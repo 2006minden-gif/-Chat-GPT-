@@ -1,0 +1,116 @@
+name: Deploy to SpaceWeb
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'private/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Check connection and preview changes without publishing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: spaceweb-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check PHP syntax and client tests
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do php -l "$file"; done < <(find public private -name '*.php' -print0)
+          node --test tests/api-client.test.cjs
+
+      - name: Configure SSH
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$PRIVATE_KEY"
+          test -n "$KNOWN_HOSTS"
+          [[ "$SSH_HOST" =~ ^[a-zA-Z0-9.-]+$ ]]
+          [[ "$SSH_USER" =~ ^[a-zA-Z0-9_-]+$ ]]
+          [[ "$SSH_PORT" =~ ^[0-9]+$ ]]
+          test "$DEPLOY_PATH" = "/home/n/neurodepro/public_html"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$PRIVATE_KEY" > ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy_key ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host spaceweb-deploy
+            HostName $SSH_HOST
+            User $SSH_USER
+            Port $SSH_PORT
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            ConnectTimeout 20
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Verify server and existing installation
+        run: |
+          ssh spaceweb-deploy 'bash -se' <<'REMOTE'
+          set -euo pipefail
+          command -v rsync
+          command -v tar
+          test -d /home/n/neurodepro/public_html
+          test ! -L /home/n/neurodepro/public_html
+          test -d /home/n/neurodepro/private
+          test ! -L /home/n/neurodepro/private
+          test -f /home/n/neurodepro/private/config.php
+          test -w /home/n/neurodepro/public_html
+          test -w /home/n/neurodepro/private
+          REMOTE
+
+      - name: Back up current files before publishing
+        if: env.DRY_RUN != 'true'
+        run: |
+          ssh spaceweb-deploy 'bash -se' <<'REMOTE'
+          set -euo pipefail
+          umask 077
+          backup_dir=/home/n/neurodepro/deploy-backups
+          mkdir -p "$backup_dir"
+          chmod 700 "$backup_dir"
+          archive="$backup_dir/site-$(date -u +%Y%m%dT%H%M%SZ)-$$.tar.gz"
+          tar -czf "$archive" -C /home/n/neurodepro public_html private
+          chmod 600 "$archive"
+          printf 'File backup created: %s\n' "$archive"
+          REMOTE
+
+      - name: Publish or preview files
+        run: |
+          set -euo pipefail
+          options=(-rz --checksum --itemize-changes --delay-updates --chmod=D755,F644)
+          if [ "$DRY_RUN" = true ]; then options+=(--dry-run); fi
+          rsync "${options[@]}" --exclude=config.php --exclude=config.example.php --exclude=privacy-policy.txt private/ spaceweb-deploy:/home/n/neurodepro/private/
+          rsync "${options[@]}" --exclude=setup.php --exclude=.user.ini public/ "spaceweb-deploy:$DEPLOY_PATH/"
+          # No --delete: server-managed files and uploads are preserved.
+          # Database migrations are deliberately a separate operation.
+
+      - name: Remove temporary SSH credentials
+        if: always()
+        run: rm -f ~/.ssh/deploy_key ~/.ssh/config ~/.ssh/known_hosts
