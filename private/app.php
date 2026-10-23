@@ -98,12 +98,23 @@ function valid_contact(string $contact): bool {
     if(str_starts_with($contact,'+') && !str_starts_with($digits,'7'))return false;
     return (bool)preg_match('/^[78][3489][0-9]{9}$/D',$digits);
 }
-function privacy_settings(): array {
+function privacy_document(): array {
     $c=config();$version=$c['privacy_policy_version'] ?? '';
+    $disabled=['settings'=>['enabled'=>false,'version'=>'','url'=>'/privacy.php','hash'=>''],'text'=>''];
+    if (($c['privacy_policy_approved'] ?? false)!==true || !is_string($version)
+        || !preg_match('/^[A-Za-z0-9._-]{1,64}$/D',$version)) return $disabled;
     $file=__DIR__.'/privacy-policy.txt';
-    $text=is_file($file) ? file_get_contents($file) : '';
-    $enabled=($c['privacy_policy_approved'] ?? false)===true && is_string($version)
-        && preg_match('/^[A-Za-z0-9._-]{1,64}$/D',$version) && trim($text)!=='';
-    return ['enabled'=>(bool)$enabled,'version'=>$enabled?$version:'','url'=>'/privacy.php',
-            'hash'=>$enabled?hash('sha256',$text):''];
+    if (!is_file($file)) return $disabled;
+    // A failed read returns false. Never pass it to trim/hash under strict PHP 8.
+    // Suppress the filesystem warning (which can contain a private path), log only a fixed event.
+    $text=@file_get_contents($file);
+    if ($text===false) {
+        error_log('NeuroDelo {"event":"privacy_policy_unreadable"}');
+        return $disabled;
+    }
+    if (trim($text)==='') return $disabled;
+    return ['settings'=>['enabled'=>true,'version'=>$version,'url'=>'/privacy.php','hash'=>hash('sha256',$text)],'text'=>$text];
+}
+function privacy_settings(): array {
+    return privacy_document()['settings'];
 }

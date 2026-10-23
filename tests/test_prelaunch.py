@@ -19,7 +19,7 @@ class Prelaunch(unittest.TestCase):
   cls.dbname='neuro_test_'+secrets.token_hex(8)
   cls.dbargs={'dsn':dsn,'user':os.environ.get('NEURO_TEST_USER','root'),'password':os.environ.get('NEURO_TEST_PASSWORD','')}
   cls.tmp=tempfile.TemporaryDirectory();cls.path=Path(cls.tmp.name)
-  for name in ['public','private','database','tests']:shutil.copytree(ROOT/name,cls.path/name,ignore=shutil.ignore_patterns('config.php','__pycache__'))
+  for name in ['public','private','database','tests','scripts']:shutil.copytree(ROOT/name,cls.path/name,ignore=shutil.ignore_patterns('config.php','__pycache__'))
   cls.password=secrets.token_urlsafe(24)
   cls.sql('CREATE DATABASE `'+cls.dbname+'` CHARACTER SET utf8mb4',admin=True)
   cls.addClassCleanup(cls.cleanup)
@@ -104,6 +104,8 @@ class Prelaunch(unittest.TestCase):
   self.assertNotIn(str(self.path),bad.text)
   self.config['db_name']=self.dbname+'_absent';self.write_config()
   try:
+   # Privacy has no SQL dependency; a missing database must not break this API.
+   privacy=requests.get(self.api('privacy'));self.assertEqual(privacy.status_code,200);self.assertTrue(privacy.json()['enabled'])
    failed=owner.get(self.api('leads'));self.assertEqual(failed.status_code,503)
    self.assertIn('X-Request-ID',failed.headers)
    self.assertNotIn(self.dbname,failed.text);self.assertNotIn('PDO',failed.text)
@@ -187,7 +189,112 @@ class Prelaunch(unittest.TestCase):
     self.assertFalse(page.locator('#consent').is_checked());self.assertEqual(page.locator('#idea').input_value(),'Не терять текст')
    finally:self.config['privacy_policy_version']='test-policy-v1';self.write_config()
    browser.close()
- def test_06_additive_migrations_preserve_history(self):
+ def test_06_privacy_files_fail_closed(self):
+  policy=self.path/'private/privacy-policy.txt';original=policy.read_bytes()
+  try:
+   for content in [b'', b'   \n']:
+    policy.write_bytes(content)
+    self.assertEqual(requests.get(self.api('privacy')).json()['enabled'],False)
+    self.assertEqual(requests.get(self.base+'/privacy.php').status_code,503)
+    self.assertEqual(requests.post(self.api('leads'),json=self.lead()).status_code,503)
+   policy.unlink()
+   self.assertFalse(requests.get(self.api('privacy')).json()['enabled'])
+   policy.write_bytes(original);policy.chmod(0)
+   if os.access(policy,os.R_OK):self.fail('Run privacy permission regression as an unprivileged user')
+   r=requests.get(self.api('privacy'));self.assertEqual(r.status_code,200);self.assertFalse(r.json()['enabled'])
+   page=requests.get(self.base+'/privacy.php');self.assertEqual(page.status_code,503)
+   self.assertIn('ещё не опубликована',page.text);self.assertNotIn(str(self.path),page.text)
+   self.assertEqual(requests.post(self.api('leads'),json=self.lead()).status_code,503)
+   self.assertIn('privacy_policy_unreadable',(self.path/'server.log').read_text())
+  finally:policy.chmod(0o600);policy.write_bytes(original)
+  policy.write_text('<script>synthetic</script>')
+  try:
+   page=requests.get(self.base+'/privacy.php');self.assertEqual(page.status_code,200)
+   self.assertIn('&lt;script&gt;synthetic&lt;/script&gt;',page.text)
+   self.assertNotIn('<script>synthetic',page.text)
+   data=requests.get(self.api('privacy')).json();self.assertTrue(data['enabled']);self.assertNotIn('text',data);self.assertNotIn('settings',data)
+  finally:policy.write_bytes(original)
+ def test_06_browser_disabled_policy(self):
+  from playwright.sync_api import sync_playwright
+  policy=self.path/'private/privacy-policy.txt'
+  with sync_playwright() as p:
+   browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox'])
+   try:
+    page=browser.new_page()
+    for approved,readable in [(False,True),(True,False)]:
+     self.config['privacy_policy_approved']=approved;self.write_config();policy.chmod(0o600 if readable else 0)
+     with page.expect_response(lambda r:'api.php?r=privacy' in r.url):page.goto(self.base)
+     self.assertTrue(page.locator('#consent').is_disabled())
+     self.assertFalse(page.locator('#consent').is_checked())
+     self.assertTrue(page.locator('#brief-form button').is_disabled())
+   finally:
+    policy.chmod(0o600);self.config['privacy_policy_approved']=True;self.write_config();browser.close()
+ def test_07_shared_config_failure_and_readonly_diagnostics(self):
+  config=self.path/'private/config.php';original=config.read_bytes()
+  try:
+   config.write_text('<?php return [ BROKEN SYNTAX SECRET_MARKER;')
+   ids=[]
+   for route in ['/setup.php','/privacy.php','/api.php?r=privacy']:
+    r=requests.get(self.base+route);self.assertEqual(r.status_code,503)
+    self.assertIn('Сервис временно недоступен',r.json()['detail'])
+    self.assertNotIn('SECRET_MARKER',r.text);self.assertNotIn(str(self.path),r.text)
+    ids.append(r.headers['X-Request-ID'])
+   log=(self.path/'server.log').read_text()
+   for request_id in ids:self.assertIn(request_id,log)
+   self.assertIn('ParseError',log)
+   r=subprocess.run([self.php,str(self.path/'scripts/diagnose.php')],capture_output=True,text=True)
+   self.assertEqual(r.returncode,1);self.assertNotIn('SECRET_MARKER',r.stdout+r.stderr)
+   self.assertTrue(any(item['check']=='config_load' and item['type']=='ParseError' for item in json.loads(r.stdout)))
+  finally:config.write_bytes(original)
+  before=self.sql('SELECT COUNT(*) AS n FROM nd_leads')[0]['n']
+  r=subprocess.run([self.php,str(self.path/'scripts/diagnose.php')],capture_output=True,text=True)
+  data={item['check']:item for item in json.loads(r.stdout)}
+  for key in ['config_structure','database_connection','schema_nd_admin','schema_nd_leads','schema_nd_sessions','schema_nd_limits','administrator_exists']:
+   self.assertTrue(data[key]['ok'],key)
+  self.assertNotIn(self.password,r.stdout+r.stderr)
+  self.assertEqual(self.sql('SELECT COUNT(*) AS n FROM nd_leads')[0]['n'],before)
+  self.config['db_name']=self.dbname+'_absent';self.write_config()
+  try:
+   r=subprocess.run([self.php,str(self.path/'scripts/diagnose.php')],capture_output=True,text=True)
+   self.assertEqual(r.returncode,1);self.assertNotIn(self.dbname,r.stdout+r.stderr)
+   self.assertNotIn(str(self.path),r.stdout+r.stderr)
+   self.assertTrue(any(item['check']=='database' and not item['ok'] and 'sqlstate' in item for item in json.loads(r.stdout)))
+  finally:self.config['db_name']=self.dbname;self.write_config()
+ def test_08_setup_authentication_session_and_logout(self):
+  # Only this suite's random database is changed. Restore its synthetic account afterwards.
+  original=self.sql('SELECT password_hash FROM nd_admin WHERE id=1')[0]['password_hash']
+  self.config['setup_key']=secrets.token_hex(32);self.write_config()
+  try:
+   self.assertEqual(requests.get(self.base+'/setup.php').status_code,403)
+   self.assertEqual(requests.post(self.base+'/setup.php',data={'setup_key':self.config['setup_key'],'password':'do-not-overwrite','repeat':'do-not-overwrite'}).status_code,403)
+   self.assertEqual(self.sql('SELECT password_hash FROM nd_admin WHERE id=1')[0]['password_hash'],original)
+   self.sql('DELETE FROM nd_admin WHERE id=1')
+   self.assertEqual(requests.get(self.base+'/setup.php').status_code,200)
+   payload={'setup_key':self.config['setup_key'],'password':self.password,'repeat':self.password}
+   self.assertEqual(requests.post(self.base+'/setup.php',data=payload,headers={'Origin':'https://invalid.example'}).status_code,403)
+   wrong=dict(payload,setup_key='wrong');self.assertEqual(requests.post(self.base+'/setup.php',data=wrong).status_code,403)
+   short=dict(payload,password='short',repeat='short');self.assertEqual(requests.post(self.base+'/setup.php',data=short).status_code,422)
+   r=requests.post(self.base+'/setup.php',data=payload,allow_redirects=False);self.assertEqual(r.status_code,303);self.assertEqual(r.headers['Location'],'/studio.php')
+   self.assertEqual(requests.post(self.base+'/setup.php',data=payload).status_code,403)
+   self.assertEqual(requests.post(self.api('login'),json={'password':'incorrect'}).status_code,401)
+   owner=requests.Session();login=owner.post(self.api('login'),json={'password':self.password});self.assertEqual(login.status_code,200)
+   cookie=login.headers['Set-Cookie'];self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie)
+   csrf={'X-CSRF-Token':login.json()['csrf']}
+   self.assertEqual(owner.get(self.api('session')).status_code,200)
+   self.assertEqual(owner.post(self.api('logout')).status_code,403)
+   self.assertEqual(owner.post(self.api('logout'),headers=dict(csrf,Origin='https://invalid.example')).status_code,403)
+   self.assertEqual(owner.get(self.api('session')).status_code,200)
+   self.assertEqual(owner.post(self.api('logout'),headers=csrf).status_code,200)
+   self.assertEqual(owner.get(self.api('session')).status_code,401)
+   owner,csrf=self.owner()
+   self.sql('UPDATE nd_sessions SET expires=0 WHERE token=?',params=[hashlib.sha256(owner.cookies['nd_session'].encode()).hexdigest()])
+   self.assertEqual(owner.get(self.api('session')).status_code,401)
+  finally:
+   self.sql('DELETE FROM nd_admin WHERE id=1')
+   self.sql('INSERT INTO nd_admin(id,password_hash) VALUES (1,?)',params=[original])
+   self.config['setup_key']='';self.write_config()
+  self.assertEqual(requests.get(self.base+'/setup.php').status_code,503)
+ def test_09_additive_migrations_preserve_history(self):
   import zipfile,re
   # Baseline fixture belongs to tests; no live database is migrated.
   old=(ROOT/'tests/legacy_leads.sql').read_text()
