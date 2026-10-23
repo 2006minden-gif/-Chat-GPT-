@@ -1,0 +1,8 @@
+.local/
+__pycache__/
+.venv/
+.env
+*.sqlite3
+*.sqlite3-*
+private/config.php
+/dist/

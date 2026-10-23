@@ -1,0 +1,36 @@
+-- Import into the database created in the hosting panel. MySQL 5.7+/8, MariaDB 10.5+.
+CREATE TABLE IF NOT EXISTS nd_admin (
+ id TINYINT UNSIGNED PRIMARY KEY,
+ password_hash VARCHAR(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS nd_leads (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100) NOT NULL,
+ contact VARCHAR(200) NOT NULL,
+ service VARCHAR(100) NOT NULL,
+ idea TEXT NOT NULL,
+ status VARCHAR(30) NOT NULL DEFAULT 'Новая',
+ notes TEXT NOT NULL,
+ next_step VARCHAR(500) NOT NULL DEFAULT '',
+ created BIGINT UNSIGNED NOT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ request_key CHAR(64) NULL,
+ request_hash CHAR(64) NULL,
+ consent TINYINT UNSIGNED NULL,
+ consent_at BIGINT UNSIGNED NULL,
+ policy_version VARCHAR(64) NULL,
+ policy_hash CHAR(64) NULL,
+ UNIQUE KEY nd_leads_request_key (request_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS nd_sessions (
+ token CHAR(64) PRIMARY KEY,
+ csrf CHAR(64) NOT NULL,
+ expires BIGINT UNSIGNED NOT NULL,
+ INDEX (expires)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS nd_limits (
+ bucket CHAR(64) PRIMARY KEY,
+ attempts INT UNSIGNED NOT NULL,
+ expires BIGINT UNSIGNED NOT NULL,
+ INDEX (expires)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
