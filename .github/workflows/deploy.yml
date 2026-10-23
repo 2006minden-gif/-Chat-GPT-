@@ -30,7 +30,7 @@ jobs:
       SSH_PORT: ${{ secrets.SSH_PORT }}
       SSH_USER: ${{ secrets.SSH_USER }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+      DRY_RUN: ${{ vars.DEPLOY_ENABLED != 'true' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
     steps:
       - uses: actions/checkout@v4
         with:
