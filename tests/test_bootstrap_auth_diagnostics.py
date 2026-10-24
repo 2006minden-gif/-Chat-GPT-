@@ -37,5 +37,22 @@ class BootstrapAPIDiagnosticsTests(unittest.TestCase):
                 control.api("GET", "repos/" + control.REPO + "/actions/variables/MISSING", missing=True)
 
 
+    def test_direct_probe_classifies_http_without_leaking_secret(self):
+        import urllib.error
+        for code in (401,403,404):
+            with self.subTest(code=code), patch("urllib.request.urlopen", side_effect=urllib.error.HTTPError("https://api.github.com",code,"secret_token",{},None)):
+                self.assertEqual(control.safe_api_probe("secret_token"),"direct_http_"+str(code))
+        with patch("urllib.request.urlopen", side_effect=urllib.error.URLError("secret_token")):
+            self.assertEqual(control.safe_api_probe("secret_token"),"direct_transport_failure")
+        self.assertEqual(control.safe_api_probe(""),"missing_token")
+
+    def test_unknown_gh_failure_includes_read_only_probe_category(self):
+        with patch.object(control.subprocess,"run",return_value=SimpleNamespace(returncode=1,stderr="network failure secret_token",stdout="")), patch.object(control,"safe_api_probe",return_value="direct_http_401"):
+            with self.assertRaises(control.GitHubFailure) as caught:
+                control.api("GET","repos/"+control.REPO)
+            self.assertIn("safe_probe=direct_http_401",str(caught.exception))
+            self.assertNotIn("secret_token",str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main()
