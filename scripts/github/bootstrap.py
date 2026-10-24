@@ -2,6 +2,7 @@
 import argparse
 import io
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -24,9 +25,19 @@ def verify_report(report,sha):
             if report['after']['checks'].get('/'+path.split('/',1)[1],{}).get('sha256')!=digest:raise GitHubFailure('Published asset revision is not verified')
     if final.get('revision')!=sha or final.get('files_verified') is not True:raise GitHubFailure('Bootstrap final server state is unverified')
 
-def read_report(base,run_id):
+def read_report(base,run_id,allow_current=False):
     run=api('GET',base+'/actions/runs/'+run_id)
-    if run.get('status')!='completed' or run.get('head_branch')!='main' or run.get('head_repository',{}).get('full_name')!=REPO or run.get('path')!='.github/workflows/deploy.yml' or run.get('event')!='workflow_dispatch' or run.get('conclusion')!='success':raise GitHubFailure('Only a successful trusted main bootstrap workflow can promote delivery')
+    current = (allow_current and os.environ.get('GITHUB_RUN_ID') == run_id
+        and os.environ.get('GITHUB_JOB') == 'promote_bootstrap'
+        and os.environ.get('GITHUB_EVENT_NAME') == 'workflow_dispatch'
+        and os.environ.get('GITHUB_REF') == 'refs/heads/main'
+        and os.environ.get('GITHUB_SHA') == run.get('head_sha')
+        and run.get('display_title') == 'bootstrap ' + run.get('head_sha', '')
+        and run.get('status') == 'in_progress' and run.get('conclusion') is None)
+    completed = run.get('status') == 'completed' and run.get('conclusion') == 'success'
+    if (allow_current and not current) or (not allow_current and not completed):
+        raise GitHubFailure('Only a successful run or its own post-publish job can promote delivery')
+    if run.get('head_branch')!='main' or run.get('head_repository',{}).get('full_name')!=REPO or run.get('path')!='.github/workflows/deploy.yml' or run.get('event')!='workflow_dispatch':raise GitHubFailure('Only a successful trusted main bootstrap workflow can promote delivery')
     jobs=api('GET',base+'/actions/runs/'+run_id+'/jobs?per_page=100')['jobs']
     if not all(any(j['name']==name and j['conclusion']=='success' for j in jobs) for name in ['Validate','Publish approved main']):raise GitHubFailure('Main CI and publish jobs must both pass')
     artifacts=api('GET',base+'/actions/runs/'+run_id+'/artifacts?per_page=100')['artifacts']
@@ -40,13 +51,13 @@ def read_report(base,run_id):
         report=json.loads(archive.read('deployment-report.json'))
     verify_report(report,run['head_sha']);return run,report
 
-def promote(run_id):
+def promote(run_id,current_run=False):
     if not re.fullmatch('[0-9]+',run_id):raise GitHubFailure('Invalid bootstrap run ID')
     base='repos/'+REPO;repo=api('GET',base)
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):raise GitHubFailure('Repository administrator access required')
     required_delivery_policy(base)
     for env in ['production','automation']:verify_environment(base,env)
-    run,report=read_report(base,run_id)
+    run,report=read_report(base,run_id,allow_current=True) if current_run else read_report(base,run_id)
     if api('GET',base+'/git/ref/heads/main')['object']['sha']!=run['head_sha']:raise GitHubFailure('Main moved after bootstrap; verify the current main before promotion')
     # Only metadata/verification references, never a token, credential or plaintext private file.
     set_variable(base,'BOOTSTRAP_VERIFIED_RUN',run_id)
@@ -56,9 +67,9 @@ def promote(run_id):
     print(json.dumps({'result':'verified_bootstrap_promoted','run_id':run_id,'revision':run['head_sha'],'files_verified':len(report['apply']['files_sha256'])}))
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['check','promote']);parser.add_argument('--run-id');parser.add_argument('--apply',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['check','promote']);parser.add_argument('--run-id');parser.add_argument('--apply',action='store_true');parser.add_argument('--current-run',action='store_true');args=parser.parse_args()
     try:
         if args.operation=='check':verify_environment('repos/'+REPO,'production');print('Production environment remains main-only; no settings changed')
         elif not args.apply:raise GitHubFailure('Promotion requires --apply and administrator authorization after successful smoke delivery')
-        else:promote(args.run_id or '')
+        else:promote(args.run_id or '',current_run=args.current_run)
     except (GitHubFailure,ValueError,KeyError,TypeError,AttributeError,zipfile.BadZipFile,subprocess.TimeoutExpired) as error:print(str(error) if isinstance(error,GitHubFailure) else 'Bootstrap evidence validation failed');raise SystemExit(1)
