@@ -124,7 +124,11 @@ class Gateway:
    r=subprocess.run(command,input=json.dumps({'query':query}) if query else None,text=True,capture_output=True,timeout=45)
    if r.returncode:
     status=re.search(r'HTTP (\d+)',r.stderr)
-    return {'status':int(status.group(1)) if status else None,'available':False}
+    detail={'status':int(status.group(1)) if status else None,'available':False}
+    if query:
+     try:detail['graphql_errors']=[e.get('message','')[:250] for e in json.loads(r.stdout).get('errors',[])]
+     except ValueError:pass
+    return detail
    try:return {'status':200,'available':True,'data':json.loads(r.stdout)}
    except ValueError:return {'status':200,'available':False}
   base='repos/'+REPO;result={}
