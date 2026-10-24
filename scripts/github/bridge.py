@@ -26,7 +26,7 @@ class Gateway:
    try:message=json.loads(body).get('message','')
    except ValueError:message=''
    # API errors contain no request headers or secret values; retain only known diagnostics.
-   allowed=['Resource not accessible by integration','GitHub Actions is not permitted to create or approve pull requests.','Not Found','Bad credentials']
+   allowed=['Resource not accessible by integration','GitHub Actions is not permitted to create or approve pull requests.','Not Found','Bad credentials','Upgrade to GitHub Pro or make this repository public to enable this feature.']
    return {'status':error.code,'error':message if message in allowed else 'github_request_rejected'}
 
  def inspect(self):
@@ -54,8 +54,35 @@ class Gateway:
    safe={k:run.get(k) for k in ['id','name','event','head_branch','head_sha','status','conclusion','html_url','path']}
    jobs=self.call('GET',base+'/actions/runs/'+str(run['id'])+'/jobs?per_page=30')
    safe['jobs']=[{'id':j['id'],'name':j['name'],'status':j['status'],'conclusion':j['conclusion'],'steps':[{'name':s['name'],'conclusion':s.get('conclusion'),'status':s['status']} for s in j.get('steps',[])]} for j in jobs.get('data',{}).get('jobs',[])]
+   if run.get('head_branch')=='ci/automatic-spaceweb' and run.get('conclusion')=='failure':
+    for job in safe['jobs']:
+     if job['name']=='Validate' and job['conclusion']=='failure':job['diagnostics']=self.validation_errors(job['id'])
    result['runs']['runs'].append(safe)
   return result
+ def validation_errors(self,job_id):
+  # This job has synthetic loopback DB only and no production secrets.
+  request=urllib.request.Request(API+'repos/'+REPO+'/actions/jobs/'+str(job_id)+'/logs',headers={'Authorization':'Bearer '+self.token})
+  try:
+   # Strip Authorization on cross-origin download redirects.
+   class Redirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self,request,fp,code,msg,headers,newurl):
+     target=super().redirect_request(request,fp,code,msg,headers,newurl)
+     if target and urllib.parse.urlparse(request.full_url).netloc!=urllib.parse.urlparse(newurl).netloc:target.remove_header('Authorization')
+     return target
+   with urllib.request.build_opener(Redirect()).open(request,timeout=40) as response:text=response.read(4000000).decode('utf-8','replace')
+   # Only recognized test/CI failure windows, never arbitrary job/environment dumps.
+   lines=text.splitlines();out=[]
+   for index,line in enumerate(lines):
+    if any(marker in line for marker in ['FAIL:', 'ERROR:', 'AssertionError:', 'ModuleNotFoundError:', 'RuntimeError:', 'FAILED (','No matching distribution']):
+     window=lines[max(0,index-2):min(len(lines),index+7)]
+     out.extend(window)
+   safe=[]
+   for line in list(dict.fromkeys(out))[:120]:
+    line=line.replace(self.token,'<redacted>')
+    line=re.sub(r'(gh[pousr]_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+)','<redacted>',line)
+    safe.append(line[:500])
+   return {'errors':safe}
+  except Exception as error:return {'error_type':type(error).__name__}
  def prepare_pr(self):
   base='repos/'+REPO;head='ci/automatic-spaceweb'
   existing=self.call('GET',base+'/pulls?state=open&base=main&head='+urllib.parse.quote('2006minden-gif:'+head,safe=''))
