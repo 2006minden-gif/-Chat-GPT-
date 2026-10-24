@@ -54,6 +54,11 @@ class RepairFiles(unittest.TestCase):
   applied=self.rpc('apply');self.assertTrue(applied['configuration_syntax_valid']);self.assertEqual(applied['quarantined_copies'],2)
   self.assertFalse((self.root/'public_html/~.htaccess').exists());self.assertEqual((plan/'quarantine/copy_rules').read_text(),'OLD BACKUP')
   rolled=self.rpc('rollback');self.assertTrue(rolled['bytes_restored']);self.assertEqual((self.root/'private/config.php').read_text(),self.config);self.assertEqual((self.root/'public_html/.htaccess').read_text(),'Options -Indexes\n');self.assertEqual((self.root/'public_html/customer-upload.dat').read_text(),'KEEP');self.assertFalse((self.root/'public_html/index~.html').exists())
+ def test_large_public_copy_uses_streaming_backup_and_private_quarantine(self):
+  import hashlib
+  data=b'SYNTHETIC PUBLIC BACKUP '+b'x'*400000;(self.root/'public_html/index~.html').write_bytes(data)
+  inspected=self.rpc('inspect');self.assertFalse(inspected['backup_copies']['index~.html']['scan_complete']);self.assertEqual(inspected['backup_copies']['index~.html']['bytes'],len(data))
+  self.rpc('prepare');self.rpc('apply');copy=self.root/'.neurodelo-repair/test-plan/quarantine/copy_index';self.assertEqual(hashlib.sha256(copy.read_bytes()).digest(),hashlib.sha256(data).digest());self.rpc('rollback')
  def test_corrupt_backup_stale_source_and_parallel_plan_are_refused(self):
   self.rpc('prepare');self.assertEqual(self.rpc('prepare','other-plan',expect=1)['error'],'pending_repair_requires_resolution')
   config=self.root/'private/config.php';config.write_text(self.config+'\n');self.assertEqual(self.rpc('apply',expect=1)['error'],'source_changed_since_backup');config.write_text(self.config)
@@ -115,5 +120,14 @@ class RepairCoordinator(unittest.TestCase):
    self.assertEqual({t:f.sql('SELECT * FROM '+t) for t in prior},prior);self.assertFalse(result['server']['preflight']['privacy_approved']);self.assertFalse(requests.get(f.base+'/api.php?r=privacy').json()['enabled'])
   finally:f.doClassCleanups()
 
+
+
+class RepairWorkflow(unittest.TestCase):
+ def test_main_only_manual_repair_reuses_ci_without_publishing(self):
+  import yaml
+  w=yaml.load((ROOT/'.github/workflows/production-repair.yml').read_text(),Loader=yaml.BaseLoader);self.assertEqual(set(w['on']),{'workflow_dispatch'});self.assertEqual(w['jobs']['validate']['uses'],'./.github/workflows/deploy.yml');self.assertEqual(w['jobs']['validate']['with']['validation_only'],'true')
+  job=w['jobs']['repair'];self.assertEqual(job['if'],"github.ref == 'refs/heads/main'");self.assertEqual(job['needs'],'validate');self.assertEqual(job['environment'],'production');self.assertEqual(job['concurrency']['group'],'spaceweb-production');self.assertEqual(job['concurrency']['cancel-in-progress'],'false')
+  source=(ROOT/'.github/workflows/deploy.yml').read_text();self.assertIn('inputs.validation_only != true',source);self.assertIn('BOOTSTRAP_VERIFIED_RUN',source)
+  self.assertNotIn('migrate.php',str(w));self.assertNotIn('AUTOMATION_READY',str(w));self.assertNotIn('secrets: inherit',str(w))
 
 if __name__=='__main__':unittest.main()
