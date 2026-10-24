@@ -1,0 +1,27 @@
+name: Authorized GitHub control relay
+on:
+  push:
+    branches: [automation/github-control]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  control:
+    if: github.ref == 'refs/heads/automation/github-control'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: neurodelo-control-evidence
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Inspect GitHub and prepare review PR without production access
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/github/bridge.py
