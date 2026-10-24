@@ -136,6 +136,26 @@ class Gateway:
   if r.get('data'):r['data']={k:r['data'].get(k) for k in ['number','html_url','state','draft']}
   return r
 
+
+ def prepare_issue10_pr(self,expected_sha):
+  base='repos/'+REPO;head='fix/issue-10-production-repair'
+  current=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(head,safe=''))
+  if current['status']!=200 or current.get('data',{}).get('object',{}).get('sha')!=expected_sha:return {'status':409,'error':'repair_head_changed'}
+  body=('Refs #10. Separate reviewed repair path from main; no Stage 3/4 or migrations. '
+        'Read-only server diagnosis confirms ParseError line 12 from two unescaped existing apostrophes; a native syntax-valid candidate preserves declared value bytes. '
+        'Actual GET and HEAD expose both backup URLs with 200. No production repair was applied. '
+        'Adds server-local verified backup/recovery, restricted literal/escape repair, private quarantine, atomic writes, real GET+HEAD/HTTP confirmation and rollback. '
+        'Manual repair job is main-only after full existing CI, with exact revision and prepared-plan checks; no automatic release enabled. '
+        '87 Python and 12 Node tests passed locally, actual Apache and isolated MySQL 5.7 included. '
+        'See docs/PRODUCTION-REPAIR-ISSUE-10.md. Review and controlled prepare/apply are required; do not close #10 until production baseline is genuinely healthy.')
+  existing=self.call('GET',base+'/pulls?state=open&base=main&head='+urllib.parse.quote('2006minden-gif:'+head,safe=''))
+  if existing['status']!=200:return {'status':existing['status'],'error':'repair_pr_lookup_failed'}
+  if existing.get('data'):
+   r={'status':200,'data':existing['data'][0]}
+  else:r=self.call('POST',base+'/pulls',{'head':head,'base':'main','draft':False,'title':'Issue #10: secret-preserving production syntax repair and backup protection','body':body})
+  if r.get('data'):r['data']={k:r['data'].get(k) for k in ['number','html_url','state','draft']}
+  return r
+
  def issue8_audit(self):
   # Execute gh in the authorized Actions environment. All output selected below is metadata only.
   def gh(path,query=None):
@@ -192,7 +212,8 @@ if __name__=='__main__':
   'run_url':'https://github.com/'+REPO+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],'time':datetime.datetime.now(datetime.timezone.utc).isoformat(),'production_touched':False}
  try:
   report['inspection']=gateway.inspect()
-  if plan['action']=='prepare-issue8-pr':report['issue8_pr']=gateway.prepare_issue8_pr(plan['expected_sha'])
+  if plan['action']=='prepare-issue10-pr':report['issue10_pr']=gateway.prepare_issue10_pr(plan['expected_sha'])
+  elif plan['action']=='prepare-issue8-pr':report['issue8_pr']=gateway.prepare_issue8_pr(plan['expected_sha'])
   elif plan['action']=='audit-issue8':report['issue8_audit']=gateway.issue8_audit()
   elif plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
   elif plan['action']=='prepare-stage4-pr':report['stage4_pr']=gateway.prepare_customer_pr(plan['expected_sha'])
