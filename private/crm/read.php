@@ -13,6 +13,7 @@ function crm_list(string $kind,array $filters=[]):array{
   if($f==='customer_id'&&$kind==='leads'){$where[]='t.id IN (SELECT lead_id FROM nd_lead_customers WHERE customer_id=?)';$p[]=$filters[$f];continue;}
   if($kind==='activity'&&$f==='customer_id'||in_array($f,crm_models()[$kind]??[],true)||$kind==='leads'&&$f==='status'){$where[]='t.'.$f.'=?';$p[]=$filters[$f];}
  }
+ if(($filters['active']??'')==='true'&&in_array($kind,['deals','orders','projects'],true))$where[]="t.status NOT IN ('won','lost','completed','cancelled')";
  $search=$filters['search']??'';if(!is_string($search)||strlen($search)>300)crm_fail(422,'Слишком длинный поиск.');
  if($search!==''&&in_array($kind,array_merge(array_keys(crm_models()),['leads']),true)){$f=in_array($kind,['customers','employees','leads'],true)?'name':'title';$where[]='t.'.$f.' LIKE ?';$p[]='%'.$search.'%';}
  if($kind==='notifications'&&($filters['unread']??'')==='true')$where[]='t.read_at IS NULL';

@@ -38,7 +38,7 @@ function crm_write(string $kind,int $id,string $action,array $d,string $method):
    if(in_array($kind,['customers','employees'],true))$v['status']=$action==='archive'?'archived':($kind==='customers'?'active':'suspended');
    if($kind==='stages')crm_fail(422,'Для этапа используйте статус отмены.');
   }elseif($action===''&&$method==='PATCH'){
-   if($old['archived_at']!==null)crm_fail(422,'Сначала восстановите запись.');
+   if(($old['archived_at']??null)!==null)crm_fail(422,'Сначала восстановите запись.');
    $v=crm_values($kind,$d,$old);
    if($kind==='projects'&&($v['status']??'')==='completed'){
     $progress=crm_progress($id);if($progress['total']===0||$progress['percent']!==100)crm_fail(422,'Для завершения проекта завершите все этапы.');

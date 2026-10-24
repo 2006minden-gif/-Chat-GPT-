@@ -109,6 +109,7 @@ function crm_insert(string $kind,array $data):array{
  $v=crm_values($kind,$data);$table=crm_table($kind);$cols=array_keys($v);
  crm_query('INSERT INTO '.$table.' ('.implode(',',$cols).') VALUES ('.implode(',',array_fill(0,count($cols),'?')).')',array_values($v));$id=(int)db()->lastInsertId();
  if($kind==='tasks'&&isset($data['project_id']))crm_task_link($id,$data);
+ if($kind==='stages')crm_query('UPDATE nd_projects SET version=version+1 WHERE id=?',[$v['project_id']]);
  $row=crm_record($kind,$id);crm_event($kind,$id,'created',$row);return ['ok'=>true,'record'=>$row];
 }
 function crm_task_link(int $id,array $d):void{
