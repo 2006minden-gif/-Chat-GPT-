@@ -2,6 +2,8 @@
 from pathlib import Path
 import re
 import subprocess
+import os
+import tempfile
 import unittest
 import yaml
 ROOT=Path(__file__).resolve().parents[1]
@@ -47,6 +49,23 @@ class DeploymentSafety(unittest.TestCase):
   self.assertEqual(job['steps'][0]['with']['ref'],'main')
   self.assertTrue(any(s.get('uses','').startswith('actions/create-github-app-token@') for s in job['steps']))
   self.assertNotIn('SSH_PRIVATE_KEY',str(w));self.assertNotIn('download-artifact',str(w))
+ def test_stale_main_validation_never_configures_and_is_not_a_failure(self):
+  w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
+  job=w['jobs']['configure_validated_main'];steps=job['steps']
+  self.assertEqual(steps[0]['id'],'current')
+  self.assertEqual(steps[1]['if'],"steps.current.outputs.current == 'true'")
+  self.assertEqual(steps[2]['if'],"steps.current.outputs.current == 'true'")
+  self.assertIn('ref',steps[1]['with'])
+  self.assertNotIn('|| true',steps[0]['run'])
+  with tempfile.TemporaryDirectory() as tmp:
+   output=Path(tmp)/'github-output'
+   for current,validated,expected in [('b'*40,'a'*40,'current=false'),('a'*40,'a'*40,'current=true')]:
+    output.write_text('')
+    script='gh() { echo "$CURRENT_SHA"; }\n'+steps[0]['run']
+    result=subprocess.run(['bash','-e'],input=script,text=True,env=dict(os.environ,GITHUB_OUTPUT=str(output),GITHUB_REPOSITORY='2006minden-gif/-Chat-GPT-',CURRENT_SHA=current,VALIDATED=validated),capture_output=True)
+    self.assertEqual(result.returncode,0,result.stderr)
+    self.assertIn(expected,output.read_text())
+
  def test_bootstrap_and_native_dispatch_are_sha_bound_and_keep_ready_closed(self):
   inputs=self.w['on']['workflow_dispatch']['inputs'];self.assertIn('bootstrap',inputs['operation']['options']);self.assertIn('expected_revision',inputs)
   job=self.w['jobs']['deploy'];self.assertIn("vars.AUTOMATION_READY == 'true'",job['if']);self.assertIn('BOOTSTRAP_CONFIGURED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_APPROVED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_VERIFIED_RUN',job['if']);self.assertNotIn("inputs.operation != 'deploy'",job['if']);self.assertIn("inputs.operation == 'rollback'",job['if'])
@@ -83,6 +102,25 @@ class DeploymentSafety(unittest.TestCase):
   self.assertEqual(repair['jobs']['validate']['with']['validation_only'],'true')
   self.assertEqual(repair['jobs']['repair']['needs'],'validate')
   self.assertEqual(repair['jobs']['repair']['concurrency']['group'],'spaceweb-production')
+
+ def test_initial_delivery_and_promotion_require_validated_main_and_evidence(self):
+  w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
+  job=w['jobs']['configure_validated_main']
+  self.assertIn("github.event.workflow_run.conclusion == 'success'",job['if'])
+  self.assertIn("github.event.workflow_run.head_branch == 'main'",job['if'])
+  self.assertEqual(job['permissions']['actions'],'write')
+  start=job['steps'][-1]
+  self.assertEqual(start['if'],"steps.current.outputs.current == 'true'")
+  self.assertIn("configured['value'] != sha",start['run'])
+  self.assertIn("'operation': 'bootstrap', 'expected_revision': sha",start['run'])
+  self.assertNotIn("'AUTOMATION_READY', 'true'",start['run'])
+  promote=w['jobs']['promote_verified_delivery']
+  self.assertIn("github.event.workflow_run.event == 'workflow_dispatch'",promote['if'])
+  self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",promote['if'])
+  self.assertIn("github.event.workflow_run.conclusion == 'success'",promote['if'])
+  self.assertEqual(promote['environment'],'automation')
+  self.assertIn('bootstrap.py promote --run-id',promote['steps'][-1]['run'])
+
  def test_shell_syntax(self):
   for path in (ROOT/'.github/workflows').glob('*.yml'):
    w=yaml.load(path.read_text(),Loader=yaml.BaseLoader)

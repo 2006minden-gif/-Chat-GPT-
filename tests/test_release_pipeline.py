@@ -300,7 +300,7 @@ class GovernanceTests(unittest.TestCase):
   calls=[];variables={};protected={'enforce_admins':{'enabled':True},'required_status_checks':{'strict':True,'checks':[{'context':'Validate','app_id':15368}]},'required_pull_request_reviews':{'required_approving_review_count':1,'dismiss_stale_reviews':True}}
   def fake(method,path,payload=None,missing=False):
    calls.append((method,path,payload))
-   if path=='repos/'+control.REPO and method=='GET':return {'id':123,'full_name':control.REPO,'permissions':{'admin':True},'allow_auto_merge':True}
+   if path=='repos/'+control.REPO and method=='GET':return {'id':123,'full_name':control.REPO,'permissions':{'admin':True},'allow_auto_merge':False}
    if path.endswith('/branches/main/protection'):return protected
    if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
    if '/actions/variables/' in path and method=='GET':
