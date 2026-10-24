@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
       - id: plan
-        run: python -c "import json,os; p=json.load(open('.github/control-plan.json')); open(os.environ['GITHUB_OUTPUT'],'a').write('enabled='+str(p['action']=='readonly-host').lower()+'\n')"
+        run: python -c "import json,os; p=json.load(open('.github/control-plan.json')); open(os.environ['GITHUB_OUTPUT'],'a').write('enabled='+str(p['action'] in ['readonly-host','inspect-issue10']).lower()+'\n')"
       - name: Require successful isolated CI before credentials become available
         if: steps.plan.outputs.enabled == 'true'
         env:
@@ -62,4 +62,10 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
           PHP_CLI: ${{ vars.PHP_CLI }}
-        run: python scripts/github/host_probe.py
+        run: |
+          python - <<'PYRUN'
+          import json,subprocess
+          plan=json.load(open('.github/control-plan.json'))
+          script='scripts/github/issue10_probe.py' if plan['action']=='inspect-issue10' else 'scripts/github/host_probe.py'
+          subprocess.run(['python',script],check=True)
+          PYRUN

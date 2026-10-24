@@ -193,7 +193,7 @@ if __name__=='__main__':
   elif plan['action']=='audit-issue8':report['issue8_audit']=gateway.issue8_audit()
   elif plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
   elif plan['action']=='prepare-stage4-pr':report['stage4_pr']=gateway.prepare_customer_pr(plan['expected_sha'])
-  elif plan['action'] not in ['inspect','readonly-host']:raise ValueError('unsupported_control_action')
+  elif plan['action'] not in ['inspect','readonly-host','inspect-issue10']:raise ValueError('unsupported_control_action')
  except Exception as error:report['error_type']=type(error).__name__
  publish(report)
  print('Evidence published to automation/evidence; no production operation executed')

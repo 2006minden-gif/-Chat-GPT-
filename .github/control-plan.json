@@ -1,6 +1,5 @@
 {
   "schema_version": 1,
-  "nonce": "8bdc139e36854e86d98bf8bb5b836cd8",
-  "action": "prepare-issue8-pr",
-  "expected_sha": "cb10eae19c8794b6cdf3e200c5a0a09e2dd139bf"
+  "nonce": "f5fe57bec971d4a4beff7aab80ca8770",
+  "action": "inspect-issue10"
 }
