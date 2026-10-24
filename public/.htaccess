@@ -6,3 +6,8 @@ DirectoryIndex index.php
 <FilesMatch "^\.">
     Require all denied
 </FilesMatch>
+# Editor copies, temporary files and backup suffixes are never public assets.
+# Match the whole filename, including copies such as index~.html and ~.htaccess.
+<FilesMatch "(?i)(~|^#.*#$|\.(bak|bkp|backup|old|orig|save|swp|swo|tmp|temp)(\.|$))">
+    Require all denied
+</FilesMatch>

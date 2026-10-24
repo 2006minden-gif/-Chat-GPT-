@@ -1,18 +1,16 @@
 name: Deploy to SpaceWeb
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'public/**'
-      - 'private/**'
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:
     inputs:
       dry_run:
         description: 'Check connection and preview changes without publishing'
         type: boolean
         default: true
+      publish_confirmation:
+        description: 'For publishing only: type PUBLISH neurodelo.pro (dry_run must be false)'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -23,6 +21,8 @@ concurrency:
 
 jobs:
   deploy:
+    # Defense in depth: publishing is never reached by push/PR or a different ref.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -30,8 +30,23 @@ jobs:
       SSH_PORT: ${{ secrets.SSH_PORT }}
       SSH_USER: ${{ secrets.SSH_USER }}
       DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      DRY_RUN: ${{ vars.DEPLOY_ENABLED != 'true' || (github.event_name == 'workflow_dispatch' && inputs.dry_run) }}
+      DRY_RUN: ${{ inputs.dry_run != false }}
     steps:
+      - name: Validate manual authorization
+        env:
+          PUBLISH_CONFIRMATION: ${{ inputs.publish_confirmation }}
+          PUBLISH_ENABLED: ${{ vars.DEPLOY_ENABLED }}
+        run: |
+          set -euo pipefail
+          case "$DRY_RUN" in
+            true) ;;
+            false)
+              test "$PUBLISH_CONFIRMATION" = 'PUBLISH neurodelo.pro'
+              test "$PUBLISH_ENABLED" = true
+              ;;
+            *) exit 1 ;;
+          esac
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
