@@ -20,11 +20,15 @@ class RepairSyntax(unittest.TestCase):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false]\n"
   d=self.helper("$c=rp_config_candidate($v);echo json_encode(['kind'=>$c['kind'],'same'=>rp_literal_signature($v)===rp_literal_signature($c['content']),'bytes_added'=>strlen($c['content'])-strlen($v),'valid'=>rp_static_config($c['content'])]);",s)
   self.assertEqual(d,{'kind':'missing_terminal_semicolon','same':True,'bytes_added':1,'valid':True})
+ def test_multiple_missing_separators_never_change_literal_bytes(self):
+  for s in ["<?php return ['a'=>1 'b'=>2 'c'=>false];", "<?php return ['a'=>'SYNTHETIC_ONLY'\n'b'=>false]"]:
+   d=self.helper("$c=rp_config_candidate($v);echo json_encode(['valid'=>rp_static_config($c['content']),'same'=>rp_literal_signature($v)===rp_literal_signature($c['content']),'count'=>$c['insertions']]);",s)
+   self.assertEqual(d,{'valid':True,'same':True,'count':2})
  def test_valid_config_is_unchanged(self):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false];"
   self.assertTrue(self.helper("$c=rp_config_candidate($v);echo json_encode($v===$c['content']);",s))
  def test_refuses_unterminated_string_multiple_defects_and_executable_config(self):
-  for s in ["<?php return ['db_password'=>'unterminated];", "<?php return ['a'=>1 'b'=>2 'c'=>3];", "<?php return ['a'=>getenv('SECRET')];", "<?php file_put_contents('/tmp/SHOULD_NOT_EXIST','x'); return [];", "<?php return ['a'=>\"$secret\"];", "<?php return ['a'=>1]; echo 'leak';"]:
+  for s in ["<?php return ['db_password'=>'unterminated];", "<?php return ['a'=>getenv('SECRET')];", "<?php file_put_contents('/tmp/SHOULD_NOT_EXIST','x'); return [];", "<?php return ['a'=>\"$secret\"];", "<?php return ['a'=>1]; echo 'leak';"]:
    self.assertTrue(self.helper("try{rp_config_candidate($v);echo 'false';}catch(RepairFailure $e){echo 'true';}",s))
  def test_handles_comments_nested_arrays_and_booleans_without_reformat(self):
   for s in ["<?php return array('a'=>array('b'=>true)\n/* preserve */'c'=>null);", "<?php declare(strict_types=1); return ['a'=>-2\n'b'=>false];"]:
