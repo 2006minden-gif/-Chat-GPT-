@@ -2,7 +2,7 @@
 
 ## Состояние и зависимости
 
-Отдельная ветка: `feature/stage-5-crm-operations`. Исходный main bcb5797; Stage 3 968c82d / PR #4, Stage 4 92f2b22 / PR #7 включены только в dev dependency chain. Их интеграция/публикация не разрешена автоматически. Ни workflows, ни production deploy implementation не менялись. Main и production не изменялись.
+Отдельная ветка: `feature/stage-5-crm-operations`. Исходный main bcb5797, затем синхронизация с main 478ca7f (PR #20); Stage 3 968c82d / PR #4, Stage 4 92f2b22 / PR #7 включены только в dev dependency chain. Их интеграция/публикация не разрешена автоматически. Ни workflows, ни production deploy implementation не менялись. Main и production не изменялись.
 
 ## Реализовано
 
@@ -22,7 +22,7 @@
 
 ## Проверено
 
-Полный Python suite: 186 PASS, 0 FAIL/0 SKIP (изолированные PHP 8.4.27, MySQL 5.7.42, Apache/Chromium). Новый operations suite — 12 тестов с несколькими lifecycle/security/browser assertions. Node — 12 PASS. PHP syntax — 25 файлов PASS; JS syntax, compileall, actionlint, release policy, diff --check — PASS. Финальный hosted CI/run IDs фиксируются в GitHub отдельно; локальный PASS не подменяет hosted CI или production delivery.
+Полный Python suite: 191 PASS, 0 FAIL/0 SKIP (изолированные PHP 8.4.27, MySQL 5.7.42, Apache/Chromium). Новый operations suite — 12 тестов с несколькими lifecycle/security/browser assertions. Node — 12 PASS. PHP syntax — 25 файлов PASS; JS syntax, compileall, actionlint, release policy, diff --check — PASS. Финальный hosted CI/run IDs фиксируются в GitHub отдельно; локальный PASS не подменяет hosted CI или production delivery.
 
 Проверены старые lead/admin/session behavior, Stage 3/4 migration/auth tests, customer lifecycle без потери unrelated leads, sales transitions без авто-заказа, повтор conversion с тем же/новым ключом, exact decimal amount, project/stage/task/employee relationships, stale version, origin/CSRF, XSS text rendering, SQL-injection search, portal IDOR/disabled account, нормальный/ошибочный browser save. Migration 006 up/up/down/up сохраняет исходные rows; populated rollback, unmanaged collisions, checksum tamper, partial journal fail closed. Browser report и снимки — STAGE-5-UX.md.
 

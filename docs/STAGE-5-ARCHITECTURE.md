@@ -2,7 +2,7 @@
 
 ## Зависимости и безопасность релиза
 
-Ветка `feature/stage-5-crm-operations` создана от main bcb5797, затем обычным merge включена ветка Stage 4 92f2b22, содержащая Stage 3 968c82d. На момент проверки PR #4/#7 не merged (их commits не ancestors main). Это зависимость только dev-ветки, не разрешение публикации. Миграции 004/005 сохранены без изменения checksums. Workflows `.github/` и весь `scripts/deploy/` идентичны исходному main; production credentials, flags, данные не читались и не менялись.
+Ветка `feature/stage-5-crm-operations` создана от main bcb5797, затем синхронизирована с main 478ca7f (PR #20), затем обычным merge включена ветка Stage 4 92f2b22, содержащая Stage 3 968c82d. На момент проверки PR #4/#7 не merged (их commits не ancestors main). Это зависимость только dev-ветки, не разрешение публикации. Миграции 004/005 сохранены без изменения checksums. Workflows `.github/` и весь `scripts/deploy/` идентичны актуальному main 478ca7f; production credentials, flags, данные не читались и не менялись.
 
 **Deployment blocker:** существующий production allowlist не включает новые CRM/customer assets/services. Он намеренно не меняется этой задачей. Нельзя сливать Stage 5 в автоматически публикуемый main до отдельного одобрения зависимостей и согласованного release manifest, approval миграций и проверки staging. Прохождение CI текущего production bundle не означает готовность пакета Stage 5. Ручной development packager `scripts/package.py` включает все новые PHP services и CLI migrations, без working config и policy; это не новый CI/CD механизм.
 
