@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "source_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
-  "nonce": "workflow-40129406398",
-  "run_id": "40129418770",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129418770",
-  "time": "2026-10-24T20:21:45.821267+00:00",
+  "nonce": "workflow-40129430863",
+  "run_id": "40129434395",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129434395",
+  "time": "2026-10-24T20:21:59.826811+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40129406398,
+    "id": 40129430863,
     "name": "Enable approved auto-merge",
     "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
     "head_branch": "main",
     "event": "workflow_run",
     "status": "completed",
     "conclusion": "skipped",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129406398",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129430863",
     "path": ".github/workflows/auto-merge.yml"
   },
   "inspection": {
@@ -207,73 +207,13 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
-          "status": "pending",
+          "status": "in_progress",
           "conclusion": null,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129434395",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
               "id": 120977784384,
-              "name": "record",
-              "status": "pending",
-              "conclusion": null,
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40129430863,
-          "name": "Enable approved auto-merge",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
-          "status": "completed",
-          "conclusion": "skipped",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129430863",
-          "path": ".github/workflows/auto-merge.yml",
-          "jobs": [
-            {
-              "id": 120977775849,
-              "name": "approved",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40129430822,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
-          "status": "pending",
-          "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129430822",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 120977774602,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "cancelled",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40129418770,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
-          "status": "in_progress",
-          "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129418770",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 120977740119,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -297,6 +237,106 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40129430863,
+          "name": "Enable approved auto-merge",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
+          "status": "completed",
+          "conclusion": "skipped",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129430863",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 120977775849,
+              "name": "approved",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 120977798977,
+              "name": "Configure CI/CD after validated main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 120977808054,
+              "name": "Enable routine deployment only after verified bootstrap",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40129430822,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129430822",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 120977774602,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "cancelled",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40129418770,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "d882cf240b9e213e97c7e7e8943916c392966038",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40129418770",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 120977740119,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
