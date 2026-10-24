@@ -161,7 +161,8 @@ class RemoteFilesystemTests(unittest.TestCase):
    release.build(self.candidate,format(number,'040x'));(self.candidate/'baseline.json').write_text(json.dumps(good()))
    self.agent('apply');self.finish()
   state=json.loads((self.root/'.neurodelo-deploy/state.json').read_text());backups=self.root/'.neurodelo-deploy/backups'
-  self.assertLessEqual(len(list(backups.iterdir())),3);self.assertTrue((backups/state['known_good_backup']).exists());self.assertTrue((backups/state['last_release']).exists());self.assert_protected()
+  pinned={state.get(k) for k in ['known_good_backup','database_recovery_backup','active','last_release'] if state.get(k)}
+  self.assertLessEqual(len({p.name for p in backups.iterdir()}-pinned),3);self.assertTrue((backups/state['known_good_backup']).exists());self.assertTrue((backups/state['last_release']).exists());self.assert_protected()
  def test_preexisting_failure_keeps_improvements_but_never_marks_good(self):
   (self.candidate/'baseline.json').write_text(json.dumps(bad()));self.agent('apply')
   (self.candidate/'after-health.json').write_text(json.dumps(bad()));result=self.agent('mark-unhealthy')

@@ -31,7 +31,7 @@ class Prelaunch(unittest.TestCase):
    cls.config.update(privacy_policy_approved=True,privacy_policy_version='test-policy-v1')
    (cls.path/'private/privacy-policy.txt').write_text('SYNTHETIC TEST FIXTURE ONLY. Not a legal policy.')
   cls.write_config()
-  cls.log=(cls.path/'server.log').open('w');cls.proc=subprocess.Popen([cls.php,'-d','opcache.enable_cli=0','-S','127.0.0.1:'+str(cls.port),'-t',str(cls.path/'public'),str(cls.path/'tests/router.php')],stdout=cls.log,stderr=cls.log)
+  cls.log=(cls.path/'server.log').open('w');cls.proc=subprocess.Popen([cls.php,'-d','opcache.enable=0','-d','opcache.enable_cli=0','-S','127.0.0.1:'+str(cls.port),'-t',str(cls.path/'public'),str(cls.path/'tests/router.php')],stdout=cls.log,stderr=cls.log)
   for _ in range(100):
    try:requests.get(cls.base,timeout=1);break
    except requests.ConnectionError:time.sleep(.1)

@@ -2,7 +2,7 @@
 /** Private CLI deployment agent. Only allowlisted code files; never imports test data. */
 declare(strict_types=1);
 if (PHP_SAPI!=='cli') {http_response_code(404);exit;}
-ini_set('display_errors','0');umask(0077);
+ini_set('display_errors','0');ini_set('serialize_precision','-1');umask(0077);
 final class DeployFailure extends RuntimeException {}
 function insist(bool $condition,string $code):void {if(!$condition)throw new DeployFailure($code);}
 function read_json(string $path):array {
