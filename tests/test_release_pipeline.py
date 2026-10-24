@@ -312,7 +312,7 @@ class GovernanceTests(unittest.TestCase):
    if '/secrets?' in path:return {'secrets':[]}
    raise AssertionError('Unexpected API call '+method+' '+path)
   with patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.bootstrap()
-  self.assertEqual(variables['AUTOMATION_READY'],'false');self.assertEqual(variables['AUTOMERGE_ENABLED'],'true');self.assertEqual(variables['BOOTSTRAP_CONFIGURED_SHA'],'a'*40)
+  self.assertEqual(variables['AUTOMATION_READY'],'false');self.assertEqual(variables['AUTOMERGE_ENABLED'],'false');self.assertEqual(variables['BOOTSTRAP_CONFIGURED_SHA'],'a'*40)
   self.assertFalse(any(m in ['PUT','DELETE'] or ('/secrets' in p and m!='GET') for m,p,v in calls))
   self.assertTrue(protected['required_pull_request_reviews']['dismiss_stale_reviews'])
  def test_bootstrap_never_mutates_when_admin_read_is_blocked(self):

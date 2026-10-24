@@ -125,7 +125,7 @@ def bootstrap():
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):raise GitHubFailure('Repository administrator access required')
     # Never publishes or promotes READY. Valid names are metadata, not proof of a working key/server.
     set_variable(base,'AUTOMATION_READY','false')
-    required_policy(base)
+    required_delivery_policy(base)
     for environment in ['production','automation']:verify_environment(base,environment)
     scopes=secret_metadata(base,repo['id'])
     app=api('GET',base+'/actions/variables/AUTOMERGE_APP_ID',missing=True)
@@ -136,8 +136,10 @@ def bootstrap():
     if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository native auto-merge must be enabled by its administrator')
     set_variable(base,'BOOTSTRAP_CONFIGURED_SHA',api('GET',base+'/git/ref/heads/main')['object']['sha'])
     set_variable(base,'BOOTSTRAP_APPROVED_SHA','')
-    set_variable(base,'AUTOMERGE_ENABLED','true')
-    print('Existing protection and secret scopes verified; AUTOMATION_READY remains false until verified bootstrap delivery')
+    # A sole owner cannot independently approve her own PR. Keep automatic
+    # PR merging disabled until the separate review policy has been verified.
+    set_variable(base,'AUTOMERGE_ENABLED','false')
+    print('Strict release protection and secret scopes verified; PR auto-merge disabled; AUTOMATION_READY remains false until verified bootstrap delivery')
 
 def verify_protection(protection):
     reviews=protection.get('required_pull_request_reviews') or {}
@@ -187,6 +189,33 @@ def ensure_pr_for_validated_branch():
         'draft':branch.startswith(('draft/','wip/')),
         'body':'Created automatically after Validate passed for '+sha+'. Independent review is required before auto-merge. No deployment from this branch.'})
     print('Created review PR for validated branch',branch)
+
+
+def required_delivery_policy(base):
+    """Check protected, strict Actions Validate for publication; no PR automation implied.
+
+    Releasing a reviewed/merged main revision and automatically merging new PRs
+    have separate requirements. Keep independent reviews mandatory for auto_merge().
+    Never change GitHub branch protection or permit unvalidated code to deploy.
+    """
+    try:
+        protection=api('GET',base+'/branches/main/protection')
+    except GitHubFailure:
+        # Only accept an actual strict, active ruleset; never guess from a 403.
+        rules=api('GET',base+'/rules/branches/main')
+        checks=next((r.get('parameters',{}) for r in rules if r.get('type')=='required_status_checks'),{})
+        requirements=checks.get('required_status_checks',[])
+        valid=checks.get('strict_required_status_checks_policy') and any(
+            c.get('context')==REQUIRED_CHECK and c.get('integration_id')==15368 for c in requirements)
+        if not valid:
+            raise GitHubFailure('Cannot verify strict GitHub Actions Validate protection on main; deployment remains disabled')
+    else:
+        checks=protection.get('required_status_checks') or {}
+        valid=checks.get('strict') and any(
+            c.get('context')==REQUIRED_CHECK and c.get('app_id')==15368 for c in checks.get('checks',[]))
+        if not valid:
+            raise GitHubFailure('Main must require strict GitHub Actions Validate for releases')
+    return True
 
 def required_policy(base):
     try:

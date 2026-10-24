@@ -33,12 +33,12 @@ class BootstrapSafety(unittest.TestCase):
    if path=='repos/'+control.REPO:return {'full_name':control.REPO,'permissions':{'admin':True}}
    if path.endswith('/heads/main'):return {'object':{'sha':'c'*40}}
    raise AssertionError('Unexpected write or endpoint')
-  with patch.object(bootstrap,'api',side_effect=fake),patch.object(bootstrap,'required_policy'),patch.object(bootstrap,'verify_environment'),patch.object(bootstrap,'read_report',return_value=({'head_sha':'a'*40},self.proof())),patch.object(bootstrap,'set_variable') as write:
+  with patch.object(bootstrap,'api',side_effect=fake),patch.object(bootstrap,'required_delivery_policy'),patch.object(bootstrap,'verify_environment'),patch.object(bootstrap,'read_report',return_value=({'head_sha':'a'*40},self.proof())),patch.object(bootstrap,'set_variable') as write:
    with self.assertRaises(control.GitHubFailure):bootstrap.promote('123')
    write.assert_not_called()
  def test_promote_ready_is_last_and_clears_single_use_smoke_authorization(self):
   def fake(method,path,*args,**kwargs):return {'full_name':control.REPO,'permissions':{'admin':True}} if path=='repos/'+control.REPO else {'object':{'sha':'a'*40}}
-  with patch.object(bootstrap,'api',side_effect=fake),patch.object(bootstrap,'required_policy'),patch.object(bootstrap,'verify_environment'),patch.object(bootstrap,'read_report',return_value=({'head_sha':'a'*40},self.proof())),patch.object(bootstrap,'set_variable') as write,patch('sys.stdout',new_callable=io.StringIO):bootstrap.promote('123')
+  with patch.object(bootstrap,'api',side_effect=fake),patch.object(bootstrap,'required_delivery_policy'),patch.object(bootstrap,'verify_environment'),patch.object(bootstrap,'read_report',return_value=({'head_sha':'a'*40},self.proof())),patch.object(bootstrap,'set_variable') as write,patch('sys.stdout',new_callable=io.StringIO):bootstrap.promote('123')
   self.assertEqual(write.call_args.args[1:],('AUTOMATION_READY','true'));self.assertIn(('BOOTSTRAP_APPROVED_SHA',''),[c.args[1:] for c in write.call_args_list])
  def test_main_only_environment_does_not_accept_tags_wildcards_or_protected_branches(self):
   for policy in [{'name':'*','type':'branch'},{'name':'main','type':'tag'},{'name':'feature/*','type':'branch'}]:
@@ -51,6 +51,39 @@ class BootstrapSafety(unittest.TestCase):
  def test_single_owner_ci_only_mode_is_not_enabled_without_confirmation(self):
   policy={'enforce_admins':{'enabled':True},'required_pull_request_reviews':{'required_approving_review_count':0},'required_status_checks':{'strict':True,'checks':[{'context':'Validate','app_id':15368}]}}
   with self.assertRaises(control.GitHubFailure):control.verify_protection(policy)
+
+ def test_release_checks_accept_main_validate_only_but_not_unprotected_release(self):
+  base='repos/'+control.REPO
+  protected={'required_status_checks':{'strict':True,'checks':[{'context':'Validate','app_id':15368}]}}
+  with patch.object(control,'api',return_value=protected):
+   self.assertTrue(control.required_delivery_policy(base))
+  for broken in [
+   {'required_status_checks':{'strict':False,'checks':[{'context':'Validate','app_id':15368}]}},
+   {'required_status_checks':{'strict':True,'checks':[{'context':'Validate','app_id':999}]}}
+  ]:
+   with patch.object(control,'api',return_value=broken),self.assertRaises(control.GitHubFailure):
+    control.required_delivery_policy(base)
+  def denied(method,path,*args,**kwargs):
+   if path.endswith('/branches/main/protection'):raise control.GitHubFailure('Forbidden')
+   return []
+  with patch.object(control,'api',side_effect=denied),self.assertRaises(control.GitHubFailure):
+   control.required_delivery_policy(base)
+
+ def test_initial_configuration_keeps_auto_merge_and_delivery_off(self):
+  repo={'full_name':control.REPO,'permissions':{'admin':True},'id':42,'allow_auto_merge':True}
+  def fake(method,path,*args,**kwargs):
+   if path=='repos/'+control.REPO:return repo
+   if path.endswith('/AUTOMERGE_APP_ID'):return None
+   if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
+   raise AssertionError('Unexpected request '+path)
+  with patch.object(control,'api',side_effect=fake),patch.object(control,'required_delivery_policy'),patch.object(control,'verify_environment'),patch.object(control,'secret_metadata',return_value={'repository':set(),'production':set()}),patch.object(control,'set_variable') as write,patch('sys.stdout',new_callable=io.StringIO):
+   control.bootstrap()
+  settings={call.args[1]:call.args[2] for call in write.call_args_list}
+  self.assertEqual(settings['AUTOMATION_READY'],'false')
+  self.assertEqual(settings['BOOTSTRAP_APPROVED_SHA'],'')
+  self.assertEqual(settings['AUTOMERGE_ENABLED'],'false')
+  self.assertEqual(settings['BOOTSTRAP_CONFIGURED_SHA'],'a'*40)
+
  def test_bootstrap_unhealthy_baseline_stops_before_transfer_or_backup(self):
   calls=[]
   class Remote:

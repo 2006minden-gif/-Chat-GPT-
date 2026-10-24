@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 import subprocess
 import zipfile
-from control import REPO,GitHubFailure,api,required_policy,verify_environment,set_variable
+from control import REPO,GitHubFailure,api,required_delivery_policy,verify_environment,set_variable
 
 def verify_report(report,sha):
     if not isinstance(report,dict) or report.get('revision')!=sha or report.get('mode')!='bootstrap' or report.get('result')!='deployed_and_verified':raise GitHubFailure('Bootstrap deployment did not succeed for the expected revision')
@@ -44,7 +44,7 @@ def promote(run_id):
     if not re.fullmatch('[0-9]+',run_id):raise GitHubFailure('Invalid bootstrap run ID')
     base='repos/'+REPO;repo=api('GET',base)
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):raise GitHubFailure('Repository administrator access required')
-    required_policy(base)
+    required_delivery_policy(base)
     for env in ['production','automation']:verify_environment(base,env)
     run,report=read_report(base,run_id)
     if api('GET',base+'/git/ref/heads/main')['object']['sha']!=run['head_sha']:raise GitHubFailure('Main moved after bootstrap; verify the current main before promotion')
