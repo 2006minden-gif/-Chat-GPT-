@@ -1,4 +1,5 @@
 name: NeuroDelo CI/CD
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('{0} {1}', inputs.operation, inputs.expected_revision) || format('Validate {0}', github.sha) }}
 
 on:
   pull_request:
@@ -10,8 +11,13 @@ on:
       operation:
         description: 'Maintenance only; routine approved main pushes deploy automatically'
         type: choice
-        options: [preview, deploy, rollback]
+        options: [preview, deploy, rollback, bootstrap]
         default: preview
+      expected_revision:
+        description: 'Exact main SHA for a dispatch; required for deploy/bootstrap'
+        type: string
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -43,6 +49,19 @@ jobs:
       APACHE_BIN: /usr/sbin/apache2
       APACHE_MODULE_DIR: /usr/lib/apache2/modules
     steps:
+      - name: Validate dispatched revision
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          EXPECTED: ${{ inputs.expected_revision }}
+          OPERATION: ${{ inputs.operation }}
+          REVISION: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$OPERATION" = deploy ] || [ "$OPERATION" = bootstrap ]; then
+            [[ "$EXPECTED" =~ ^[a-f0-9]{40}$ ]] && [ "$EXPECTED" = "$REVISION" ]
+          elif [ -n "$EXPECTED" ]; then
+            [ "$EXPECTED" = "$REVISION" ]
+          fi
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
@@ -100,9 +119,12 @@ jobs:
     needs: validate
     if: >-
       github.ref == 'refs/heads/main' &&
+      ((vars.AUTOMATION_READY == 'true' && vars.BOOTSTRAP_VERIFIED_RUN != '' && vars.BOOTSTRAP_VERIFIED_SHA != '') ||
+       (github.event_name == 'workflow_dispatch' && inputs.operation == 'bootstrap' &&
+        vars.BOOTSTRAP_APPROVED_SHA == github.sha && vars.BOOTSTRAP_CONFIGURED_SHA == github.sha)) &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (vars.DEPLOY_PAUSED != 'true' ||
-       (github.event_name == 'workflow_dispatch' && inputs.operation != 'deploy'))
+       (github.event_name == 'workflow_dispatch' && (inputs.operation == 'preview' || inputs.operation == 'rollback')))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment:
@@ -118,8 +140,20 @@ jobs:
       - name: Require one-time protection bootstrap
         env:
           READY: ${{ vars.AUTOMATION_READY }}
+          OPERATION: ${{ inputs.operation }}
+          APPROVED: ${{ vars.BOOTSTRAP_APPROVED_SHA }}
+          CONFIGURED: ${{ vars.BOOTSTRAP_CONFIGURED_SHA }}
+          REVISION: ${{ github.sha }}
+          VERIFIED_RUN: ${{ vars.BOOTSTRAP_VERIFIED_RUN }}
+          VERIFIED_SHA: ${{ vars.BOOTSTRAP_VERIFIED_SHA }}
         run: |
-          test "$READY" = true || { echo '::error::Run the documented one-time repository protection bootstrap before automatic publication.'; exit 1; }
+          set -euo pipefail
+          if [ "$OPERATION" = bootstrap ]; then
+            [ "$APPROVED" = "$REVISION" ] && [ "$CONFIGURED" = "$REVISION" ]
+          else
+            [[ "$VERIFIED_RUN" =~ ^[0-9]+$ ]] && [[ "$VERIFIED_SHA" =~ ^[a-f0-9]{40}$ ]]
+            test "$READY" = true || { echo '::error::Verified bootstrap delivery is required before automatic publication.'; exit 1; }
+          fi
       - name: Skip obsolete commits
         id: current
         env:
@@ -138,9 +172,15 @@ jobs:
         with:
           name: neurodelo-${{ github.sha }}
           path: ${{ runner.temp }}/neurodelo-release
+      - name: Recheck production environment before secret use
+        if: steps.current.outputs.current == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/github/bootstrap.py check
       - name: Publish or maintain checked release
         if: steps.current.outputs.current == 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_PORT: ${{ secrets.SSH_PORT }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -152,6 +192,8 @@ jobs:
           REVISION: ${{ github.sha }}
         run: |
           set -euo pipefail
+          current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          [ "$current" = "$REVISION" ] || { echo '::error::Main changed before publication; refusing stale artifact.'; exit 1; }
           python scripts/deploy/client.py --bundle "$RUNNER_TEMP/neurodelo-release" --revision "$REVISION" --operation "$OPERATION" --report "$RUNNER_TEMP/deployment-report.json"
       - name: Record deployment evidence
         if: always() && steps.current.outputs.current == 'true'
