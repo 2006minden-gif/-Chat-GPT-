@@ -26,6 +26,7 @@ function crm_write(string $kind,int $id,string $action,array $d,string $method):
    crm_query('INSERT INTO nd_project_members(project_id,employee_id,role) VALUES (?,?,?) ON DUPLICATE KEY UPDATE role=VALUES(role)',[$id,$employee,$role]);crm_query('UPDATE nd_projects SET version=version+1 WHERE id=?',[$id]);crm_event($kind,$id,'member_assigned',$old);return ['ok'=>true,'record'=>crm_record($kind,$id)];
   }
   if($action==='reorder'&&$kind==='projects'){
+   if($old['archived_at']!==null||in_array($old['status'],['completed','cancelled'],true))crm_fail(422,'Нельзя менять этапы закрытого проекта.');
    $ids=$d['stage_ids']??null;if(!is_array($ids)||count($ids)>1000||array_filter($ids,fn($v)=>!is_int($v)||$v<1))crm_fail(422,'Некорректный порядок этапов.');
    $current=crm_query('SELECT id,position FROM nd_project_stages WHERE project_id=? FOR UPDATE',[$id])->fetchAll();$expected=array_map(fn($r)=>(int)$r['id'],$current);$sorted=$ids;sort($expected);sort($sorted);if($sorted!==$expected)crm_fail(409,'Список этапов изменился. Обновите проект.');
    $max=$current?max(array_column($current,'position')):0;if($max+count($ids)>4294967295)crm_fail(422,'Невозможно изменить порядок.');

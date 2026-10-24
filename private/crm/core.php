@@ -29,6 +29,7 @@ function crm_event(string $kind,int $id,string $action,array $row=[]):void {
  $context=[];
  foreach(['customer_id','project_id','lead_id'] as $f)if(isset($row[$f])&&$f!==$field)$context[$f]=$row[$f];
  if($kind==='tasks'){$link=crm_query('SELECT project_id FROM nd_task_projects WHERE task_id=?',[$id])->fetch();if($link)$context['project_id']=$link['project_id'];}
+ if(isset($context['project_id'])&&!isset($context['customer_id']))$context['customer_id']=crm_record('projects',(int)$context['project_id'])['customer_id'];
  $columns=['actor_admin_id',$field,'action','summary',...array_keys($context)];
  crm_query('INSERT INTO nd_activity_history('.implode(',',$columns).') VALUES ('.implode(',',array_fill(0,count($columns),'?')).')',[1,$id,$action,'Изменение записи CRM',...array_values($context)]);
  $event=(string)db()->lastInsertId();crm_notice('activity:'.$event,$kind,$id,'Обновлена запись: '.crm_labels()[$kind]);
@@ -85,7 +86,7 @@ function crm_values(string $kind,array $d,?array $old=null):array{
  foreach(['owner_employee_id','manager_employee_id','assignee_employee_id'] as $f)if(!empty($row[$f])){if(crm_record('employees',(int)$row[$f],true)['status']!=='active')crm_fail(422,'Сотрудник не активен.');}
  foreach(['deal_id'=>'deals','order_id'=>'orders'] as $f=>$k)if(!empty($row[$f])){ $parent=crm_record($k,(int)$row[$f],true);if((int)$parent['customer_id']!==(int)$row['customer_id']||$parent['archived_at']!==null)crm_fail(422,'Связанный документ принадлежит другому клиенту или архивирован.');if($f==='deal_id'&&!$old)crm_fail(422,'Используйте явное создание заказа из успешной сделки.');}
  if($kind==='deals'&&!empty($row['lead_id'])&&!crm_query('SELECT 1 FROM nd_lead_customers WHERE lead_id=? AND customer_id=?',[$row['lead_id'],$row['customer_id']])->fetchColumn())crm_fail(422,'Заявка не связана с выбранным клиентом.');
- if($kind==='stages'){if(crm_record('projects',(int)$row['project_id'],true)['archived_at']!==null)crm_fail(422,'Проект архивирован.');}
+ if($kind==='stages'){$project=crm_record('projects',(int)$row['project_id'],true);if($project['archived_at']!==null||in_array($project['status'],['completed','cancelled'],true))crm_fail(422,'Нельзя менять этапы завершённого, отменённого или архивного проекта.');}
  if(!empty($row['starts_on'])&&!empty($row['due_on'])&&$row['starts_on']>$row['due_on'])crm_fail(422,'Срок раньше даты начала.');
  if(isset($values['status'])){
   if(in_array($kind,['orders','projects','stages','tasks'],true))$values['completed_at']=in_array($values['status'],['completed','done'],true)?gmdate('Y-m-d H:i:s'):null;
@@ -111,6 +112,7 @@ function crm_idempotent(string $route,array $d,callable $fn):array{
 function crm_insert(string $kind,array $data):array{
  $v=crm_values($kind,$data);$table=crm_table($kind);$cols=array_keys($v);
  crm_query('INSERT INTO '.$table.' ('.implode(',',$cols).') VALUES ('.implode(',',array_fill(0,count($cols),'?')).')',array_values($v));$id=(int)db()->lastInsertId();
+ if($kind==='tasks'&&isset($data['stage_id'])&&!isset($data['project_id']))crm_fail(422,'Для этапа выберите проект.');
  if($kind==='tasks'&&isset($data['project_id']))crm_task_link($id,$data);
  if($kind==='stages')crm_query('UPDATE nd_projects SET version=version+1 WHERE id=?',[$v['project_id']]);
  $row=crm_record($kind,$id);crm_event($kind,$id,'created',$row);return ['ok'=>true,'record'=>$row];

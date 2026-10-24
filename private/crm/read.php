@@ -25,6 +25,7 @@ function crm_list(string $kind,array $filters=[]):array{
  $total=(int)crm_query('SELECT COUNT(*) FROM '.$table.' t'.$w,$p)->fetchColumn();
  $rows=crm_query('SELECT t.* FROM '.$table.' t'.$w.' ORDER BY t.id DESC LIMIT '.$limit.' OFFSET '.$offset,$p)->fetchAll();
  foreach($rows as &$r){
+  if(in_array($kind,['deals','orders','projects'],true))$r['customer_name']=crm_record('customers',(int)$r['customer_id'])['name'];
   if($kind==='projects'){$r['progress']=crm_progress((int)$r['id']);$r['current_stage']=crm_query("SELECT title FROM nd_project_stages WHERE project_id=? AND status IN ('active','planned') ORDER BY status='active' DESC,position LIMIT 1",[$r['id']])->fetchColumn()?:null;$r['customer_name']=crm_record('customers',(int)$r['customer_id'])['name'];$r['overdue_tasks']=(int)crm_query("SELECT COUNT(*) FROM nd_tasks JOIN nd_task_projects ON task_id=nd_tasks.id WHERE project_id=? AND due_at<UTC_TIMESTAMP() AND status NOT IN ('done','cancelled') AND archived_at IS NULL",[$r['id']])->fetchColumn();}
   if($kind==='customers'){$r['last_activity']=crm_query('SELECT MAX(created_at) FROM nd_activity_history WHERE customer_id=?',[$r['id']])->fetchColumn();$r['orders_count']=(int)crm_query('SELECT COUNT(*) FROM nd_orders WHERE customer_id=?',[$r['id']])->fetchColumn();$r['projects_count']=(int)crm_query("SELECT COUNT(*) FROM nd_projects WHERE customer_id=? AND archived_at IS NULL AND status NOT IN ('completed','cancelled')",[$r['id']])->fetchColumn();$r['leads_count']=(int)crm_query('SELECT COUNT(*) FROM nd_lead_customers WHERE customer_id=?',[$r['id']])->fetchColumn();}
  }unset($r);
@@ -32,13 +33,13 @@ function crm_list(string $kind,array $filters=[]):array{
 }
 function crm_detail(string $kind,int $id):array{
  if($kind==='leads'){$r=crm_query('SELECT * FROM nd_leads WHERE id=?',[$id])->fetch();if(!$r)crm_fail(404,'Заявка не найдена.');return ['ok'=>true,'record'=>$r];}
- $r=crm_record($kind,$id);$related=[];
+ $r=crm_record($kind,$id);if(isset($r['customer_id']))$r['customer_name']=crm_record('customers',(int)$r['customer_id'])['name'];$related=[];
  if($kind==='customers')foreach(['leads','deals','orders','projects','activity'] as $k)$related[$k]=crm_list($k,['customer_id'=>$id,'archived'=>'all']);
  if($kind==='projects'){
   $r['progress']=crm_progress($id);$related['stages']=crm_query('SELECT * FROM nd_project_stages WHERE project_id=? ORDER BY position,id',[$id])->fetchAll();$related['tasks']=crm_list('tasks',['project_id'=>$id,'archived'=>'all']);
   $related['members']=crm_query('SELECT m.employee_id,m.role,e.name FROM nd_project_members m JOIN nd_employees e ON e.id=m.employee_id WHERE project_id=?',[$id])->fetchAll();
  }
- if($kind==='employees'){$related['tasks']=crm_list('tasks',['assignee_employee_id'=>$id,'archived'=>'all']);$related['projects']=['items'=>crm_query('SELECT p.* FROM nd_projects p JOIN nd_project_members m ON m.project_id=p.id WHERE m.employee_id=?',[$id])->fetchAll()];}
+ if($kind==='employees'){$related['tasks']=crm_list('tasks',['assignee_employee_id'=>$id,'archived'=>'all']);$related['projects']=['items'=>crm_query('SELECT DISTINCT p.* FROM nd_projects p LEFT JOIN nd_project_members m ON m.project_id=p.id AND m.employee_id=? WHERE m.employee_id IS NOT NULL OR p.manager_employee_id=?',[$id,$id])->fetchAll()];}
  if($kind==='orders')$related['projects']= ['items'=>crm_query('SELECT * FROM nd_projects WHERE order_id=?',[$id])->fetchAll()];
  if($kind==='deals')$related['orders']=['items'=>crm_query('SELECT * FROM nd_orders WHERE deal_id=?',[$id])->fetchAll()];
  if($kind==='tasks')$related['project']=crm_query('SELECT project_id,stage_id FROM nd_task_projects WHERE task_id=?',[$id])->fetch()?:null;

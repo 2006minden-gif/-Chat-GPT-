@@ -123,6 +123,12 @@ class CrmOperations(unittest.TestCase):
    self.assertIn(o['id'],[row['id'] for row in r.json()['items']]);self.assertNotIn(other['id'],[row['id'] for row in r.json()['items']])
    self.assertNotIn('INTERNAL-NOTE',r.text);self.assertNotIn('notes',r.text);self.assertEqual(client.get(url+'portal/orders/'+str(other['id'])).status_code,404)
    r=client.get(url+'portal/projects/'+str(project['id']));self.assertEqual(r.status_code,200,r.text);self.assertEqual(len(r.json()['record']['stages']),1);self.assertNotIn('description',r.text);self.assertNotIn('employee',r.text)
+   from playwright.sync_api import sync_playwright
+   with sync_playwright() as pw:
+    browser=pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox'])
+    context=browser.new_context(viewport={'width':390,'height':844});context.add_cookies([{'name':cookie.name,'value':cookie.value,'url':self.base} for cookie in client.cookies])
+    pg=context.new_page();pg.goto(self.base+'/portal.php#projects');pg.get_by_role('heading',name='Проект А',exact=True).wait_for();self.assertNotIn('INTERNAL-NOTE',pg.locator('body').inner_text());self.assertTrue(pg.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+    shots=Path(os.environ.get('NEURO_CRM_SCREENSHOTS','/tmp/neuro-stage5-ux'));shots.mkdir(parents=True,exist_ok=True);pg.screenshot(path=str(shots/'portal-mobile.png'),full_page=True);browser.close()
    self.assertEqual(client.get(self.url('customers')).status_code,401)
    self.assertEqual(client.post(url+'portal/orders',json={}).status_code,405)
    self.f.sql("UPDATE nd_customer_accounts SET status='disabled' WHERE id=?",params=[aid]);self.assertEqual(client.get(url+'portal/orders').status_code,401)
@@ -134,10 +140,19 @@ class CrmOperations(unittest.TestCase):
    browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox'])
    page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
    page.goto(self.base+'/workspace.php');page.locator('#owner-password').fill(self.f.password);page.locator('#login-form button').click();page.wait_for_selector('.kpi');self.assertEqual(page.locator('.kpi').count(),6)
-   page.locator('a[href="#customers"]').click();page.wait_for_selector('.card');page.locator('#create').click();page.wait_for_selector('#editor[open]');page.locator('[name=name]').fill('Клиент из интерфейса');page.locator('[name=email]').fill('browser@example.invalid');page.locator('#save').click();page.wait_for_selector('#editor[open]',state='hidden');page.locator('#content').get_by_text('Клиент из интерфейса',exact=True).first.wait_for()
+   page.locator('a[href="#customers"]').click();page.wait_for_selector('.card');page.locator('#create').click();page.wait_for_selector('#editor[open]');page.locator('[name=name]').fill('Клиент из интерфейса');page.locator('[name=email]').fill('browser@example.invalid');self.assertTrue(page.locator('#fields input, #fields select, #fields textarea').evaluate_all("elements => elements.every(e => e.labels && e.labels.length)"));page.locator('#save').click();page.wait_for_selector('#editor[open]',state='hidden');page.locator('#content').get_by_text('Клиент из интерфейса',exact=True).first.wait_for()
    page.locator('#create').click();page.locator('[name=name]').fill('Несохранённый черновик');page.locator('[name=email]').fill('draft@example.invalid')
    page.route('**/api.php?r=crm/customers',lambda r:r.fulfill(status=200,content_type='text/html',body='<html>unrelated response</html>') if r.request.method=='POST' else r.continue_())
    page.locator('#save').click();page.wait_for_function("() => document.querySelector('#form-message').textContent.includes('неожиданный')");self.assertEqual(page.locator('[name=name]').input_value(),'Несохранённый черновик');page.unroute('**/api.php?r=crm/customers')
+   pending=[]
+   page.route('**/api.php?r=crm/customers',lambda route:pending.append(route) if route.request.method=='POST' else route.continue_())
+   page.locator('#save').click();page.wait_for_function("() => document.querySelector('#save').disabled")
+   for _ in range(20):
+    if pending:break
+    page.wait_for_timeout(10)
+   self.assertTrue(pending)
+   page.locator('[name=name]').fill('Правка во время запроса');pending[0].continue_();page.wait_for_function("() => document.querySelector('#form-message').textContent.includes('Новые правки')")
+   self.assertEqual(page.locator('[name=name]').input_value(),'Правка во время запроса');self.assertTrue(page.locator('#editor').is_visible());page.unroute('**/api.php?r=crm/customers')
    page.on('dialog',lambda d:d.accept());page.locator('#cancel').click()
    for kind in ['dashboard','customers','deals','orders','projects','tasks','employees','notifications','activity','settings']:
     page.goto(self.base+'/workspace.php#'+kind);page.wait_for_function("() => !document.querySelector('#refresh').disabled && document.querySelector('#content').children.length>0")
