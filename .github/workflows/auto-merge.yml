@@ -30,6 +30,7 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: read
+      actions: write
     steps:
       - name: Ensure successful validated SHA is still current main
         id: current
@@ -58,6 +59,61 @@ jobs:
           set -euo pipefail
           test -n "$GH_TOKEN" || { echo '::error::Missing automation environment admin secret'; exit 1; }
           python scripts/github/control.py bootstrap --apply
+
+
+      - name: Start authorized first publication for the validated main
+        if: steps.current.outputs.current == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.BOOTSTRAP_ADMIN_TOKEN }}
+          GITHUB_DISPATCH_TOKEN: ${{ github.token }}
+          VALIDATED: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os, sys
+          sys.path.insert(0, 'scripts/github')
+          from control import api, set_variable, REPO
+          base = 'repos/' + REPO
+          sha = os.environ['VALIDATED']
+          if api('GET', base + '/git/ref/heads/main')['object']['sha'] != sha:
+              raise SystemExit('Main changed; refusing outdated first publication')
+          configured = api('GET', base + '/actions/variables/BOOTSTRAP_CONFIGURED_SHA')
+          if configured['value'] != sha:
+              raise SystemExit('Configuration must match validated main')
+          set_variable(base, 'BOOTSTRAP_APPROVED_SHA', sha)
+          set_variable(base, 'DEPLOY_PAUSED', 'false')
+          api('POST', base + '/actions/workflows/deploy.yml/dispatches',
+              {'ref': 'main', 'inputs': {'operation': 'bootstrap', 'expected_revision': sha}})
+          print('Requested authorized bootstrap for validated main', sha)
+          PY
+
+  promote_verified_delivery:
+    name: Enable routine deployment only after verified bootstrap
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'workflow_dispatch' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.conclusion == 'success' &&
+      vars.AUTOMATION_READY != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: automation
+    concurrency:
+      group: spaceweb-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Verify delivery evidence before enabling routine publication
+        env:
+          GH_TOKEN: ${{ secrets.BOOTSTRAP_ADMIN_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: python scripts/github/bootstrap.py promote --run-id "$RUN_ID" --apply
 
   approved:
     if: >-
