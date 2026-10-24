@@ -133,7 +133,6 @@ def bootstrap():
         automation={v['name'] for v in pages('repositories/'+str(repo['id'])+'/environments/automation/secrets','secrets')}
         if not app['value'].isdigit() or 'AUTOMERGE_APP_PRIVATE_KEY' not in (automation|scopes['repository']):
             raise GitHubFailure('Configured GitHub App requires valid ID and available key metadata')
-    if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository native auto-merge must be enabled by its administrator')
     set_variable(base,'BOOTSTRAP_CONFIGURED_SHA',api('GET',base+'/git/ref/heads/main')['object']['sha'])
     set_variable(base,'BOOTSTRAP_APPROVED_SHA','')
     # A sole owner cannot independently approve her own PR. Keep automatic
