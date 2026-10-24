@@ -63,10 +63,10 @@ def coordinate(server,operation,plan_id='',snapshot=health.snapshot,probe=protec
   report['final_health']=snapshot()
   report['result']='repaired_and_verified' if report['final_health']['ok'] else 'failed'
   if report['result']=='failed':report['error']='confirmed_repair_health_changed'
- except RemoteFailure:
+ except Exception:
   report['error']='repair_or_verification_failed'
   try:report['rollback']=server.rpc('rollback',plan_id);report['after_rollback']=snapshot();report['rollback_bytes_verified']=report['rollback'].get('bytes_restored') is True
-  except RemoteFailure:report['rollback_error']='rollback_requires_attention'
+  except Exception:report['rollback_error']='rollback_requires_attention'
  return report
 
 if __name__=='__main__':

@@ -75,6 +75,6 @@ Workflow не требует нового admin PAT или переноса SSH 
 
 ## Выполненная локальная верификация
 
-Полный набор этой ветки: 86 Python tests PASS (64 прежних + 22 repair tests), Node API-client 12 PASS. PHP 8.4.27 syntax: 11 файлов; JS syntax: 3 файла. Изолированный настоящий MySQL 5.7.42, read-only PDO, Apache 2.4.69 и browser regressions. actionlint и release policy/diff checks прошли; redacted secret scan — 0 findings. CI/GitHub результат отдельного PR фиксируется после push, не подменяется локальными результатами.
+Полный набор этой ветки: 87 Python tests PASS (64 прежних + 23 repair tests), Node API-client 12 PASS. PHP 8.4.27 syntax: 11 файлов; JS syntax: 3 файла. Изолированный настоящий MySQL 5.7.42, read-only PDO, Apache 2.4.69 и browser regressions. actionlint и release policy/diff checks прошли; redacted secret scan — 0 findings. CI/GitHub результат отдельного PR фиксируется после push, не подменяется локальными результатами.
 
 Синтетический end-to-end ремонт действительно применялся и откатывался только в временных директориях/случайной loopback DB. Проверка Apache выполнялась отдельно на реальном Apache; dynamic PHP fixture — отдельно на локальном PHP server. Production .htaccess/config/data оставались неизменны, baseline здоровым пока не называется.

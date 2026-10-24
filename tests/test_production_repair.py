@@ -119,6 +119,17 @@ class RepairCoordinator(unittest.TestCase):
   receipt={p:{'GET':403,'HEAD':403} for p in self.client.probe_urls('test')};receipt['/~.htaccess']['GET']=200
   r=self.client.coordinate(Server(),'apply','test',snapshot=lambda:next(snapshots),probe=lambda _:receipt)
   self.assertEqual(r['result'],'failed');self.assertEqual(calls,['apply','rollback']);self.assertTrue(r['rollback_bytes_verified'])
+ def test_unexpected_verification_failure_still_attempts_rollback(self):
+  calls=[];count=0
+  class Server:
+   def rpc(self,op,*a):calls.append(op);return {'ok':True,'bytes_restored':True}
+  def snapshot():
+   nonlocal count
+   count+=1
+   if count==2:raise RuntimeError('SYNTHETIC_LOCAL_VERIFICATION_FAILURE')
+   return {'ok':False,'complete':True,'checks':{}}
+  r=self.client.coordinate(Server(),'apply','test',snapshot=snapshot)
+  self.assertEqual(r['result'],'failed');self.assertEqual(calls,['apply','rollback'])
  def test_missing_baseline_transport_stops_before_apply(self):
   class Server:
    def rpc(self,*a):raise AssertionError('Must not write without a baseline')
