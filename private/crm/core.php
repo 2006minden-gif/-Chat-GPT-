@@ -26,9 +26,11 @@ function crm_record(string $kind,int $id,bool $lock=false):array {
 function crm_version(array $d,array $row):void{if(!isset($d['version'])||!is_int($d['version'])||$d['version']!==(int)$row['version'])crm_fail(409,'Запись изменена. Ваш черновик сохранён. Загрузите актуальные данные перед повторным сохранением.');}
 function crm_event(string $kind,int $id,string $action,array $row=[]):void {
  $field=['customers'=>'customer_id','deals'=>'deal_id','orders'=>'order_id','projects'=>'project_id','tasks'=>'task_id','employees'=>'employee_id','stages'=>'stage_id'][$kind];
- $extra=isset($row['customer_id'])&&$field!=='customer_id'?',customer_id':'';
- $p=[$id,$action,'Изменение записи CRM'];if($extra)$p[]=$row['customer_id'];
- crm_query('INSERT INTO nd_activity_history(actor_admin_id,'.$field.',action,summary'.$extra.') VALUES (1,?,?,?'.($extra?',?':'').')',$p);
+ $context=[];
+ foreach(['customer_id','project_id','lead_id'] as $f)if(isset($row[$f])&&$f!==$field)$context[$f]=$row[$f];
+ if($kind==='tasks'){$link=crm_query('SELECT project_id FROM nd_task_projects WHERE task_id=?',[$id])->fetch();if($link)$context['project_id']=$link['project_id'];}
+ $columns=['actor_admin_id',$field,'action','summary',...array_keys($context)];
+ crm_query('INSERT INTO nd_activity_history('.implode(',',$columns).') VALUES ('.implode(',',array_fill(0,count($columns),'?')).')',[1,$id,$action,'Изменение записи CRM',...array_values($context)]);
  $event=(string)db()->lastInsertId();crm_notice('activity:'.$event,$kind,$id,'Обновлена запись: '.crm_labels()[$kind]);
 }
 function crm_labels():array{return ['customers'=>'Клиенты','deals'=>'Сделки','orders'=>'Заказы','projects'=>'Проекты','tasks'=>'Задачи','employees'=>'Сотрудники','stages'=>'Этапы','leads'=>'Заявки'];}
@@ -89,6 +91,7 @@ function crm_values(string $kind,array $d,?array $old=null):array{
   if(in_array($kind,['orders','projects','stages','tasks'],true))$values['completed_at']=in_array($values['status'],['completed','done'],true)?gmdate('Y-m-d H:i:s'):null;
   if($kind==='deals')$values['closed_at']=in_array($values['status'],['won','lost'],true)?gmdate('Y-m-d H:i:s'):null;
  }
+ if($kind==='orders'&&($values['status']??'')==='confirmed')$values['confirmed_at']=gmdate('Y-m-d H:i:s');
  if($kind==='orders'&&!$old){if(!isset($row['total_amount']))crm_fail(422,'Укажите сумму заказа.');$values['number']='ND-'.strtoupper(bin2hex(random_bytes(8)));}
  return $values;
 }

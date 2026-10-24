@@ -98,3 +98,58 @@ class CrmOperations(unittest.TestCase):
   a=self.post('customers',**data);b=self.post('customers',**data);self.assertEqual(a.status_code,200,a.text);self.assertEqual(a.json()['record']['id'],b.json()['record']['id'])
   data['name']='Иное содержимое';self.assertEqual(self.post('customers',**data).status_code,409)
   data['request_key']=secrets.token_hex(32);self.assertNotEqual(self.post('customers',**data).json()['record']['id'],a.json()['record']['id'])
+ def test_07_customer_portal_actual_auth_and_idor(self):
+  import base64,hashlib,time
+  a=self.customer();b=self.customer();o=self.create('orders',customer_id=int(a['id']),title='Заказ клиента А',total_amount='10.00',notes='INTERNAL-NOTE-NOT-FOR-CUSTOMER')
+  other=self.create('orders',customer_id=int(b['id']),title='Чужой заказ',total_amount='20.00')
+  project=self.create('projects',customer_id=int(a['id']),order_id=int(o['id']),title='Проект А',description='INTERNAL-NOTE-NOT-FOR-CUSTOMER')
+  self.create('stages',title='Публичный этап',position=1,project_id=int(project['id']))
+  # Enable only isolated synthetic deployment gates. Never write production config.
+  c=dict(self.f.config);self.f.config.update(customer_auth_enabled=True,customer_auth_privacy_approved=True,customer_auth_test_mode=True)
+  def write():
+   payload=base64.b64encode(json.dumps(self.f.config).encode()).decode();(self.f.path/'private/config.php').write_text("<?php return json_decode(base64_decode('"+payload+"'),true);")
+  write()
+  try:
+   email=secrets.token_hex(8)+'@example.invalid';password=secrets.token_urlsafe(20)
+   hashed=self.f.php_eval('echo password_hash($v["p"],PASSWORD_DEFAULT);',{'p':password})
+   self.f.sql("INSERT INTO nd_customer_accounts(customer_id,email,password_hash,status) VALUES (?,?,?,'active')",params=[a['id'],email,hashed])
+   aid=self.f.sql('SELECT id FROM nd_customer_accounts WHERE email=?',params=[email])[0]['id']
+   policy=hashlib.sha256((self.f.path/'private/privacy-policy.txt').read_bytes()).hexdigest()
+   self.f.sql("INSERT INTO nd_customer_auth VALUES (?,'invitation',?,?,?,?)",params=[aid,int(time.time()),int(time.time()),'test-policy-v1',policy])
+   client=requests.Session();url=self.base+'/customer-api.php?r='
+   boot=client.get(url+'session');self.assertEqual(boot.status_code,200,boot.text);client.headers['X-CSRF-Token']=boot.json()['csrf']
+   login=client.post(url+'login',json={'email':email,'password':password});self.assertEqual(login.status_code,200,login.text)
+   r=client.get(url+'portal/orders');self.assertEqual(r.status_code,200,r.text)
+   self.assertIn(o['id'],[row['id'] for row in r.json()['items']]);self.assertNotIn(other['id'],[row['id'] for row in r.json()['items']])
+   self.assertNotIn('INTERNAL-NOTE',r.text);self.assertNotIn('notes',r.text);self.assertEqual(client.get(url+'portal/orders/'+str(other['id'])).status_code,404)
+   r=client.get(url+'portal/projects/'+str(project['id']));self.assertEqual(r.status_code,200,r.text);self.assertEqual(len(r.json()['record']['stages']),1);self.assertNotIn('description',r.text);self.assertNotIn('employee',r.text)
+   self.assertEqual(client.get(self.url('customers')).status_code,401)
+   self.assertEqual(client.post(url+'portal/orders',json={}).status_code,405)
+   self.f.sql("UPDATE nd_customer_accounts SET status='disabled' WHERE id=?",params=[aid]);self.assertEqual(client.get(url+'portal/orders').status_code,401)
+  finally:self.f.config=c;self.f.write_config()
+ def test_08_browser_owner_desktop_mobile_and_draft(self):
+  from playwright.sync_api import sync_playwright
+  a=self.customer();self.create('projects',customer_id=int(a['id']),title='Проект для интерфейса')
+  with sync_playwright() as p:
+   browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox'])
+   page=browser.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+   page.goto(self.base+'/workspace.php');page.locator('#owner-password').fill(self.f.password);page.locator('#login-form button').click();page.wait_for_selector('.kpi');self.assertEqual(page.locator('.kpi').count(),6)
+   page.locator('a[href="#customers"]').click();page.wait_for_selector('.card');page.locator('#create').click();page.wait_for_selector('#editor[open]');page.locator('[name=name]').fill('Клиент из интерфейса');page.locator('[name=email]').fill('browser@example.invalid');page.locator('#save').click();page.wait_for_selector('#editor[open]',state='hidden');page.locator('#content').get_by_text('Клиент из интерфейса',exact=True).first.wait_for()
+   page.locator('#create').click();page.locator('[name=name]').fill('Несохранённый черновик');page.locator('[name=email]').fill('draft@example.invalid')
+   page.route('**/api.php?r=crm/customers',lambda r:r.fulfill(status=200,content_type='text/html',body='<html>unrelated response</html>') if r.request.method=='POST' else r.continue_())
+   page.locator('#save').click();page.wait_for_function("() => document.querySelector('#form-message').textContent.includes('неожиданный')");self.assertEqual(page.locator('[name=name]').input_value(),'Несохранённый черновик');page.unroute('**/api.php?r=crm/customers')
+   page.on('dialog',lambda d:d.accept());page.locator('#cancel').click()
+   for kind in ['dashboard','customers','deals','orders','projects','tasks','employees','notifications','activity','settings']:
+    page.goto(self.base+'/workspace.php#'+kind);page.wait_for_function("() => !document.querySelector('#refresh').disabled && document.querySelector('#content').children.length>0")
+    self.assertEqual(page.locator('#message').inner_text(),'')
+   page.goto(self.base+'/workspace.php#projects');page.wait_for_selector('.card');self.assertFalse(page.locator('script:has-text("alert(1)")').count())
+   shots=Path(os.environ.get('NEURO_CRM_SCREENSHOTS','/tmp/neuro-stage5-ux'));shots.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(shots/'projects-desktop.png'),full_page=True)
+   page.set_viewport_size({'width':390,'height':844})
+   for kind in ['dashboard','customers','deals','orders','projects','tasks','employees','notifications','activity','settings']:
+    page.goto(self.base+'/workspace.php#'+kind);page.wait_for_function("() => !document.querySelector('#refresh').disabled && document.querySelector('#content').children.length>0")
+    self.assertTrue(page.evaluate('document.documentElement.scrollWidth<=innerWidth'),kind)
+   page.screenshot(path=str(shots/'settings-mobile.png'),full_page=True);self.assertEqual(errors,[])
+ def test_09_migration_rollback_refuses_operational_data(self):
+  self.customer()
+  r=subprocess.run([self.f.php,str(self.f.path/'scripts/migrate-crm.php'),'down'],capture_output=True,text=True)
+  self.assertEqual(r.returncode,1);self.assertEqual(self.f.sql("SELECT state FROM nd_schema_migrations WHERE version='006_crm_operations'")[0]['state'],'applied')

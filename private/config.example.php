@@ -1,6 +1,8 @@
 <?php
 // Copy to config.php OUTSIDE the site's public directory. Never upload into public_html.
 return [
+    // Stage 5 stays disabled until legal approval, migrations and review.
+    'crm_operations_enabled' => false,
     'db_host' => 'localhost',
     'db_port' => 3306,
     'db_name' => 'YOUR_DATABASE',

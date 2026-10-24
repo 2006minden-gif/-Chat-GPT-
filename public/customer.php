@@ -19,5 +19,5 @@ $titles=['login'=>'Войти в кабинет','register'=>'Создать а�
 <button id="customer-submit" class="button primary"><?= $titles[$view] ?> →</button></fieldset></form>
 <p id="customer-message" role="status" aria-live="polite"></p>
 <nav class="customer-nav" aria-label="Кабинет"><a href="/customer.php">Вход</a><a href="/customer.php?view=register">Регистрация</a><a href="/customer.php?view=forgot">Забыли пароль?</a><a href="/customer.php?view=resend">Нет письма?</a></nav>
-<section id="customer-home" hidden><h2>Вы в кабинете</h2><p id="customer-identity"></p><p>Аккаунт подтверждён. Разделы проектов будут добавлены на следующих этапах.</p><button id="customer-logout" class="button primary" type="button">Выйти</button></section>
+<section id="customer-home" hidden><h2>Вы в кабинете</h2><p id="customer-identity"></p><?php if((config()['crm_operations_enabled']??false)===true): ?><p><a href="/portal.php">Мои заказы и проекты →</a></p><?php endif; ?><button id="customer-logout" class="button primary" type="button">Выйти</button></section>
 <a href="/" class="back-link">← Вернуться на сайт</a></section></main><script src="customer.js"></script></body></html>

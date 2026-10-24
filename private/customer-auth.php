@@ -133,6 +133,7 @@ function ca_dispatch(string $route,string $method):never {
         $p=privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'policy'=>$p]);
     }
     ca_gate();
+    if(str_starts_with($route,'portal/')){require_once __DIR__.'/crm/portal.php';crm_portal($route,$method);}
     ca_rate('ip',120,$_SERVER['REMOTE_ADDR']??'unknown');
     if(str_starts_with($route,'owner/')) {ca_owner($route,$method);}
     if($route==='session'&&$method==='GET'){

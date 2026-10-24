@@ -18,7 +18,7 @@ function crm_write(string $kind,int $id,string $action,array $d,string $method):
    $existing=crm_query('SELECT customer_id FROM nd_lead_customers WHERE lead_id=?',[$lead])->fetchColumn();
    if($existing&&(int)$existing!==$id)crm_fail(409,'Заявка уже принадлежит другому клиенту.');
    if(!$existing)crm_query('INSERT INTO nd_lead_customers(lead_id,customer_id) VALUES (?,?)',[$lead,$id]);
-   crm_query('UPDATE nd_customers SET version=version+1 WHERE id=?',[$id]);crm_event($kind,$id,'lead_linked');return ['ok'=>true,'record'=>crm_record($kind,$id)];
+   crm_query('UPDATE nd_customers SET version=version+1 WHERE id=?',[$id]);crm_event($kind,$id,'lead_linked',['lead_id'=>$lead]);return ['ok'=>true,'record'=>crm_record($kind,$id)];
   }
   if($action==='members'&&$kind==='projects'){
    $employee=$d['employee_id']??null;if(!is_int($employee)||crm_record('employees',$employee,true)['status']!=='active'||$old['archived_at']!==null)crm_fail(422,'Выберите активного сотрудника и проект.');
