@@ -16,11 +16,13 @@ class RepairSyntax(unittest.TestCase):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY',\n'app_url'=>'https://example.invalid'\n'privacy_policy_approved'=>false,'setup_key'=>'','db_port'=>3306];"
   d=self.helper("$c=rp_config_candidate($v);echo json_encode(['kind'=>$c['kind'],'same'=>rp_literal_signature($v)===rp_literal_signature($c['content']),'valid'=>rp_static_config($c['content'])]);",s)
   self.assertEqual(d,{'kind':'missing_comma','same':True,'valid':True})
+ def test_multiple_separator_candidate_preserves_literal_spelling(self):
+  self.assertTrue(self.helper("$c=rp_config_candidate($v);echo json_encode(rp_static_config($c['content'])&&rp_literal_signature($v)===rp_literal_signature($c['content']));", "<?php return ['a'=>1 'b'=>2 'c'=>false];"))
  def test_valid_config_is_unchanged(self):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false];"
   self.assertTrue(self.helper("$c=rp_config_candidate($v);echo json_encode($v===$c['content']);",s))
  def test_refuses_unterminated_string_multiple_defects_and_executable_config(self):
-  for s in ["<?php return ['db_password'=>'unterminated];", "<?php return ['a'=>1 'b'=>2 'c'=>3];", "<?php return ['a'=>getenv('SECRET')];", "<?php file_put_contents('/tmp/SHOULD_NOT_EXIST','x'); return [];", "<?php return ['a'=>\"$secret\"];", "<?php return ['a'=>1]; echo 'leak';"]:
+  for s in ["<?php return ['db_password'=>'unterminated];", "<?php return ['a'=>getenv('SECRET')];", "<?php file_put_contents('/tmp/SHOULD_NOT_EXIST','x'); return [];", "<?php return ['a'=>\"$secret\"];", "<?php return ['a'=>1]; echo 'leak';"]:
    self.assertTrue(self.helper("try{rp_config_candidate($v);echo 'false';}catch(RepairFailure $e){echo 'true';}",s))
  def test_handles_comments_nested_arrays_and_booleans_without_reformat(self):
   for s in ["<?php return array('a'=>array('b'=>true)\n/* preserve */'c'=>null);", "<?php declare(strict_types=1); return ['a'=>-2\n'b'=>false];"]:
