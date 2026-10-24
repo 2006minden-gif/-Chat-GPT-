@@ -2,6 +2,16 @@
 
 Дата проверки: 24.10.2026. Issue: https://github.com/2006minden-gif/-Chat-GPT-/issues/8.
 
+## Обновление PR #9 после интеграции PR #11 — 24.10.2026
+
+Ветка обновлена обычным merge от `main` **41ce4eb0d9c709ab24e9c0857e86730b0a93a827**, без rebase/force push. Текстовых конфликтов нет. `production-repair.yml`, scripts/repair и Apache repair rules сохранены идентично main. Stage 3/4 не включены.
+
+Обнаружен и устранён логический конфликт: глобальное требование BOOTSTRAP_VERIFIED_RUN/SHA, добавленное PR #11, делало первый bootstrap невозможным. Эти доказательства остаются обязательными для обычной публикации в ветке READY=true; одноразовый workflow_dispatch bootstrap требует собственные APPROVED_SHA/CONFIGURED_SHA текущего main. validation_only=true блокирует обе ветви. Это не разрешение выполнить публикацию: здоровый baseline, новый Validate, существующая защита environment, точный SHA, проверенный backup/recovery и отсутствие миграций обязательны. Promotion по-прежнему проверяет реальный delivery artifact и ставит READY последним.
+
+Повторно выполнены: **101 Python PASS, 12 Node PASS**, PHP 8.4 lint, JavaScript syntax, compileall, actionlint, release policy, diff --check, redacted Gitleaks (0 находок). Изолированные MySQL 5.7.42, Apache и Chromium; тесты пишут только синтетические данные. Проверены release build, dry-run, backup, apply, HTTP failure/rollback, stale SHA, отсутствие config overwrite, отсутствие миграций при bootstrap, promotion и матрица launch conditions. Реальный production release/rollback не запускался; весь end-to-end pipeline на SpaceWeb пока НЕ ПОДТВЕРЖДЁН. Merge PR #11 в GitHub сам по себе не подтверждает выполнение repair на сервере.
+
+Оставшиеся действия: review актуального PR #9 и required GitHub checks; проверка здорового production baseline после контролируемого ремонта PR #11; временная административная авторизация и configure на итоговом main SHA; runtime permission читать защиту main; отдельное разрешение первого smoke на этот SHA; успешный реальный bootstrap delivery и promote его run ID; отзыв временного admin grant. Существующие reviewers, environment protections, SSH secrets и privacy settings не ослаблять. Сведения ниже описывают предыдущие диагностики, не новую проверку production.
+
 ## Итог
 
 **AUTOMATIC DEPLOYMENT NOT YET VERIFIED.** Исправления подготовлены отдельно от main; production-публикация и изменения production config/БД не выполнялись. Нельзя закрывать #8 по одному зелёному CI: acceptance `deployed_and_verified` на SpaceWeb пока не получен.

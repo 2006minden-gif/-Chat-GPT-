@@ -124,7 +124,6 @@ jobs:
     needs: validate
     if: >-
       inputs.validation_only != true &&
-      vars.BOOTSTRAP_VERIFIED_RUN != '' && vars.BOOTSTRAP_VERIFIED_SHA != '' &&
       github.ref == 'refs/heads/main' &&
       ((vars.AUTOMATION_READY == 'true' && vars.BOOTSTRAP_VERIFIED_RUN != '' && vars.BOOTSTRAP_VERIFIED_SHA != '') ||
        (github.event_name == 'workflow_dispatch' && inputs.operation == 'bootstrap' &&
