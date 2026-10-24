@@ -69,8 +69,8 @@ class ReleaseFilesTests(unittest.TestCase):
  def test_allowlisted_artifact_never_contains_credentials_or_installer(self):
   with tempfile.TemporaryDirectory() as tmp:
    bundle=Path(tmp)/'release';m=release.build(bundle,'a'*40)
-   self.assertEqual(len(m['files']),14);client.validate_bundle(bundle,'a'*40)
-   self.assertIn('database/schema.sql',m['tools']);self.assertTrue(all(not p.startswith('public_html/') for p in m['tools'] if p.endswith('.sql')))
+   self.assertEqual(len(m['files']),21);client.validate_bundle(bundle,'a'*40)
+   self.assertIn('scripts/migrate-customer.php',m['tools']);self.assertIn('database/migrations/005_customer_auth/up.sql',m['tools']);self.assertTrue(all(not e['automatic'] for e in m['migrations']));self.assertIn('database/schema.sql',m['tools']);self.assertTrue(all(not p.startswith('public_html/') for p in m['tools'] if p.endswith('.sql')))
    self.assertNotIn('private/config.php',str(m));self.assertNotIn('setup.php',str(m))
    (bundle/'private/app.php').write_text('tampered')
    with self.assertRaises(ValueError):client.validate_bundle(bundle,'a'*40)
@@ -224,6 +224,28 @@ $p->prepare('INSERT INTO nd_schema_migrations VALUES (?,?,?,?)')->execute(['004_
   finally:
    self.f.sql('DROP DATABASE IF EXISTS `'+restore+'`',admin=True)
    for i in range(12):self.f.sql('DROP TABLE IF EXISTS nd_ci_'+chr(97+i))
+   self.f.sql('DROP TABLE IF EXISTS nd_schema_migrations')
+
+
+ def test_stage4_ordered_migrations_backup_restore_and_file_rollback(self):
+  # Actual 004 + 005 operators, synthetic loopback database only. Production flags remain false.
+  self.agent('apply');self.finish();self.id='stage4-migration';self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id
+  manifest=release.build(self.candidate,'b'*40);(self.candidate/'baseline.json').write_text(json.dumps(good()))
+  for entry in manifest['migrations']:entry.update(automatic=True,required=True)
+  (self.candidate/'manifest.json').write_text(json.dumps(manifest));restore='neuro_test_restore_'+__import__('secrets').token_hex(8)
+  versions=['004_crm_foundation','005_customer_auth'];tables=[]
+  for version in versions:tables+=__import__('re').findall(r'CREATE TABLE (nd_[a-z_]+)\s*\(', (ROOT/'database/migrations'/version/'up.sql').read_text())
+  before=self.f.sql('SELECT * FROM nd_admin')
+  try:
+   result=self.agent('apply');self.assertEqual(result['migrations'],versions)
+   self.assertEqual([x['version'] for x in self.f.sql("SELECT version FROM nd_schema_migrations WHERE state='applied' ORDER BY version")],versions)
+   backup=self.root/'.neurodelo-deploy/backups'/self.id;sql=(backup/'database.sql').read_text().replace('`'+self.f.dbname+'`','`'+restore+'`');self.f.sql(sql,admin=True)
+   self.assertEqual(self.f.sql('SELECT * FROM `'+restore+'`.nd_admin',admin=True),before)
+   self.agent('rollback');self.assertEqual(self.f.sql('SELECT * FROM nd_admin'),before)
+   self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_customer_tokens')[0]['n'],0);self.assert_protected()
+  finally:
+   self.f.sql('DROP DATABASE IF EXISTS `'+restore+'`',admin=True)
+   for table in reversed(tables):self.f.sql('DROP TABLE IF EXISTS '+table)
    self.f.sql('DROP TABLE IF EXISTS nd_schema_migrations')
 
 class SSHIsolationTests(unittest.TestCase):

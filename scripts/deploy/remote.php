@@ -17,8 +17,8 @@ function save_json(string $path,array $value):void {
     chmod($tmp,0600);insist(rename($tmp,$path),'metadata_rename_failed');
 }
 function paths():array {
-    $public=['.htaccess','api-client.js','api.php','crm.css','crm.html','crm.js','index.html','index.php','privacy.php','script.js','studio.php','styles.css'];
-    return array_merge(array_map(fn($p)=>'public_html/'.$p,$public),['private/.htaccess','private/app.php']);
+    $public=['.htaccess','api-client.js','api.php','crm.css','crm.html','crm.js','index.html','index.php','privacy.php','script.js','studio.php','styles.css','customer.php','customer-api.php','customer.js','customer.css','customer-owner.js'];
+    return array_merge(array_map(fn($p)=>'public_html/'.$p,$public),['private/.htaccess','private/app.php','private/customer-auth.php','private/customer-mail.php']);
 }
 function hash_file_safe(string $path):?string {
     insist(!is_link($path),'symlink_refused');
@@ -58,7 +58,7 @@ function verify_bundle(string $candidate,string $id):array {
     $actual=array_keys($m['files']??[]);$expected=paths();sort($actual);sort($expected);insist($actual===$expected,'release_allowlist_mismatch');
     insist(($m['keep_backups']??0)>=2&&($m['keep_backups']??0)<=20,'invalid_retention');
     foreach(array_merge($m['files'],$m['tools']) as $path=>$hash) {
-        insist(preg_match('#^(public_html/[A-Za-z0-9_.-]+|private/(app.php|\.htaccess)|remote.php|scripts/migrate.php|database/schema\.sql|database/migrations/[0-9]{3}_[a-z_]+\.sql|database/migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
+        insist(preg_match('#^(public_html/[A-Za-z0-9_.-]+|private/(app.php|customer-auth.php|customer-mail.php|\.htaccess)|remote.php|scripts/(migrate|migrate-customer).php|database/schema\.sql|database/migrations/[0-9]{3}_[a-z_]+\.sql|database/migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
     $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
@@ -97,21 +97,26 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
     $c=require $root.'/private/config.php';
     $pdo=new PDO('mysql:host='.$c['db_host'].';port='.($c['db_port']??3306).';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     $exists=(bool)$pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='nd_schema_migrations'")->fetchColumn();
-    $pending=[];
+    $pending=[];$versions=array_column($entries,'version');$sorted=$versions;sort($sorted);
+    insist($versions===$sorted&&count(array_unique($versions))===count($versions),'invalid_migration_order');
     foreach($entries as $entry) {
         insist(is_bool($entry['automatic']??null)&&is_bool($entry['required']??null)&&preg_match('/^[0-9]{3}_[a-z_]+$/D',$entry['version']??'')===1,'invalid_migration_approval');
         foreach(['up','down'] as $direction)insist(hash_file_safe($candidate.'/database/migrations/'.$entry['version'].'/'.$direction.'.sql')===($entry[$direction.'_sha256']??null),'migration_checksum_mismatch');
         $row=false;if($exists){$q=$pdo->prepare('SELECT * FROM nd_schema_migrations WHERE version=?');$q->execute([$entry['version']]);$row=$q->fetch(PDO::FETCH_ASSOC);}
         if($row){insist($row['state']==='applied'&&$row['up_checksum']===$entry['up_sha256']&&$row['down_checksum']===$entry['down_sha256'],'migration_state_or_checksum_mismatch');continue;}
         if(!$entry['automatic']){insist(!$entry['required'],'manual_migration_approval_required');continue;}
-        insist($entry['version']==='004_crm_foundation'&&$entry['kind']==='additive','unapproved_automatic_migration');
+        insist(isset(['004_crm_foundation'=>12,'005_customer_auth'=>5][$entry['version']])&&$entry['kind']==='additive','unapproved_automatic_migration');
         $up=(string)file_get_contents($candidate.'/database/migrations/'.$entry['version'].'/up.sql');
         $sql=preg_replace('/^--[^\n]*$/m','',$up);$statements=array_values(array_filter(array_map('trim',explode(';',$sql))));
-        insist(count($statements)===12,'unsupported_automatic_migration');
+        insist(count($statements)===['004_crm_foundation'=>12,'005_customer_auth'=>5][$entry['version']],'unsupported_automatic_migration');
         foreach($statements as $statement)insist(preg_match('/^CREATE TABLE nd_[a-z_]+\s*\([\s\S]+\)\s*ENGINE=InnoDB[\s\S]*$/D',$statement)===1,'destructive_migration_refused');
         $pending[]=$entry['version'];
     }
     if(!$pending)return [];
+    if(in_array('005_customer_auth',$pending,true)&&!in_array('004_crm_foundation',$pending,true)) {
+        $dependency=false;if($exists){$q=$pdo->query("SELECT state FROM nd_schema_migrations WHERE version='004_crm_foundation'");$dependency=$q->fetchColumn();}
+        insist($dependency==='applied','migration_004_required');
+    }
     // A prior genuinely healthy delivery and this CI's real dump/restore test are mandatory.
     $state=read_json(dirname(dirname($backup)).'/state.json');$previous=$state['last_release']??'';
     insist(is_string($previous)&&preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$previous)===1&&($m['verification_contract']??'')==='ci-mysql57-backup-restore-v1','pipeline_backup_recovery_not_verified');
@@ -141,7 +146,10 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
     $configLink=$candidate.'/private/config.php';insist(!file_exists($configLink)&&!is_link($configLink),'candidate_config_collision');
     insist(symlink($root.'/private/config.php',$configLink),'candidate_config_link_failed');
     try {
-        execute_private([getenv('NEURO_PHP_BIN')?:PHP_BINARY,$candidate.'/scripts/migrate.php','up'],$backup.'/migration.log');
+        foreach($pending as $version) {
+            $runner=['004_crm_foundation'=>'migrate.php','005_customer_auth'=>'migrate-customer.php'][$version];
+            execute_private([getenv('NEURO_PHP_BIN')?:PHP_BINARY,$candidate.'/scripts/'.$runner,'up'],$backup.'/'.$version.'.log');
+        }
         // Confirm persistence in the migration journal, not only a successful process exit.
         foreach($entries as $entry)if(in_array($entry['version'],$pending,true)) {
             $q=$pdo->prepare('SELECT state,up_checksum,down_checksum FROM nd_schema_migrations WHERE version=?');$q->execute([$entry['version']]);$row=$q->fetch(PDO::FETCH_ASSOC);

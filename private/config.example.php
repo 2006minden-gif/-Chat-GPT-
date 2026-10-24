@@ -13,4 +13,12 @@ return [
     // Enable only after owner/legal review; place approved text in private/privacy-policy.txt.
     'privacy_policy_approved' => false,
     'privacy_policy_version' => '',
+    // Keep both false until Stage 3/4 migrations, mail and customer/invitation legal review pass.
+    'customer_auth_enabled' => false,
+    'customer_auth_privacy_approved' => false,
+    // SMTP acceptance is not guaranteed inbox delivery. Store actual credentials only in config.php.
+    'customer_mail' => [
+        'transport' => 'smtp', 'host' => '', 'port' => 587, 'encryption' => 'starttls',
+        'from' => '', 'username' => '', 'password' => '',
+    ],
 ];
