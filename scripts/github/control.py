@@ -23,8 +23,12 @@ def safe_api_probe(token):
                  'Accept':'application/vnd.github+json',
                  'User-Agent':'NeuroDelo-bootstrap-diagnostic'},
         method='GET')
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, msg, headers, newurl):
+            return None
     try:
-        with urllib.request.urlopen(request,timeout=12) as response:
+        # A token must never follow a redirect, even to another GitHub hostname.
+        with urllib.request.build_opener(NoRedirect()).open(request,timeout=12) as response:
             return 'direct_http_'+str(response.status)
     except urllib.error.HTTPError as error:
         return 'direct_http_'+str(error.code)
