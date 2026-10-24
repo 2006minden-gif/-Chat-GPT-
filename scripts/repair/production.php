@@ -23,7 +23,7 @@ function rp_backup_copy(string $source,string $destination,string $expected):voi
 function rp_syntax(string $s):array {
     rp_assert(function_exists('token_get_all'),'tokenizer_extension_required');
     try{token_get_all($s,TOKEN_PARSE);return ['valid'=>true,'line'=>null];}
-    catch(ParseError $e){return ['valid'=>false,'line'=>$e->getLine()];}
+    catch(ParseError $e){$message=$e->getMessage();$category='syntax_error';foreach(['unexpected end of file'=>'unexpected_eof','Unclosed'=>'unclosed_delimiter','unexpected identifier'=>'unexpected_identifier','unexpected single-quoted string'=>'unexpected_string_literal','unexpected double-quoted string'=>'unexpected_string_literal'] as $match=>$safe)if(str_contains($message,$match)){$category=$safe;break;}return ['valid'=>false,'line'=>$e->getLine(),'category'=>$category];}
 }
 function rp_tokens(string $s):array {
     $tokens=[];$offset=0;
@@ -31,6 +31,18 @@ function rp_tokens(string $s):array {
         if(!in_array($id,[T_WHITESPACE,T_COMMENT,T_DOC_COMMENT],true))$tokens[]=['id'=>$id,'text'=>$text,'offset'=>$offset,'end'=>$offset+strlen($text)];
         $offset+=strlen($text);
     }return $tokens;
+}
+function rp_shape(string $s):array {
+    $tokens=rp_tokens($s);$balance=['square'=>0,'round'=>0,'curly'=>0];$nonliteral=[];$commaSites=0;$return=false;$repeated=0;
+    foreach($tokens as $i=>$t){
+        if($t['id']===null){foreach(['['=>['square',1],']'=>['square',-1],'('=>['round',1],')'=>['round',-1],'{'=>['curly',1],'}'=>['curly',-1]] as $char=>$v)if($t['text']===$char)$balance[$v[0]]+=$v[1];}
+        if($t['id']===T_RETURN)$return=true;
+        if($t['id']===T_STRING&&!in_array(strtolower($t['text']),['true','false','null','strict_types'],true))$nonliteral['T_STRING']=($nonliteral['T_STRING']??0)+1;
+        if(in_array($t['id'],[T_VARIABLE,T_ENCAPSED_AND_WHITESPACE,T_INLINE_HTML,T_STRING_VARNAME,T_NAME_FULLY_QUALIFIED,T_NAME_QUALIFIED],true)){$key=token_name($t['id']);$nonliteral[$key]=($nonliteral[$key]??0)+1;}
+        if($i&&$t['text']===','&&$tokens[$i-1]['text']===',')$repeated++;
+        if($i&&$t['id']===T_CONSTANT_ENCAPSED_STRING&&($tokens[$i+1]['id']??null)===T_DOUBLE_ARROW){$p=$tokens[$i-1];if(in_array($p['id'],[T_CONSTANT_ENCAPSED_STRING,T_LNUMBER,T_DNUMBER],true)||($p['id']===T_STRING&&in_array(strtolower($p['text']),['true','false','null'],true))||in_array($p['text'],[']',')'],true))$commaSites++;}
+    }
+    $last=end($tokens);return ['line_count'=>substr_count($s,"\n")+1,'return_present'=>$return,'delimiter_balance'=>$balance,'nonliteral_token_counts'=>$nonliteral,'missing_comma_sites'=>$commaSites,'repeated_commas'=>$repeated,'ends_with_array_closer'=>$last&&in_array($last['text'],[']',')'],true)];
 }
 function rp_literal_signature(string $s):string {
     // Scalar token spellings, flags, comments and whitespace remain byte-identical, not reserialized.
@@ -107,7 +119,7 @@ function rp_htaccess_candidate(string $s):string {
 function rp_inspect(string $root):array {
     $config=rp_read($root.'/private/config.php');$syntax=rp_syntax($config);$candidate=null;
     try{$candidate=rp_config_candidate($config);}catch(RepairFailure $e){}
-    $out=['ok'=>true,'read_only'=>true,'php'=>PHP_VERSION,'configuration'=>['syntax_valid'=>$syntax['valid'],'error_type'=>$syntax['valid']?null:'ParseError','error_line'=>$syntax['line'],'automatic_repair_available'=>$candidate!==null,'repair_kind'=>$candidate['kind']??null,'repair_line'=>$candidate['line']??null],'backup_copies'=>[]];
+    $out=['ok'=>true,'read_only'=>true,'php'=>PHP_VERSION,'configuration'=>['syntax_valid'=>$syntax['valid'],'error_type'=>$syntax['valid']?null:'ParseError','error_line'=>$syntax['line'],'error_category'=>$syntax['category']??null,'structure'=>rp_shape($config),'automatic_repair_available'=>$candidate!==null,'repair_kind'=>$candidate['kind']??null,'repair_line'=>$candidate['line']??null],'backup_copies'=>[]];
     foreach(['~.htaccess','index~.html'] as $name){$path=$root.'/public_html/'.$name;$row=['exists'=>is_file($path),'symlink'=>is_link($path)];
         if($row['exists']&&!$row['symlink']){$data=@file_get_contents($path,false,null,0,65536);rp_assert(is_string($data),'backup_sample_unreadable');$row+=['bytes'=>filesize($path),'scan_complete'=>filesize($path)<=65536,'private_key_marker'=>(bool)preg_match('/-----BEGIN [^-]*PRIVATE KEY-----/',$data),'credential_assignment_marker'=>(bool)preg_match('/(?:password|secret|api_key)\s*[\x22\x27]?\s*(?:=>|=|:)/i',$data),'php_config_marker'=>str_contains($data,'db_password')];}
         $out['backup_copies'][$name]=$row;
@@ -153,14 +165,14 @@ function rp_manifest(string $plan):array {
     foreach($m['files'] as $key=>$file){rp_assert(is_array($file)&&preg_match('/^[a-f0-9]{64}$/D',$file['before']??'')===1,'invalid_file_manifest');rp_assert(hash_equals($file['before'],rp_file_hash($plan.'/'.$key.'.before')),'backup_integrity_failed');}
     return $m;
 }
-function rp_atomic(string $path,string $data,string $id,int $mode):void {
-    rp_assert(!is_link($path),'symlink_refused');$tmp=dirname($path).'/.nd-repair-'.$id.'-'.basename($path).'.tmp';
+function rp_atomic(string $path,string $data,string $id,int $mode,?string $expectedBefore=null):void {
+    rp_assert(!is_link($path),'symlink_refused');if($expectedBefore!==null)rp_assert(rp_file_hash($path)===$expectedBefore,'source_changed_before_rename');$tmp=dirname($path).'/.nd-repair-'.$id.'-'.basename($path).'.tmp';
     rp_assert(!file_exists($tmp)&&!is_link($tmp),'temporary_file_collision');
     $f=@fopen($tmp,'x+b');rp_assert(is_resource($f),'temporary_file_failed');
     try {
         chmod($tmp,0600);$left=$data;while($left!==''){$n=fwrite($f,$left);rp_assert(is_int($n)&&$n>0,'temporary_write_failed');$left=substr($left,$n);}
         rp_assert(fflush($f),'temporary_flush_failed');if(function_exists('fsync'))rp_assert(fsync($f),'temporary_sync_failed');fclose($f);$f=null;
-        rp_assert(hash('sha256',rp_read($tmp))===hash('sha256',$data),'temporary_integrity_failed');chmod($tmp,$mode&0777);rp_assert(rename($tmp,$path),'atomic_rename_failed');
+        rp_assert(hash('sha256',rp_read($tmp))===hash('sha256',$data),'temporary_integrity_failed');chmod($tmp,$mode&0777);if($expectedBefore!==null)rp_assert(rp_file_hash($path)===$expectedBefore,'source_changed_before_rename');rp_assert(rename($tmp,$path),'atomic_rename_failed');
     } finally {if(is_resource($f))fclose($f);if(is_file($tmp)&&!is_link($tmp))unlink($tmp);}
 }
 
@@ -191,6 +203,7 @@ function rp_prepare(string $root,string $id):array {
         rp_backup_copy($plan.'/'.$key.'.before',$plan.'/restore-check',$sha);unlink($plan.'/restore-check');
         $files[$key]=['before'=>$sha,'mode'=>fileperms($source)&0777];
     }
+    rp_assert($files['config']['before']===hash('sha256',$config)&&$files['rules']['before']===hash('sha256',$rules),'source_changed_during_prepare');
     foreach(['config'=>$candidate['content'],'rules'=>$newRules] as $key=>$data){rp_assert(file_put_contents($plan.'/'.$key.'.next',$data,LOCK_EX)!==false,'candidate_write_failed');chmod($plan.'/'.$key.'.next',0600);$files[$key]['after']=hash('sha256',$data);}
     $m=['schema'=>1,'rules_version'=>hash('sha256',rp_block()),'state'=>'prepared','files'=>$files,'quarantined'=>[],'repair_kind'=>$candidate['kind'],'repair_line'=>$candidate['line'],'scalar_signature'=>rp_literal_signature($config)];
     rp_save($plan.'/manifest.json',$m);rp_save($base.'/active.json',['id'=>$id]);
@@ -208,9 +221,9 @@ function rp_rollback(string $root,string $id):array {
     $plan=rp_plan($root,$id);$m=rp_manifest($plan);$fixed=rp_fixed();
     rp_assert(in_array($m['state'],['prepared','applying','applied','confirmed','rolled_back'],true),'invalid_plan_state');
     $keepRules=$m['state']==='confirmed'||($m['keep_verified_rules']??false)===true;
-    foreach(['config','rules'] as $key){$sha=rp_file_hash($root.'/'.$fixed[$key]);rp_assert(in_array($sha,[$m['files'][$key]['before'],$m['files'][$key]['after']],true),'rollback_external_change');}
+    $observed=[];foreach(['config','rules'] as $key){$sha=rp_file_hash($root.'/'.$fixed[$key]);rp_assert(in_array($sha,[$m['files'][$key]['before'],$m['files'][$key]['after']],true),'rollback_external_change');$observed[$key]=$sha;}
     rp_clean_probes($root,$id);
-    foreach(['config','rules'] as $key){if($key==='rules'&&$keepRules)continue;if(rp_file_hash($root.'/'.$fixed[$key])!==$m['files'][$key]['before'])rp_atomic($root.'/'.$fixed[$key],rp_read($plan.'/'.$key.'.before'),$id.'-rollback',$m['files'][$key]['mode']);rp_assert(rp_file_hash($root.'/'.$fixed[$key])===$m['files'][$key]['before'],'rollback_integrity_failed');}
+    foreach(['config','rules'] as $key){if($key==='rules'&&$keepRules)continue;if(rp_file_hash($root.'/'.$fixed[$key])!==$m['files'][$key]['before'])rp_atomic($root.'/'.$fixed[$key],rp_read($plan.'/'.$key.'.before'),$id.'-rollback',$m['files'][$key]['mode'],$observed[$key]);rp_assert(rp_file_hash($root.'/'.$fixed[$key])===$m['files'][$key]['before'],'rollback_integrity_failed');}
     // Quarantined copies NEVER move back to public_html, including after rollback.
     $m['state']='rolled_back';$m['keep_verified_rules']=$keepRules;rp_save($plan.'/manifest.json',$m);$base=dirname($plan);
     if(is_file($base.'/active.json')){rp_assert(rp_json($base.'/active.json')['id']===$id,'active_plan_changed');unlink($base.'/active.json');}
@@ -229,7 +242,7 @@ function rp_apply(string $root,string $id):array {
         foreach(['copy_rules','copy_index'] as $key)if(isset($m['files'][$key])){
             rp_assert(rename($root.'/'.$fixed[$key],$plan.'/quarantine/'.$key),'quarantine_failed');chmod($plan.'/quarantine/'.$key,0600);$m['quarantined'][]=$key;rp_save($plan.'/manifest.json',$m);
         }
-        foreach(['rules','config'] as $key){rp_atomic($root.'/'.$fixed[$key],rp_read($plan.'/'.$key.'.next'),$id,$m['files'][$key]['mode']);rp_assert(rp_file_hash($root.'/'.$fixed[$key])===$m['files'][$key]['after'],'applied_integrity_failed');}
+        foreach(['rules','config'] as $key){rp_atomic($root.'/'.$fixed[$key],rp_read($plan.'/'.$key.'.next'),$id,$m['files'][$key]['mode'],$m['files'][$key]['before']);rp_assert(rp_file_hash($root.'/'.$fixed[$key])===$m['files'][$key]['after'],'applied_integrity_failed');}
         rp_assert(rp_static_config(rp_read($root.'/private/config.php'))&&rp_literal_signature(rp_read($root.'/private/config.php'))===$m['scalar_signature'],'literal_values_changed');
         $live=rp_preflight($root.'/private/config.php');
         rp_assert(mkdir($root.'/public_html/.nd-repair-'.$id,0755),'probe_directory_failed');
