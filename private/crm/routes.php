@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/core.php';require_once __DIR__.'/read.php';require_once __DIR__.'/write.php';
 function crm_dispatch(string $route,string $method):never{
  try{
+  if(str_starts_with($route,'collab/')){require_once dirname(__DIR__).'/collab/routes.php';cc_dispatch(false,substr($route,7),$method);}
   current_session($method!=='GET');crm_gate();
   if($method==='GET'){
    if($route==='dashboard')json_response(crm_dashboard($_GET));
