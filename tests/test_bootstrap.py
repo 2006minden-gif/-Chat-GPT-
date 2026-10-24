@@ -71,7 +71,47 @@ class BootstrapSafety(unittest.TestCase):
    if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
    if '/runs?' in path:return {'workflow_runs':[]}
    return {'content':base64.b64encode(b'name: NeuroDelo CI/CD\noperation:').decode()}
-  with patch.dict(control.os.environ,{'GITHUB_TOKEN_FALLBACK':'true'}),patch.object(control,'api',side_effect=fake),self.assertRaises(control.GitHubFailure):control.ensure_main_ci()
+  with patch.dict(control.os.environ,{'GITHUB_TOKEN_FALLBACK':'true','AUTOMATION_READY':'true'}),patch.object(control,'api',side_effect=fake),self.assertRaises(control.GitHubFailure):control.ensure_main_ci()
   self.assertFalse(any(m=='POST' for m,p in calls))
+
+ def test_initial_smoke_dispatch_requires_fresh_main_validate_and_exact_owner_sha(self):
+  import base64
+  calls=[];runs=[]
+  def fake(method,path,payload=None,**kwargs):
+   calls.append((method,path,payload))
+   if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
+   if '/runs?' in path:return {'workflow_runs':runs}
+   if '/jobs?' in path:return {'jobs':[{'name':'Validate','conclusion':'success'}]}
+   if '/contents/' in path:return {'content':base64.b64encode(b'name: NeuroDelo CI/CD\noperation:\nexpected_revision:').decode()}
+  env={'GITHUB_TOKEN_FALLBACK':'true','AUTOMATION_READY':'false','BOOTSTRAP_APPROVED_SHA':'a'*40,'BOOTSTRAP_CONFIGURED_SHA':'a'*40}
+  with patch.dict(control.os.environ,env),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_main_ci()
+  self.assertEqual(calls[-1][2]['inputs']['operation'],'preview')
+  runs.append({'id':1,'head_sha':'a'*40,'status':'completed','conclusion':'success','event':'push'})
+  with patch.dict(control.os.environ,env),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_main_ci()
+  self.assertEqual(calls[-1][2]['inputs'],{'operation':'bootstrap','expected_revision':'a'*40})
+  runs.append({'head_sha':'a'*40,'event':'workflow_dispatch','display_title':'bootstrap '+'a'*40})
+  calls.clear()
+  with patch.dict(control.os.environ,env),patch.object(control,'api',side_effect=fake):control.ensure_main_ci()
+  self.assertFalse(any(m=='POST' for m,p,d in calls))
+
+ def test_trusted_report_archive_is_read_and_untrusted_run_is_rejected(self):
+  import zipfile
+  from types import SimpleNamespace
+  data=io.BytesIO()
+  with zipfile.ZipFile(data,'w') as z:z.writestr('deployment-report.json',json.dumps(self.proof()))
+  run={'status':'completed','head_branch':'main','head_repository':{'full_name':control.REPO},'path':'.github/workflows/deploy.yml','event':'workflow_dispatch','conclusion':'success','head_sha':'a'*40}
+  def fake(method,path,*a,**kw):
+   if path.endswith('/123'):return run
+   if '/jobs?' in path:return {'jobs':[{'name':n,'conclusion':'success'} for n in ['Validate','Publish approved main']]}
+   if '/artifacts?' in path:return {'artifacts':[{'id':1,'name':'deployment-evidence-123-1','size_in_bytes':len(data.getvalue()),'expired':False}]}
+   raise AssertionError('Unexpected endpoint')
+  with patch.object(bootstrap,'api',side_effect=fake),patch.object(bootstrap.subprocess,'run',return_value=SimpleNamespace(returncode=0,stdout=data.getvalue())):self.assertEqual(bootstrap.read_report('repos/'+control.REPO,'123')[0]['head_sha'],'a'*40)
+  run['head_branch']='feature/untrusted'
+  with patch.object(bootstrap,'api',side_effect=fake),self.assertRaises(control.GitHubFailure):bootstrap.read_report('repos/'+control.REPO,'123')
+ def test_administration_workflow_is_manual_main_only_and_has_no_ssh(self):
+  import yaml
+  w=yaml.load((ROOT/'.github/workflows/bootstrap.yml').read_text(),Loader=yaml.BaseLoader)
+  self.assertEqual(set(w['on']),{'workflow_dispatch'});job=w['jobs']['administration'];self.assertEqual(job['if'],"github.ref == 'refs/heads/main'");self.assertEqual(job['environment'],'automation');self.assertNotIn('SSH_',str(w));self.assertNotIn('DEPLOY_PATH',str(w))
+  self.assertIn('bootstrap --apply',str(w));self.assertIn('promote --run-id',str(w));self.assertNotIn('rsync',str(w))
 
 if __name__=='__main__':unittest.main()

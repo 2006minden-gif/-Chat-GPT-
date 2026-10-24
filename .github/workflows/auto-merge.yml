@@ -52,5 +52,9 @@ jobs:
       - name: Enable only independently reviewed passing PRs
         env:
           GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
+          GITHUB_DISPATCH_TOKEN: ${{ github.token }}
+          AUTOMATION_READY: ${{ vars.AUTOMATION_READY }}
+          BOOTSTRAP_CONFIGURED_SHA: ${{ vars.BOOTSTRAP_CONFIGURED_SHA }}
+          BOOTSTRAP_APPROVED_SHA: ${{ vars.BOOTSTRAP_APPROVED_SHA }}
           GITHUB_TOKEN_FALLBACK: ${{ steps.app.outputs.token == '' && 'true' || 'false' }}
         run: python scripts/github/control.py auto-merge

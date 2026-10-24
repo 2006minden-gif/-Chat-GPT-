@@ -1,4 +1,5 @@
 name: NeuroDelo CI/CD
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('{0} {1}', inputs.operation, inputs.expected_revision) || format('Validate {0}', github.sha) }}
 
 on:
   pull_request:
@@ -123,7 +124,7 @@ jobs:
         vars.BOOTSTRAP_APPROVED_SHA == github.sha && vars.BOOTSTRAP_CONFIGURED_SHA == github.sha)) &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (vars.DEPLOY_PAUSED != 'true' ||
-       (github.event_name == 'workflow_dispatch' && inputs.operation != 'deploy'))
+       (github.event_name == 'workflow_dispatch' && (inputs.operation == 'preview' || inputs.operation == 'rollback')))
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment:

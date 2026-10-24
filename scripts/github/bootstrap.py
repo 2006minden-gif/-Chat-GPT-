@@ -26,7 +26,7 @@ def verify_report(report,sha):
 
 def read_report(base,run_id):
     run=api('GET',base+'/actions/runs/'+run_id)
-    if run.get('head_branch')!='main' or run.get('head_repository',{}).get('full_name')!=REPO or run.get('path')!='.github/workflows/deploy.yml' or run.get('event')!='workflow_dispatch' or run.get('conclusion')!='success':raise GitHubFailure('Only a successful trusted main bootstrap workflow can promote delivery')
+    if run.get('status')!='completed' or run.get('head_branch')!='main' or run.get('head_repository',{}).get('full_name')!=REPO or run.get('path')!='.github/workflows/deploy.yml' or run.get('event')!='workflow_dispatch' or run.get('conclusion')!='success':raise GitHubFailure('Only a successful trusted main bootstrap workflow can promote delivery')
     jobs=api('GET',base+'/actions/runs/'+run_id+'/jobs?per_page=100')['jobs']
     if not all(any(j['name']==name and j['conclusion']=='success' for j in jobs) for name in ['Validate','Publish approved main']):raise GitHubFailure('Main CI and publish jobs must both pass')
     artifacts=api('GET',base+'/actions/runs/'+run_id+'/artifacts?per_page=100')['artifacts']

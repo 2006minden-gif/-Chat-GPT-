@@ -1,0 +1,42 @@
+name: One-time CI/CD administration
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Configure fail-closed gates, or promote a verified bootstrap run'
+        type: choice
+        options: [configure, promote]
+        default: configure
+      run_id:
+        description: 'Successful main bootstrap run ID; required only for promote'
+        type: string
+        required: false
+permissions:
+  contents: read
+jobs:
+  administration:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: automation
+    concurrency:
+      group: spaceweb-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify existing configuration or promote actual delivery evidence
+        env:
+          GH_TOKEN: ${{ secrets.BOOTSTRAP_ADMIN_TOKEN }}
+          OPERATION: ${{ inputs.operation }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN" || { echo '::error::A temporary repository-administrator grant is required in the main-only automation environment.'; exit 1; }
+          case "$OPERATION" in
+            configure) python scripts/github/control.py bootstrap --apply ;;
+            promote) python scripts/github/bootstrap.py promote --run-id "$RUN_ID" --apply ;;
+            *) exit 1 ;;
+          esac

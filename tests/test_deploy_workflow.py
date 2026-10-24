@@ -49,7 +49,7 @@ class DeploymentSafety(unittest.TestCase):
   self.assertNotIn('SSH_PRIVATE_KEY',str(w));self.assertNotIn('download-artifact',str(w))
  def test_bootstrap_and_native_dispatch_are_sha_bound_and_keep_ready_closed(self):
   inputs=self.w['on']['workflow_dispatch']['inputs'];self.assertIn('bootstrap',inputs['operation']['options']);self.assertIn('expected_revision',inputs)
-  job=self.w['jobs']['deploy'];self.assertIn("vars.AUTOMATION_READY == 'true'",job['if']);self.assertIn('BOOTSTRAP_CONFIGURED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_APPROVED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_VERIFIED_RUN',job['if'])
+  job=self.w['jobs']['deploy'];self.assertIn("vars.AUTOMATION_READY == 'true'",job['if']);self.assertIn('BOOTSTRAP_CONFIGURED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_APPROVED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_VERIFIED_RUN',job['if']);self.assertNotIn("inputs.operation != 'deploy'",job['if']);self.assertIn("inputs.operation == 'rollback'",job['if'])
   names=[s.get('name') for s in job['steps']];self.assertLess(names.index('Recheck production environment before secret use'),names.index('Publish or maintain checked release'))
   code='\n'.join(s.get('run','') for s in self.w['jobs']['validate']['steps']);self.assertIn('$EXPECTED',code);self.assertIn('$REVISION',code)
  def test_shell_syntax(self):

@@ -14,7 +14,10 @@ class GitHubFailure(RuntimeError): pass
 def api(method, path, payload=None, missing=False):
     command=['gh','api',path,'--method',method,'-H','Accept: application/vnd.github+json','-H','X-GitHub-Api-Version: 2022-11-28']
     if payload is not None:command+=['--input','-']
-    r=subprocess.run(command,input=json.dumps(payload) if payload is not None else None,capture_output=True,text=True,timeout=45)
+    runenv=None
+    if method=='POST' and path=='repos/'+REPO+'/actions/workflows/deploy.yml/dispatches' and os.environ.get('GITHUB_DISPATCH_TOKEN'):
+        runenv=dict(os.environ,GH_TOKEN=os.environ['GITHUB_DISPATCH_TOKEN'])
+    r=subprocess.run(command,input=json.dumps(payload) if payload is not None else None,capture_output=True,text=True,timeout=45,env=runenv)
     if r.returncode:
         if missing and '(HTTP 404)' in r.stderr:return None
         raise GitHubFailure('GitHub API access failed: '+method+' '+path)
@@ -159,17 +162,31 @@ def required_policy(base):
         return {},reviews['required_approving_review_count'],[c['context'] for c in required]
 
 def ensure_main_ci():
-    # GITHUB_TOKEN merges suppress push workflows. Explicit API dispatch is automatic, not an owner button.
-    if os.environ.get('GITHUB_TOKEN_FALLBACK')!='true':return
+    # Native GITHUB_TOKEN merges suppress push CI. Always dispatch an exact main SHA, never assume push ran.
     base='repos/'+REPO;head=api('GET',base+'/git/ref/heads/main')['object']['sha']
+    ready=os.environ.get('AUTOMATION_READY')=='true'
+    approved=os.environ.get('BOOTSTRAP_APPROVED_SHA')==head and os.environ.get('BOOTSTRAP_CONFIGURED_SHA')==head
+    native=os.environ.get('GITHUB_TOKEN_FALLBACK')=='true'
+    if ready and not native:return
     runs=api('GET',base+'/actions/workflows/deploy.yml/runs?branch=main&per_page=30')['workflow_runs']
-    if any(r['head_sha']==head for r in runs):return
+    current=[r for r in runs if r['head_sha']==head]
+    operation='deploy' if ready else 'preview'
+    if not ready and approved:
+        if any(r.get('event')=='workflow_dispatch' and r.get('display_title')=='bootstrap '+head for r in current):return
+        validated=False
+        for run in current:
+            if run.get('status')!='completed' or run.get('conclusion')!='success':continue
+            jobs=api('GET',base+'/actions/runs/'+str(run['id'])+'/jobs?per_page=100')['jobs']
+            if any(j['name']=='Validate' and j['conclusion']=='success' for j in jobs):validated=True;break
+        if validated:operation='bootstrap'
+        elif current:return
+    elif current or not native:return
     source=api('GET',base+'/contents/.github/workflows/deploy.yml?ref=main')
     import base64
     text=base64.b64decode(source['content']).decode()
-    if 'name: NeuroDelo CI/CD' not in text or 'operation:' not in text or 'expected_revision:' not in text:raise GitHubFailure('Automatic delivery workflow not integrated yet')
-    api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':'main','inputs':{'operation':'deploy','expected_revision':head}})
-    print('Requested tested main delivery automatically for',head)
+    if 'name: NeuroDelo CI/CD' not in text or 'operation:' not in text or 'expected_revision:' not in text:raise GitHubFailure('SHA-gated delivery workflow not integrated yet')
+    api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':'main','inputs':{'operation':operation,'expected_revision':head}})
+    print('Requested tested main operation automatically:',operation,head)
 
 def auto_merge():
     base='repos/'+REPO;repo=api('GET',base)

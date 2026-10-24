@@ -118,10 +118,10 @@ class RemoteFilesystemTests(unittest.TestCase):
  def test_readonly_preflight_creates_no_backup_or_lock(self):
   before=set(self.root.rglob('*'));self.agent('preflight');self.assertEqual(set(self.root.rglob('*')),before);self.assert_protected()
  def test_apply_verified_backup_and_rollback_preserve_uploads_and_config(self):
-  self.agent('apply');self.assert_protected()
+  applied=self.agent('apply');self.assertTrue(applied['backup_verified']);self.assertTrue(applied['recovery_verified']);self.assertEqual(applied['files_sha256'],self.manifest['files']);self.assert_protected()
   backup=self.root/'.neurodelo-deploy/backups'/self.id
   for path,digest in self.before.items():self.assertEqual(release.digest(backup/'files'/path),digest);self.assertEqual(release.digest(self.root/path),self.manifest['files'][path])
-  self.assertFalse((backup/'files/private/config.php').exists())
+  self.assertFalse((backup/'files/private/config.php').exists());self.assertFalse((backup/'recovery-check').exists())
   result=self.agent('rollback');self.assertTrue(result['files_restored']);self.assertFalse(result['health_verified'])
   for path,digest in self.before.items():self.assertEqual(release.digest(self.root/path),digest)
   self.agent('confirm-rollback');self.assert_protected()
@@ -353,7 +353,7 @@ class GovernanceTests(unittest.TestCase):
    if '/runs?' in path:return {'workflow_runs':[]}
    if '/contents/' in path:return {'content':base64.b64encode(b'name: NeuroDelo CI/CD\noperation:\nexpected_revision:').decode()}
    return None
-  with patch.dict(os.environ,{'GITHUB_TOKEN_FALLBACK':'true'}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_main_ci()
+  with patch.dict(os.environ,{'GITHUB_TOKEN_FALLBACK':'true','AUTOMATION_READY':'true'}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_main_ci()
   self.assertEqual(calls[-1][0],'POST');self.assertEqual(calls[-1][2],{'ref':'main','inputs':{'operation':'deploy','expected_revision':'a'*40}})
 
 if __name__=='__main__':unittest.main()
