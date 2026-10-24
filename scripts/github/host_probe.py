@@ -17,7 +17,7 @@ try:
  import shlex
  command="""set -u
 printf 'ND_SSH_OK\n'
-candidates=$( { command -v php 2>/dev/null || true; find /usr/bin /usr/local /opt -maxdepth 6 -type f -name 'php' 2>/dev/null || true; } | sort -u)
+candidates=$( { command -v php8.4 2>/dev/null || true; command -v php 2>/dev/null || true; find /usr/bin /usr/local /opt -maxdepth 6 -type f \( -name 'php' -o -name 'php8.4' \) 2>/dev/null || true; } | sort -u)
 selected=''
 fallback=''
 for b in $candidates; do
