@@ -25,15 +25,15 @@ for b in $candidates; do
 done
 if [ -n "$selected" ]; then printf '%s\n' "$selected"; elif [ -n "$fallback" ]; then printf '%s\n' "$fallback"; else exit 1; fi
 """
- r=subprocess.run(remote.ssh+[remote.target,command],capture_output=True,text=True,timeout=45)
+ r=subprocess.run(remote.ssh+[remote.target,'bash -se'],input=command,capture_output=True,text=True,timeout=45)
  if 'ND_SSH_OK' not in r.stdout:
   categories={'Permission denied':'ssh_authentication_failed','Connection refused':'ssh_connection_refused','timed out':'ssh_connection_timeout','Host key verification failed':'ssh_host_key_verification_failed','REMOTE HOST IDENTIFICATION HAS CHANGED':'ssh_host_key_changed','Could not resolve hostname':'ssh_dns_failed'}
   report['ssh_exit_code']=r.returncode
   raise RemoteFailure(next((name for marker,name in categories.items() if marker in r.stderr),'ssh_session_unavailable'))
  report['ssh_connected']=True
  if r.returncode:
-  inventory='command -v php 2>/dev/null || true; php -n -v 2>/dev/null || true; find /usr/bin /usr/local /opt -maxdepth 6 \( -name php -o -name \"php[0-9]*\" \) 2>/dev/null | head -60'
-  details=subprocess.run(remote.ssh+[remote.target,inventory],capture_output=True,text=True,timeout=45)
+  inventory=r"command -v php 2>/dev/null || true; php -n -v 2>/dev/null || true; find /usr/bin /usr/local /opt -maxdepth 6 \( -name php -o -name 'php[0-9]*' \) 2>/dev/null | head -60"
+  details=subprocess.run(remote.ssh+[remote.target,'bash -se'],input=inventory,capture_output=True,text=True,timeout=45)
   import re
   report['php_inventory']=[line for line in details.stdout.splitlines() if re.match(r'^(PHP [0-9]|/(usr|opt)/[A-Za-z0-9_./+-]+$)',line)][:60]
   raise RemoteFailure('readable_php_cli_not_found')
