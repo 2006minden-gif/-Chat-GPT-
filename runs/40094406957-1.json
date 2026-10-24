@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "nonce": "0658d1869820b84b86317e46f90c6ca4",
+  "source_sha": "f577218f233e3f4594dade627b19cc8a590f472f",
+  "run_id": "40094406957",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40094406957",
+  "production_touched": false,
+  "read_only_host_probe": true,
+  "secret_presence": {
+    "SSH_HOST": true,
+    "SSH_PORT": true,
+    "SSH_USER": true,
+    "DEPLOY_PATH": true,
+    "SSH_PRIVATE_KEY": true,
+    "SSH_KNOWN_HOSTS": true
+  },
+  "public_health": {
+    "ok": false,
+    "complete": true,
+    "checks": {
+      "/": {
+        "status": 200,
+        "content_type": "text/html",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/studio.php": {
+        "status": 200,
+        "content_type": "text/html",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/api.php?r=privacy": {
+        "status": 503,
+        "content_type": "application/json",
+        "request_id": "55ac6faddcfcdc8a",
+        "transport_ok": true,
+        "redirected": false,
+        "ok": false
+      },
+      "/privacy.php": {
+        "status": 503,
+        "content_type": "application/json",
+        "request_id": "d9e3b336fde1a6ad",
+        "transport_ok": true,
+        "redirected": false,
+        "ok": false
+      },
+      "/api.php?r=session": {
+        "status": 401,
+        "content_type": "application/json",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/api.php?r=leads": {
+        "status": 401,
+        "content_type": "application/json",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/~.htaccess": {
+        "status": 200,
+        "content_type": "text/plain",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": false
+      },
+      "/index~.html": {
+        "status": 200,
+        "content_type": "text/html",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": false
+      },
+      "/.htaccess": {
+        "status": 403,
+        "content_type": "text/html",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/private/config.php": {
+        "status": 404,
+        "content_type": "text/html",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/index.html": {
+        "status": 403,
+        "content_type": "text/html",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/crm.html": {
+        "status": 403,
+        "content_type": "text/html",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true
+      },
+      "/styles.css": {
+        "status": 200,
+        "content_type": "text/css",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true,
+        "sha256": "8e4d5ec35a9db020f0c974f2747f10a5cc7d5654b93dc27e5615aa25ec345675"
+      },
+      "/crm.css": {
+        "status": 200,
+        "content_type": "text/css",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true,
+        "sha256": "38efbd6b31aecbb2eb35bf6d4520e63595fe21614cedf743a2a9faec6d45ac19"
+      },
+      "/script.js": {
+        "status": 200,
+        "content_type": "text/javascript",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true,
+        "sha256": "63bd62026170ad25e5fdf69a3b929e398bbf8ab479fdbb59a9840249251e50c1"
+      },
+      "/crm.js": {
+        "status": 200,
+        "content_type": "text/javascript",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true,
+        "sha256": "a26e9cf1c381912f36c53935ff36214d4e8a2747ca63908e30f5c325903a1485"
+      },
+      "/api-client.js": {
+        "status": 200,
+        "content_type": "text/javascript",
+        "request_id": null,
+        "transport_ok": true,
+        "redirected": false,
+        "ok": true,
+        "sha256": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20"
+      }
+    }
+  },
+  "ssh_connected": true,
+  "php_inventory": [
+    "/usr/bin/php",
+    "PHP 5.2.17-pl0-gentoo (cli) (built: Feb 21 2025 14:42:53) ",
+    "/usr/bin/php8.4",
+    "/usr/bin/php7.1",
+    "/usr/bin/php",
+    "/usr/bin/php5.4",
+    "/usr/bin/php8.1",
+    "/usr/bin/php8.0",
+    "/usr/bin/php8.5",
+    "/usr/bin/php5.3",
+    "/usr/bin/php8.2",
+    "/usr/bin/php7.4",
+    "/usr/bin/php8.3",
+    "/usr/bin/php5.6",
+    "/usr/bin/php7.0",
+    "/usr/bin/php7.2",
+    "/usr/bin/php7.3",
+    "/usr/bin/php5.5",
+    "/opt/php4-cgi",
+    "/opt/php4-cgi/include/php",
+    "/opt/php4-cgi/include/php/main/php3_compat.h",
+    "/opt/php4-cgi/bin/php",
+    "/opt/php4-cgi/lib/php"
+  ],
+  "error_type": "RemoteFailure",
+  "error": "readable_php_cli_not_found"
+}
