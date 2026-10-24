@@ -24,6 +24,13 @@ class RepairSyntax(unittest.TestCase):
   for s in ["<?php return ['a'=>1 'b'=>2 'c'=>false];", "<?php return ['a'=>'SYNTHETIC_ONLY'\n'b'=>false]"]:
    d=self.helper("$c=rp_config_candidate($v);echo json_encode(['valid'=>rp_static_config($c['content']),'same'=>rp_literal_signature($v)===rp_literal_signature($c['content']),'count'=>$c['insertions']]);",s)
    self.assertEqual(d,{'valid':True,'same':True,'count':2})
+ def test_missing_known_key_quote_never_modifies_value_bytes(self):
+  for s in ["<?php return ['db_password'=>'SYNTHETIC_ONLY', 'privacy_policy_version => '2026-v1'];", "<?php return [db_password' => 'SYNTHETIC_ONLY','privacy_policy_approved'=>false];"]:
+   d=self.helper("$c=rp_config_candidate($v);echo json_encode(['kind'=>$c['kind'],'same'=>rp_literal_signature($v)===rp_literal_signature($c['content']),'valid'=>rp_static_config($c['content'])]);",s)
+   self.assertEqual(d,{'kind':'missing_known_key_quote','same':True,'valid':True})
+ def test_key_quote_fix_never_guesses_a_corrupted_secret_value(self):
+  s="<?php return ['db_password'=>'SYNTHETIC'fragment','privacy_policy_approved'=>false];"
+  self.assertTrue(self.helper("try{rp_config_candidate($v);echo 'false';}catch(RepairFailure $e){echo 'true';}",s))
  def test_valid_config_is_unchanged(self):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false];"
   self.assertTrue(self.helper("$c=rp_config_candidate($v);echo json_encode($v===$c['content']);",s))

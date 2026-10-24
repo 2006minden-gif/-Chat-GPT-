@@ -49,9 +49,20 @@ function rp_shape(string $s):array {
     }
     $last=end($tokens);return ['line_count'=>substr_count($s,"\n")+1,'return_present'=>$return,'delimiter_balance'=>$balance,'nonliteral_token_counts'=>$nonliteral,'nonliteral_locations'=>$locations,'missing_comma_sites'=>$commaSites,'repeated_commas'=>$repeated,'ends_with_array_closer'=>$last&&in_array($last['text'],[']',')'],true)];
 }
+function rp_key_normalization(string $s):array {
+    $known=['db_host','db_port','db_name','db_user','db_password','app_url','setup_key','privacy_policy_approved','privacy_policy_version','customer_auth_enabled','customer_auth_privacy_approved'];
+    $tokens=rp_tokens($s);$edits=[];
+    foreach($tokens as $i=>$t){
+        if($i===0||!in_array($tokens[$i-1]['text'],[',','[','('],true))continue;
+        if($t['id']===T_CONSTANT_ENCAPSED_STRING&&preg_match("/^'([a-z_]+)\\s*=>/",$t['text'],$m)&&in_array($m[1],$known,true)&&in_array($tokens[$i+1]['id']??null,[T_STRING,T_LNUMBER,T_DNUMBER],true))$edits[$t['offset']+1+strlen($m[1])]="'";
+        if($t['id']===T_STRING&&in_array($t['text'],$known,true)&&preg_match("/^\\s*'\\s*=>/",substr($s,$t['end'])))$edits[$t['offset']]="'";
+    }
+    rp_assert(count($edits)<=2,'ambiguous_key_quotes');$content=$s;krsort($edits);foreach($edits as $pos=>$char)$content=substr($content,0,$pos).$char.substr($content,$pos);
+    return ['content'=>$content,'edits'=>$edits];
+}
 function rp_literal_signature(string $s):string {
     // Scalar token spellings, flags, comments and whitespace remain byte-identical, not reserialized.
-    $out=[];foreach(token_get_all($s) as $t)if(is_array($t))$out[]=[$t[0],$t[1]];
+    $s=rp_key_normalization($s)['content'];$out=[];foreach(token_get_all($s) as $t)if(is_array($t))$out[]=[$t[0],$t[1]];
     return hash('sha256',serialize($out));
 }
 function rp_static_config(string $s):bool {
@@ -81,6 +92,7 @@ function rp_static_config(string $s):bool {
 }
 function rp_config_candidate(string $s):array {
     $syntax=rp_syntax($s);
+    if(!$syntax['valid']){$keys=rp_key_normalization($s);if($keys['content']!==$s){$fixed=rp_config_candidate($keys['content']);rp_assert(rp_literal_signature($s)===rp_literal_signature($fixed['content']),'literal_values_changed');$count=count($keys['edits']);$additional=$fixed['insertions']??($fixed['kind']==='no_change'?0:1);$fixed['kind']='missing_known_key_quote';$fixed['line']=substr_count(substr($s,0,min(array_keys($keys['edits']))),"\n")+1;$fixed['insertions']=$count+$additional;return $fixed;}}
     if($syntax['valid']){rp_assert(rp_static_config($s),'nonliteral_configuration');return ['content'=>$s,'kind'=>'no_change','line'=>null];}
     $t=rp_tokens($s);$candidates=[];$sites=[];
     foreach($t as $i=>$token){
