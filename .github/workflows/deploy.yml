@@ -2,6 +2,11 @@ name: NeuroDelo CI/CD
 run-name: ${{ github.event_name == 'workflow_dispatch' && format('{0} {1}', inputs.operation, inputs.expected_revision) || format('Validate {0}', github.sha) }}
 
 on:
+  workflow_call:
+    inputs:
+      validation_only:
+        type: boolean
+        required: true
   pull_request:
     branches: [main]
   push:
@@ -68,7 +73,7 @@ jobs:
       - uses: shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea # v2
         with:
           php-version: '8.4'
-          extensions: pdo_mysql, mbstring
+          extensions: pdo_mysql, mbstring, tokenizer
           coverage: none
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -118,6 +123,8 @@ jobs:
     name: Publish approved main
     needs: validate
     if: >-
+      inputs.validation_only != true &&
+      vars.BOOTSTRAP_VERIFIED_RUN != '' && vars.BOOTSTRAP_VERIFIED_SHA != '' &&
       github.ref == 'refs/heads/main' &&
       ((vars.AUTOMATION_READY == 'true' && vars.BOOTSTRAP_VERIFIED_RUN != '' && vars.BOOTSTRAP_VERIFIED_SHA != '') ||
        (github.event_name == 'workflow_dispatch' && inputs.operation == 'bootstrap' &&

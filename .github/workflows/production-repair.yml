@@ -1,0 +1,72 @@
+name: One-time production blocker repair
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Inspect, prepare private backup, apply that exact plan, or rollback'
+        type: choice
+        options: [inspect, prepare, apply, status, rollback]
+        default: inspect
+      plan_id:
+        description: 'Unique lowercase plan ID; required except inspect'
+        type: string
+        required: false
+      expected_revision:
+        description: 'Reviewed main commit SHA (40 characters); required for writes'
+        type: string
+        required: false
+permissions:
+  contents: read
+  actions: read
+jobs:
+  validate:
+    uses: ./.github/workflows/deploy.yml
+    with:
+      validation_only: true
+  repair:
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production
+    concurrency:
+      group: spaceweb-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify reviewed revision before credentials become available
+        env:
+          OPERATION: ${{ inputs.operation }}
+          EXPECTED: ${{ inputs.expected_revision }}
+          REVISION: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "$OPERATION" != inspect ] && [ "$OPERATION" != status ]; then
+            [[ "$EXPECTED" =~ ^[a-f0-9]{40}$ ]] && [ "$EXPECTED" = "$REVISION" ]
+          fi
+          current=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          [ "$current" = "$REVISION" ]
+      - name: Run one-time plan without release or migration
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          OPERATION: ${{ inputs.operation }}
+          PLAN_ID: ${{ inputs.plan_id }}
+          REVISION: ${{ github.sha }}
+        run: python scripts/repair/client.py --operation "$OPERATION" --plan-id "$PLAN_ID" --revision "$REVISION" --report "$RUNNER_TEMP/repair-report.json"
+      - name: Store redacted verification evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: repair-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/repair-report.json
+          if-no-files-found: warn
+          retention-days: 14
