@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "nonce": "26bb9e7fcbb0f05561cc68709af9ff70",
+  "source_sha": "bfde48fd7810fb1b21d75fed4930f91d11a9e9f2",
+  "run_id": "40081444205",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40081444205",
+  "production_touched": false,
+  "read_only_host_probe": true,
+  "ssh_exit_code": 1,
+  "error_type": "RemoteFailure",
+  "error": "ssh_session_unavailable"
+}
