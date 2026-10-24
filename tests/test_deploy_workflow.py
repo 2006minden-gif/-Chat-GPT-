@@ -38,7 +38,7 @@ class DeploymentSafety(unittest.TestCase):
   for path in (ROOT/'.github/workflows').glob('*.yml'):
    workflow=yaml.load(path.read_text(),Loader=yaml.BaseLoader)
    for job in workflow['jobs'].values():
-    for step in job['steps']:
+    for step in job.get('steps',[]):
      if 'uses' in step:self.assertRegex(step['uses'],r'@[a-f0-9]{40}$')
  def test_auto_merge_uses_trusted_main_and_app_token(self):
   w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
@@ -51,7 +51,7 @@ class DeploymentSafety(unittest.TestCase):
   for path in (ROOT/'.github/workflows').glob('*.yml'):
    w=yaml.load(path.read_text(),Loader=yaml.BaseLoader)
    for job in w['jobs'].values():
-    for step in job['steps']:
+    for step in job.get('steps',[]):
      if 'run' in step:subprocess.run(['bash','-n'],input=step['run'],text=True,check=True)
 
 if __name__=='__main__':unittest.main()

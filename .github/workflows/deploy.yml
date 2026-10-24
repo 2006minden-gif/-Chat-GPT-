@@ -1,6 +1,11 @@
 name: NeuroDelo CI/CD
 
 on:
+  workflow_call:
+    inputs:
+      validation_only:
+        type: boolean
+        required: true
   pull_request:
     branches: [main]
   push:
@@ -99,6 +104,8 @@ jobs:
     name: Publish approved main
     needs: validate
     if: >-
+      inputs.validation_only != true &&
+      vars.BOOTSTRAP_VERIFIED_RUN != '' && vars.BOOTSTRAP_VERIFIED_SHA != '' &&
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       (vars.DEPLOY_PAUSED != 'true' ||
