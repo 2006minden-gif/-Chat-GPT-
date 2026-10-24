@@ -33,16 +33,21 @@ function rp_tokens(string $s):array {
     }return $tokens;
 }
 function rp_shape(string $s):array {
-    $tokens=rp_tokens($s);$balance=['square'=>0,'round'=>0,'curly'=>0];$nonliteral=[];$commaSites=0;$return=false;$repeated=0;
+    $tokens=rp_tokens($s);$balance=['square'=>0,'round'=>0,'curly'=>0];$nonliteral=[];$commaSites=0;$return=false;$repeated=0;$depth=0;$closed=false;$locations=[];
     foreach($tokens as $i=>$t){
         if($t['id']===null){foreach(['['=>['square',1],']'=>['square',-1],'('=>['round',1],')'=>['round',-1],'{'=>['curly',1],'}'=>['curly',-1]] as $char=>$v)if($t['text']===$char)$balance[$v[0]]+=$v[1];}
         if($t['id']===T_RETURN)$return=true;
+        if($return&&$t['id']===null){if($t['text']==='[')$depth++;if($t['text']===']'){$depth--;if($depth===0)$closed=true;}}
+        if($t['id']===T_STRING&&!in_array(strtolower($t['text']),['true','false','null','strict_types'],true)){
+            $prev=$tokens[$i-1]??[];$previous='other';if(($prev['id']??null)===T_CONSTANT_ENCAPSED_STRING)$previous='string_literal';elseif(($prev['id']??null)===T_DOUBLE_ARROW)$previous='assignment_arrow';elseif(in_array($prev['text']??'', [']',')'],true))$previous='array_close';elseif(($prev['text']??'')===';')$previous='semicolon';elseif(($prev['text']??'')===',')$previous='comma';
+            $locations[]=['after_return_array'=>$closed,'known_paste_marker'=>in_array($t['text'],['PHP','EOF'],true),'previous_kind'=>$previous,'followed_by_arrow'=>($tokens[$i+1]['id']??null)===T_DOUBLE_ARROW];
+        }
         if($t['id']===T_STRING&&!in_array(strtolower($t['text']),['true','false','null','strict_types'],true))$nonliteral['T_STRING']=($nonliteral['T_STRING']??0)+1;
         if(in_array($t['id'],[T_VARIABLE,T_ENCAPSED_AND_WHITESPACE,T_INLINE_HTML,T_STRING_VARNAME,T_NAME_FULLY_QUALIFIED,T_NAME_QUALIFIED],true)){$key=token_name($t['id']);$nonliteral[$key]=($nonliteral[$key]??0)+1;}
         if($i&&$t['text']===','&&$tokens[$i-1]['text']===',')$repeated++;
         if($i&&$t['id']===T_CONSTANT_ENCAPSED_STRING&&($tokens[$i+1]['id']??null)===T_DOUBLE_ARROW){$p=$tokens[$i-1];if(in_array($p['id'],[T_CONSTANT_ENCAPSED_STRING,T_LNUMBER,T_DNUMBER],true)||($p['id']===T_STRING&&in_array(strtolower($p['text']),['true','false','null'],true))||in_array($p['text'],[']',')'],true))$commaSites++;}
     }
-    $last=end($tokens);return ['line_count'=>substr_count($s,"\n")+1,'return_present'=>$return,'delimiter_balance'=>$balance,'nonliteral_token_counts'=>$nonliteral,'missing_comma_sites'=>$commaSites,'repeated_commas'=>$repeated,'ends_with_array_closer'=>$last&&in_array($last['text'],[']',')'],true)];
+    $last=end($tokens);return ['line_count'=>substr_count($s,"\n")+1,'return_present'=>$return,'delimiter_balance'=>$balance,'nonliteral_token_counts'=>$nonliteral,'nonliteral_locations'=>$locations,'missing_comma_sites'=>$commaSites,'repeated_commas'=>$repeated,'ends_with_array_closer'=>$last&&in_array($last['text'],[']',')'],true)];
 }
 function rp_literal_signature(string $s):string {
     // Scalar token spellings, flags, comments and whitespace remain byte-identical, not reserialized.
@@ -77,20 +82,25 @@ function rp_static_config(string $s):bool {
 function rp_config_candidate(string $s):array {
     $syntax=rp_syntax($s);
     if($syntax['valid']){rp_assert(rp_static_config($s),'nonliteral_configuration');return ['content'=>$s,'kind'=>'no_change','line'=>null];}
-    $t=rp_tokens($s);$candidates=[];
+    $t=rp_tokens($s);$candidates=[];$sites=[];
     foreach($t as $i=>$token){
         // Insert only a comma between a literal value and a subsequent array key. No quotes/values changed.
         if($i<1||$token['id']!==T_CONSTANT_ENCAPSED_STRING||($t[$i+1]['id']??null)!==T_DOUBLE_ARROW)continue;
         $previous=$t[$i-1];$isValue=in_array($previous['id'],[T_CONSTANT_ENCAPSED_STRING,T_LNUMBER,T_DNUMBER],true)
             ||($previous['id']===T_STRING&&in_array(strtolower($previous['text']),['true','false','null'],true))||in_array($previous['text'],[']',')'],true);
         if(!$isValue)continue;
-        $pos=$previous['end'];$candidate=substr($s,0,$pos).','.substr($s,$pos);
+        $pos=$previous['end'];$sites[$pos]=',';$candidate=substr($s,0,$pos).','.substr($s,$pos);
         if(rp_static_config($candidate)&&hash_equals(rp_literal_signature($s),rp_literal_signature($candidate)))$candidates[]=['content'=>$candidate,'kind'=>'missing_comma','line'=>substr_count(substr($s,0,$pos),"\n")+1];
     }
     $last=end($t);
     if($last&&in_array($last['text'],[']',')'],true)){
         $pos=$last['end'];$candidate=substr($s,0,$pos).';'.substr($s,$pos);
         if(rp_static_config($candidate)&&hash_equals(rp_literal_signature($s),rp_literal_signature($candidate)))$candidates[]=['content'=>$candidate,'kind'=>'missing_terminal_semicolon','line'=>substr_count(substr($s,0,$pos),"\n")+1];
+    }
+    if(!$candidates&&$sites&&count($sites)<=8){
+        if($last&&in_array($last['text'],[']',')'],true))$sites[$last['end']]=';';
+        krsort($sites);$candidate=$s;foreach($sites as $pos=>$char)$candidate=substr($candidate,0,$pos).$char.substr($candidate,$pos);
+        if(rp_static_config($candidate)&&hash_equals(rp_literal_signature($s),rp_literal_signature($candidate)))$candidates[]=['content'=>$candidate,'kind'=>'missing_array_separators','line'=>substr_count(substr($s,0,min(array_keys($sites))),"\n")+1,'insertions'=>count($sites)];
     }
     rp_assert(count($candidates)===1,'unique_literal_preserving_repair_not_found');return $candidates[0];
 }
@@ -119,7 +129,7 @@ function rp_htaccess_candidate(string $s):string {
 function rp_inspect(string $root):array {
     $config=rp_read($root.'/private/config.php');$syntax=rp_syntax($config);$candidate=null;
     try{$candidate=rp_config_candidate($config);}catch(RepairFailure $e){}
-    $out=['ok'=>true,'read_only'=>true,'php'=>PHP_VERSION,'configuration'=>['syntax_valid'=>$syntax['valid'],'error_type'=>$syntax['valid']?null:'ParseError','error_line'=>$syntax['line'],'error_category'=>$syntax['category']??null,'structure'=>rp_shape($config),'automatic_repair_available'=>$candidate!==null,'repair_kind'=>$candidate['kind']??null,'repair_line'=>$candidate['line']??null],'backup_copies'=>[]];
+    $out=['ok'=>true,'read_only'=>true,'php'=>PHP_VERSION,'configuration'=>['syntax_valid'=>$syntax['valid'],'error_type'=>$syntax['valid']?null:'ParseError','error_line'=>$syntax['line'],'error_category'=>$syntax['category']??null,'structure'=>rp_shape($config),'automatic_repair_available'=>$candidate!==null,'repair_kind'=>$candidate['kind']??null,'repair_line'=>$candidate['line']??null,'repair_insertions'=>$candidate===null?null:($candidate['insertions']??($candidate['kind']==='no_change'?0:1))],'backup_copies'=>[]];
     foreach(['~.htaccess','index~.html'] as $name){$path=$root.'/public_html/'.$name;$row=['exists'=>is_file($path),'symlink'=>is_link($path)];
         if($row['exists']&&!$row['symlink']){$data=@file_get_contents($path,false,null,0,65536);rp_assert(is_string($data),'backup_sample_unreadable');$row+=['bytes'=>filesize($path),'scan_complete'=>filesize($path)<=65536,'private_key_marker'=>(bool)preg_match('/-----BEGIN [^-]*PRIVATE KEY-----/',$data),'credential_assignment_marker'=>(bool)preg_match('/(?:password|secret|api_key)\s*[\x22\x27]?\s*(?:=>|=|:)/i',$data),'php_config_marker'=>str_contains($data,'db_password')];}
         $out['backup_copies'][$name]=$row;
@@ -188,7 +198,7 @@ function rp_preflight(string $configFile):array {
     return ['pdo'=>true,'database_version'=>$p->query('SELECT VERSION()')->fetchColumn(),'admin_exists'=>(bool)$p->query('SELECT id FROM nd_admin WHERE id=1')->fetchColumn(),'privacy_approved'=>($c['privacy_policy_approved']??false)===true];
 }
 function rp_summary(string $plan,array $m):array {
-    return ['ok'=>true,'plan_id'=>basename($plan),'state'=>$m['state'],'backup_verified'=>true,'recovery_verified'=>true,'repair_kind'=>$m['repair_kind'],'repair_line'=>$m['repair_line'],'literal_values_preserved'=>rp_literal_signature(rp_read(dirname(dirname($plan)).'/private/config.php'))===$m['scalar_signature'],'quarantined_copies'=>count($m['quarantined']??[]),'configuration_syntax_valid'=>rp_syntax(rp_read(dirname(dirname($plan)).'/private/config.php'))['valid']];
+    return ['ok'=>true,'plan_id'=>basename($plan),'state'=>$m['state'],'backup_verified'=>true,'recovery_verified'=>true,'repair_kind'=>$m['repair_kind'],'repair_line'=>$m['repair_line'],'repair_insertions'=>$m['repair_insertions'],'literal_values_preserved'=>rp_literal_signature(rp_read(dirname(dirname($plan)).'/private/config.php'))===$m['scalar_signature'],'quarantined_copies'=>count($m['quarantined']??[]),'configuration_syntax_valid'=>rp_syntax(rp_read(dirname(dirname($plan)).'/private/config.php'))['valid']];
 }
 function rp_prepare(string $root,string $id):array {
     rp_layout($root);$base=rp_base($root);rp_assert(!is_file($base.'/active.json'),'pending_repair_requires_resolution');
@@ -205,7 +215,7 @@ function rp_prepare(string $root,string $id):array {
     }
     rp_assert($files['config']['before']===hash('sha256',$config)&&$files['rules']['before']===hash('sha256',$rules),'source_changed_during_prepare');
     foreach(['config'=>$candidate['content'],'rules'=>$newRules] as $key=>$data){rp_assert(file_put_contents($plan.'/'.$key.'.next',$data,LOCK_EX)!==false,'candidate_write_failed');chmod($plan.'/'.$key.'.next',0600);$files[$key]['after']=hash('sha256',$data);}
-    $m=['schema'=>1,'rules_version'=>hash('sha256',rp_block()),'state'=>'prepared','files'=>$files,'quarantined'=>[],'repair_kind'=>$candidate['kind'],'repair_line'=>$candidate['line'],'scalar_signature'=>rp_literal_signature($config)];
+    $m=['schema'=>1,'rules_version'=>hash('sha256',rp_block()),'state'=>'prepared','files'=>$files,'quarantined'=>[],'repair_kind'=>$candidate['kind'],'repair_line'=>$candidate['line'],'repair_insertions'=>$candidate['insertions']??($candidate['kind']==='no_change'?0:1),'scalar_signature'=>rp_literal_signature($config)];
     rp_save($plan.'/manifest.json',$m);rp_save($base.'/active.json',['id'=>$id]);
     rp_manifest($plan);rp_assert(rp_static_config(rp_read($plan.'/config.next'))&&rp_literal_signature(rp_read($plan.'/config.next'))===$m['scalar_signature'],'literal_values_changed');
     $out=rp_summary($plan,$m);$out['candidate_preflight']=rp_preflight($plan.'/config.next');return $out;
