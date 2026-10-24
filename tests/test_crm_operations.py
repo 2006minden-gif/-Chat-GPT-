@@ -73,6 +73,7 @@ class CrmOperations(unittest.TestCase):
   employee=self.create('employees',name='Сотрудник',email=secrets.token_hex(8)+'@example.invalid',position='Разработчик')
   r=self.patch('employees/'+str(employee['id']),version=1,status='active');self.assertEqual(r.status_code,200,r.text)
   task=self.create('tasks',title='Сделать',project_id=int(pid),stage_id=int(stage['id']),assignee_employee_id=int(employee['id']),due_at='2020-01-01 00:00:00',priority='high')
+  self.assertEqual(self.get('tasks/'+str(task['id'])).json()['record']['project_name'],'Рабочий проект')
   other=self.create('projects',title='Другой',customer_id=int(a['id']))
   self.assertEqual(self.post('tasks',request_key=secrets.token_hex(32),title='Чужой этап',project_id=int(other['id']),stage_id=int(stage['id'])).status_code,422)
   for version,status in enumerate(['active','completed'],1):self.assertEqual(self.patch('stages/'+str(stage['id']),version=version,status=status).status_code,200)

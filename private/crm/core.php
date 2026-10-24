@@ -52,17 +52,18 @@ function crm_transition(string $kind,string $old,string $new):void{
  ];
  if($old!==$new&&isset($maps[$kind])&&!in_array($new,$maps[$kind][$old]??[],true))crm_fail(422,'Этот переход статуса недоступен.');
 }
+function crm_field_label(string $field):string{return ['name'=>'Имя','title'=>'Название','email'=>'Email','phone'=>'Телефон','telegram'=>'Telegram','kind'=>'Тип клиента','notes'=>'Заметки','description'=>'Описание','status'=>'Статус','customer_id'=>'Клиент','lead_id'=>'Заявка','deal_id'=>'Сделка','order_id'=>'Заказ','project_id'=>'Проект','stage_id'=>'Этап','position'=>'Должность или порядок этапа','estimated_amount'=>'Ожидаемая сумма','total_amount'=>'Сумма заказа','currency'=>'Валюта','owner_employee_id'=>'Ответственный','manager_employee_id'=>'Менеджер','assignee_employee_id'=>'Исполнитель','priority'=>'Приоритет','due_on'=>'Срок','due_at'=>'Срок','starts_on'=>'Дата начала','loss_reason'=>'Причина отказа'][$field]??'Значение';}
 function crm_values(string $kind,array $d,?array $old=null):array{
  $values=[];$fields=crm_models()[$kind];
  foreach($fields as $field){
   if(!array_key_exists($field,$d))continue;$v=$d[$field];
   if($v===null||$v===''){if(in_array($field,['email','phone','telegram','notes','description','position','due_on','due_at','starts_on','loss_reason','lead_id','owner_employee_id','manager_employee_id','assignee_employee_id','order_id','deal_id','estimated_amount'],true)){$values[$field]=null;continue;}}
   if(str_ends_with($field,'_id')||$field==='position'&&$kind==='stages'){
-   if(!is_int($v)||$v<1||$v>2147483647)crm_fail(422,'Поле '.$field.': выберите существующую запись.');
+   if(!is_int($v)||$v<1||$v>2147483647)crm_fail(422,crm_field_label($field).': выберите существующую запись.');
   }else{
-   if(!is_string($v)||!mb_check_encoding($v,'UTF-8')||mb_strlen($v)> (in_array($field,['description','notes'],true)?10000:($field==='loss_reason'?500:190)))crm_fail(422,'Поле '.$field.': проверьте длину и тип значения.');$v=trim($v);
+   if(!is_string($v)||!mb_check_encoding($v,'UTF-8')||mb_strlen($v)> (in_array($field,['description','notes'],true)?10000:($field==='loss_reason'?500:190)))crm_fail(422,crm_field_label($field).': проверьте длину и тип значения.');$v=trim($v);
   }
-  if(in_array($field,['name','title','email','total_amount','currency'],true)&&$v==='')crm_fail(422,'Поле '.$field.': заполните значение.');
+  if(in_array($field,['name','title','email','total_amount','currency'],true)&&$v==='')crm_fail(422,crm_field_label($field).': заполните значение.');
   if($field==='email'&&!filter_var($v,FILTER_VALIDATE_EMAIL))crm_fail(422,'Email: укажите корректный адрес.');
   if($field==='phone'&&(!preg_match('/^(?:\+7|8)[0-9]{10}$/D',preg_replace('/[\s()\-]/','',$v))))crm_fail(422,'Телефон: укажите номер РФ +7 или 8 и 10 цифр.');
   if($field==='telegram'&&!preg_match('/^@[A-Za-z][A-Za-z0-9_]{4,31}$/D',$v))crm_fail(422,'Telegram: укажите @username.');
@@ -75,7 +76,7 @@ function crm_values(string $kind,array $d,?array $old=null):array{
   $values[$field]=$v;
  }
  $row=array_replace($old??[],$values);
- if(!$old){foreach($kind==='customers'||$kind==='employees'?['name']:($kind==='stages'?['title','project_id','position']:['title']) as $required)if(empty($row[$required]))crm_fail(422,'Поле '.$required.': обязательно.');}
+ if(!$old){foreach($kind==='customers'||$kind==='employees'?['name']:($kind==='stages'?['title','project_id','position']:['title']) as $required)if(empty($row[$required]))crm_fail(422,crm_field_label($required).': обязательно.');}
  if($kind==='customers'&&empty($row['email'])&&empty($row['phone'])&&empty($row['telegram']))crm_fail(422,'Укажите email, телефон или Telegram клиента.');
  if($kind==='employees'&&empty($row['email']))crm_fail(422,'Email сотрудника обязателен.');
  if($old){foreach(['customer_id','project_id','deal_id','order_id','lead_id'] as $immutable)if(array_key_exists($immutable,$values)&&($values[$immutable]??null)!=($old[$immutable]??null))crm_fail(422,'Связь записи нельзя менять при редактировании.');if(isset($values['status']))crm_transition($kind,$old['status'],$values['status']);}
