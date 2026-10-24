@@ -7,7 +7,7 @@ import urllib.error
 import urllib.request
 
 DENIED_PATHS=['/~.htaccess','/index~.html','/.htaccess','/private/config.php','/index.html','/crm.html']
-ASSET_PATHS=['/styles.css','/crm.css','/script.js','/crm.js','/api-client.js']
+ASSET_PATHS=['/styles.css','/crm.css','/script.js','/crm.js','/api-client.js','/customer.js','/customer.css','/customer-owner.js']
 PATHS=['/','/studio.php','/api.php?r=privacy','/privacy.php','/api.php?r=session','/api.php?r=leads']+DENIED_PATHS+ASSET_PATHS
 
 def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen):

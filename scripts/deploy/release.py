@@ -28,16 +28,19 @@ def policy_check(root=ROOT):
         if entry['automatic']:
             sql = re.sub(r'^--[^\n]*$', '', (folder / 'up.sql').read_text(), flags=re.M)
             statements = [s.strip() for s in sql.split(';') if s.strip()]
-            # Narrow automatic contract: only the tested, additive Stage 3 operator.
-            if version != '004_crm_foundation' or entry['kind'] != 'additive' or not statements:
+            # Explicitly supported additive operators; execution flags remain false until release approval.
+            if version not in {'004_crm_foundation':12,'005_customer_auth':5} or entry['kind'] != 'additive' or not statements:
                 raise ValueError('automatic_migration_not_supported')
             if any(not re.fullmatch(r'CREATE TABLE nd_[a-z_]+\s*\([\s\S]+\)\s*ENGINE=InnoDB[\s\S]*', s) for s in statements):
                 raise ValueError('destructive_or_unreviewed_migration')
+            if len(statements)!={'004_crm_foundation':12,'005_customer_auth':5}[version]:raise ValueError('automatic_migration_not_supported')
         if not isinstance(entry['automatic'], bool) or not isinstance(entry['required'], bool):
             raise ValueError('invalid_migration_flags')
     discovered = list((root / 'database/migrations').glob('*/up.sql'))
     if discovered and not all((root / p).is_file() for p in ['scripts/migrate.php', 'tests/test_crm_migrations.py', 'tests/test_prelaunch_foundation.py']):
         raise ValueError('migration_compatibility_tests_missing')
+    if (root / 'database/migrations/005_customer_auth/up.sql').exists() and not all((root / p).is_file() for p in ['scripts/migrate-customer.php','tests/test_customer_auth.py','tests/test_customer_migrations.py']):
+        raise ValueError('customer_auth_migration_tests_missing')
     return policy
 
 def build(output, revision, root=ROOT):
@@ -62,7 +65,8 @@ def build(output, revision, root=ROOT):
         if not re.fullmatch(r'database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)',path):
             raise ValueError('unapproved_sql_file_path')
         copy(source,path,tools)
-    if (root / 'scripts/migrate.php').is_file():copy(root / 'scripts/migrate.php','scripts/migrate.php',tools)
+    for runner in ['scripts/migrate.php','scripts/migrate-customer.php']:
+        if (root / runner).is_file():copy(root / runner,runner,tools)
     manifest = {'schema_version':1,'revision':revision,'files':files,'tools':tools,
                 'keep_backups':policy['keep_backups'],'migrations':policy['migrations'],
                 'verification_contract':'ci-mysql57-backup-restore-v1'}

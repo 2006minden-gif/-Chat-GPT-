@@ -1,7 +1,47 @@
 {
   "schema_version": 1,
-  "public_files": [".htaccess", "api-client.js", "api.php", "crm.css", "crm.html", "crm.js", "index.html", "index.php", "privacy.php", "script.js", "studio.php", "styles.css"],
-  "private_files": [".htaccess", "app.php"],
+  "public_files": [
+    ".htaccess",
+    "api-client.js",
+    "api.php",
+    "crm.css",
+    "crm.html",
+    "crm.js",
+    "index.html",
+    "index.php",
+    "privacy.php",
+    "script.js",
+    "studio.php",
+    "styles.css",
+    "customer.php",
+    "customer-api.php",
+    "customer.js",
+    "customer.css",
+    "customer-owner.js"
+  ],
+  "private_files": [
+    ".htaccess",
+    "app.php",
+    "customer-auth.php",
+    "customer-mail.php"
+  ],
   "keep_backups": 3,
-  "migrations": []
+  "migrations": [
+    {
+      "version": "004_crm_foundation",
+      "kind": "additive",
+      "automatic": false,
+      "required": false,
+      "up_sha256": "93350e4b176cb624af35c41f84c6082e37f339c778c739ec464afa8837bd2d75",
+      "down_sha256": "b8938b981b6231c728b9927a8d5d6552ec376ae938b604f0dbaa124f9ea05462"
+    },
+    {
+      "version": "005_customer_auth",
+      "kind": "additive",
+      "automatic": false,
+      "required": false,
+      "up_sha256": "66ec8e4ce06759df5c6ed91c7f1e5ae55872a49c885f7d820eeecb97c452d32a",
+      "down_sha256": "dc0ce90b90b0b9a853ff8834c1cfbdc6a10bc77cca0465e11673eabaaff17a11"
+    }
+  ]
 }
