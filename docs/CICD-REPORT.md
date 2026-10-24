@@ -1,5 +1,7 @@
 # NeuroDelo — CI/CD и проверка доступа GitHub
 
+> Актуальные результаты GitHub Actions, штатный GITHUB_TOKEN вместо обязательного App и подтверждённые блокировки: [AUTOMATION-VERIFICATION.md](AUTOMATION-VERIFICATION.md). Противоречащие этому отчёту сведения ниже описывают прежнее состояние.
+
 Дата: 24.10.2026. Ветка `ci/automatic-spaceweb` от main `977170a`. Коммиты: `c7bba43` — utf8mb4 test helper; `484c136` — автоматический CI/CD/agent/recovery/governance; `6abbd8c` — hardened bootstrap/backup, тесты и инструкция; данный отчёт отдельным документационным коммитом.
 
 ## Итог
