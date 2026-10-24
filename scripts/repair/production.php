@@ -60,9 +60,34 @@ function rp_key_normalization(string $s):array {
     rp_assert(count($edits)<=2,'ambiguous_key_quotes');$content=$s;krsort($edits);foreach($edits as $pos=>$char)$content=substr($content,0,$pos).$char.substr($content,$pos);
     return ['content'=>$content,'edits'=>$edits];
 }
+function rp_single_value_bytes(string $raw):string {
+    $out='';for($i=0;$i<strlen($raw);$i++){
+        if($raw[$i]==='\\'&&isset($raw[$i+1])&&in_array($raw[$i+1],['\\',"'"],true))$out.=$raw[++$i];else$out.=$raw[$i];
+    }return $out;
+}
+function rp_value_normalization(string $s):array {
+    $known=['db_password','setup_key','privacy_policy_version','app_url','db_host','db_name','db_user'];
+    $tokens=rp_tokens($s);$offsets=[];foreach($tokens as $i=>$t)if($t['id']===T_CONSTANT_ENCAPSED_STRING&&($tokens[$i+1]['id']??null)===T_DOUBLE_ARROW)$offsets[$t['offset']]=true;
+    $offset=0;$edits=[];$proofs=[];$lineNumber=1;
+    foreach(explode("\n",$s) as $line){
+        if(preg_match("/^([ \\t]*)'([a-z_]+)'([ \\t]*=>[ \\t]*')([^\\r\\n]*)('[ \\t]*,?[ \\t]*)$/D",$line,$m)&&in_array($m[2],$known,true)&&isset($offsets[$offset+strlen($m[1])])&&!str_contains($m[4],'=>')){
+            $raw=$m[4];$escaped='';$added=0;
+            for($j=0;$j<strlen($raw);$j++){
+                if($raw[$j]==='\\'&&isset($raw[$j+1])&&in_array($raw[$j+1],['\\',"'"],true)){$escaped.=$raw[$j].$raw[++$j];continue;}
+                if($raw[$j]==="'"){$escaped.='\\';$added++;}$escaped.=$raw[$j];
+            }
+            if($added){$start=$offset+strlen($m[1])+strlen($m[2])+2+strlen($m[3]);$edits[]=['start'=>$start,'length'=>strlen($raw),'replacement'=>$escaped,'line'=>$lineNumber,'insertions'=>$added];$proofs[$m[2]]=hash('sha256',rp_single_value_bytes($raw));}
+        }
+        $offset+=strlen($line)+1;$lineNumber++;
+    }
+    // Only one complete, standalone declaration may need escaping; never infer absent delimiters.
+    rp_assert(count($edits)<=1,'ambiguous_string_quotes');$content=$s;
+    foreach(array_reverse($edits) as $edit)$content=substr($content,0,$edit['start']).$edit['replacement'].substr($content,$edit['start']+$edit['length']);
+    return ['content'=>$content,'edits'=>$edits,'proofs'=>$proofs];
+}
 function rp_literal_signature(string $s):string {
     // Scalar token spellings, flags, comments and whitespace remain byte-identical, not reserialized.
-    $s=rp_key_normalization($s)['content'];$out=[];foreach(token_get_all($s) as $t)if(is_array($t))$out[]=[$t[0],$t[1]];
+    $s=rp_value_normalization(rp_key_normalization($s)['content'])['content'];$out=[];foreach(token_get_all($s) as $t)if(is_array($t))$out[]=[$t[0],$t[1]];
     return hash('sha256',serialize($out));
 }
 function rp_static_config(string $s):bool {
@@ -93,6 +118,7 @@ function rp_static_config(string $s):bool {
 function rp_config_candidate(string $s):array {
     $syntax=rp_syntax($s);
     if(!$syntax['valid']){$keys=rp_key_normalization($s);if($keys['content']!==$s){$fixed=rp_config_candidate($keys['content']);rp_assert(rp_literal_signature($s)===rp_literal_signature($fixed['content']),'literal_values_changed');$count=count($keys['edits']);$additional=$fixed['insertions']??($fixed['kind']==='no_change'?0:1);$fixed['kind']='missing_known_key_quote';$fixed['line']=substr_count(substr($s,0,min(array_keys($keys['edits']))),"\n")+1;$fixed['insertions']=$count+$additional;return $fixed;}}
+    if(!$syntax['valid']){$values=rp_value_normalization($s);if($values['content']!==$s){$fixed=rp_config_candidate($values['content']);rp_assert(rp_literal_signature($s)===rp_literal_signature($fixed['content']),'literal_values_changed');$additional=$fixed['insertions']??($fixed['kind']==='no_change'?0:1);$fixed['kind']='escape_existing_single_quote';$fixed['line']=$values['edits'][0]['line'];$fixed['insertions']=$values['edits'][0]['insertions']+$additional;return $fixed;}}
     if($syntax['valid']){rp_assert(rp_static_config($s),'nonliteral_configuration');return ['content'=>$s,'kind'=>'no_change','line'=>null];}
     $t=rp_tokens($s);$candidates=[];$sites=[];
     foreach($t as $i=>$token){
@@ -198,9 +224,9 @@ function rp_atomic(string $path,string $data,string $id,int $mode,?string $expec
     } finally {if(is_resource($f))fclose($f);if(is_file($tmp)&&!is_link($tmp))unlink($tmp);}
 }
 
-function rp_preflight(string $configFile):array {
+function rp_preflight(string $configFile,array $valueProofs=[]):array {
     rp_assert(rp_static_config(rp_read($configFile)),'nonliteral_configuration');
-    $c=require $configFile;rp_assert(is_array($c),'invalid_configuration');
+    $c=require $configFile;rp_assert(is_array($c),'invalid_configuration');foreach($valueProofs as $key=>$hash)rp_assert(isset($c[$key])&&is_string($c[$key])&&hash('sha256',$c[$key])===$hash,'declared_secret_bytes_changed');
     foreach(['db_host','db_name','db_user','db_password','app_url'] as $key)rp_assert(isset($c[$key])&&is_string($c[$key]),'invalid_configuration');
     rp_assert(rtrim($c['app_url'],'/')==='https://neurodelo.pro'||(getenv('NEURO_REPAIR_TEST')==='1'&&str_starts_with($configFile,sys_get_temp_dir().'/')&&str_starts_with($c['app_url'],'http://127.0.0.1:')),'unexpected_application_url');
     if(getenv('NEURO_REPAIR_TEST_FAKE_PDO')==='1'&&getenv('NEURO_REPAIR_TEST')==='1'&&str_starts_with($configFile,sys_get_temp_dir().'/'))return ['pdo'=>true,'synthetic'=>true,'privacy_approved'=>($c['privacy_policy_approved']??false)===true];
@@ -227,10 +253,10 @@ function rp_prepare(string $root,string $id):array {
     }
     rp_assert($files['config']['before']===hash('sha256',$config)&&$files['rules']['before']===hash('sha256',$rules),'source_changed_during_prepare');
     foreach(['config'=>$candidate['content'],'rules'=>$newRules] as $key=>$data){rp_assert(file_put_contents($plan.'/'.$key.'.next',$data,LOCK_EX)!==false,'candidate_write_failed');chmod($plan.'/'.$key.'.next',0600);$files[$key]['after']=hash('sha256',$data);}
-    $m=['schema'=>1,'rules_version'=>hash('sha256',rp_block()),'state'=>'prepared','files'=>$files,'quarantined'=>[],'repair_kind'=>$candidate['kind'],'repair_line'=>$candidate['line'],'repair_insertions'=>$candidate['insertions']??($candidate['kind']==='no_change'?0:1),'scalar_signature'=>rp_literal_signature($config)];
+    $m=['schema'=>1,'rules_version'=>hash('sha256',rp_block()),'state'=>'prepared','files'=>$files,'quarantined'=>[],'repair_kind'=>$candidate['kind'],'repair_line'=>$candidate['line'],'repair_insertions'=>$candidate['insertions']??($candidate['kind']==='no_change'?0:1),'value_proofs'=>rp_value_normalization(rp_key_normalization($config)['content'])['proofs'],'scalar_signature'=>rp_literal_signature($config)];
     rp_save($plan.'/manifest.json',$m);rp_save($base.'/active.json',['id'=>$id]);
     rp_manifest($plan);rp_assert(rp_static_config(rp_read($plan.'/config.next'))&&rp_literal_signature(rp_read($plan.'/config.next'))===$m['scalar_signature'],'literal_values_changed');
-    $out=rp_summary($plan,$m);$out['candidate_preflight']=rp_preflight($plan.'/config.next');return $out;
+    $out=rp_summary($plan,$m);$out['candidate_preflight']=rp_preflight($plan.'/config.next',$m['value_proofs']);return $out;
 }
 function rp_probes(string $id):array {
     return ['.nd-repair-'.$id.'.tmp','nd-repair-'.$id.'.bak','.nd-repair-'.$id.'/probe.txt'];
@@ -258,7 +284,7 @@ function rp_apply(string $root,string $id):array {
     rp_assert(rp_static_config(rp_read($plan.'/config.next'))&&rp_literal_signature(rp_read($plan.'/config.next'))===$m['scalar_signature'],'literal_values_changed');
     foreach(rp_probes($id) as $probe)rp_assert(!file_exists($root.'/public_html/'.$probe)&&!is_link($root.'/public_html/'.$probe),'probe_collision');
     rp_assert(!file_exists($root.'/public_html/.nd-repair-'.$id)&&!is_link($root.'/public_html/.nd-repair-'.$id),'probe_collision');
-    $preflight=rp_preflight($plan.'/config.next');$m['state']='applying';rp_save($plan.'/manifest.json',$m);
+    $preflight=rp_preflight($plan.'/config.next',$m['value_proofs']);$m['state']='applying';rp_save($plan.'/manifest.json',$m);
     try{
         rp_assert(mkdir($plan.'/quarantine',0700),'quarantine_directory_failed');
         foreach(['copy_rules','copy_index'] as $key)if(isset($m['files'][$key])){
@@ -266,7 +292,7 @@ function rp_apply(string $root,string $id):array {
         }
         foreach(['rules','config'] as $key){rp_atomic($root.'/'.$fixed[$key],rp_read($plan.'/'.$key.'.next'),$id,$m['files'][$key]['mode'],$m['files'][$key]['before']);rp_assert(rp_file_hash($root.'/'.$fixed[$key])===$m['files'][$key]['after'],'applied_integrity_failed');}
         rp_assert(rp_static_config(rp_read($root.'/private/config.php'))&&rp_literal_signature(rp_read($root.'/private/config.php'))===$m['scalar_signature'],'literal_values_changed');
-        $live=rp_preflight($root.'/private/config.php');
+        $live=rp_preflight($root.'/private/config.php',$m['value_proofs']);
         rp_assert(mkdir($root.'/public_html/.nd-repair-'.$id,0755),'probe_directory_failed');
         foreach(rp_probes($id) as $relative){$p=$root.'/public_html/'.$relative;rp_assert(!file_exists($p)&&!is_link($p),'probe_collision');rp_atomic($p,'NEURODELO_SYNTHETIC_SECURITY_PROBE',$id,0644);}
         $m['state']='applied';rp_save($plan.'/manifest.json',$m);$out=rp_summary($plan,$m);$out['preflight']=$live;$out['http_confirmation_required']=true;return $out;
@@ -278,7 +304,7 @@ function rp_confirm(string $root,string $id,array $receipt):array {
     $expected=['/~.htaccess','/index~.html','/'.rp_probes($id)[0],'/'.rp_probes($id)[1],'/'.rp_probes($id)[2]];
     foreach($expected as $url)foreach(['GET','HEAD'] as $method)rp_assert(in_array($receipt['protection'][$url][$method]??0,[403,404],true),'backup_url_not_protected');
     foreach(['config'=>'private/config.php','rules'=>'public_html/.htaccess'] as $key=>$path)rp_assert(hash('sha256',rp_read($root.'/'.$path))===$m['files'][$key]['after'],'applied_file_changed');
-    rp_assert(rp_literal_signature(rp_read($root.'/private/config.php'))===$m['scalar_signature'],'literal_values_changed');rp_preflight($root.'/private/config.php');rp_clean_probes($root,$id);
+    rp_assert(rp_literal_signature(rp_read($root.'/private/config.php'))===$m['scalar_signature'],'literal_values_changed');rp_preflight($root.'/private/config.php',$m['value_proofs']);rp_clean_probes($root,$id);
     $m['state']='confirmed';$m['keep_verified_rules']=true;rp_save($plan.'/manifest.json',$m);rp_save($plan.'/http-receipt.json',$receipt);$base=dirname($plan);
     rp_assert(rp_json($base.'/active.json')['id']===$id,'active_plan_changed');unlink($base.'/active.json');$out=rp_summary($plan,$m);$out['healthy']=true;return $out;
 }

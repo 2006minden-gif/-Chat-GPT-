@@ -31,6 +31,16 @@ class RepairSyntax(unittest.TestCase):
  def test_key_quote_fix_never_guesses_a_corrupted_secret_value(self):
   s="<?php return ['db_password'=>'SYNTHETIC'fragment','privacy_policy_approved'=>false];"
   self.assertTrue(self.helper("try{rp_config_candidate($v);echo 'false';}catch(RepairFailure $e){echo 'true';}",s))
+ def test_escape_preserves_declared_string_bytes_in_native_php(self):
+  import hashlib
+  s="<?php\nreturn [\n 'db_password' => 'SYNTH'fragment',\n 'privacy_policy_approved'=>false,\n];"
+  d=self.helper("$c=rp_config_candidate($v);$tmp=tempnam(sys_get_temp_dir(),'repair-value-');try{file_put_contents($tmp,$c['content']);$config=require $tmp;echo json_encode(['kind'=>$c['kind'],'insertions'=>$c['insertions'],'hash'=>hash('sha256',$config['db_password']),'flag'=>$config['privacy_policy_approved']]);}finally{unlink($tmp);}",s)
+  self.assertEqual(d,{'kind':'escape_existing_single_quote','insertions':1,'hash':hashlib.sha256(b"SYNTH'fragment").hexdigest(),'flag':False})
+ def test_quote_escaping_refuses_multiple_declarations_and_keeps_valid_escapes(self):
+  s="<?php\nreturn [\n 'setup_key' => 'SYNTH'fragment', 'privacy_policy_version'=>'v1',\n];"
+  self.assertTrue(self.helper("try{rp_config_candidate($v);echo 'false';}catch(RepairFailure $e){echo 'true';}",s))
+  valid="<?php\nreturn [\n 'db_password' => 'SYNTH\\'existing',\n];"
+  self.assertTrue(self.helper("echo json_encode(rp_value_normalization($v)['content']===$v);",valid))
  def test_valid_config_is_unchanged(self):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false];"
   self.assertTrue(self.helper("$c=rp_config_candidate($v);echo json_encode($v===$c['content']);",s))
