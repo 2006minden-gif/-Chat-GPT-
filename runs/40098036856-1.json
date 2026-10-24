@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "source_sha": "af94761841cb6f6aaa1cbb0e9ee0d0c52e4d81f9",
+  "nonce": "1bbac365474460bc5bb132ae1f265796",
+  "run_id": "40098036856",
+  "production_touched": false,
+  "issue10_inspection": true,
+  "php_capabilities": {
+    "ok": true,
+    "tokenizer": true,
+    "extension_dir": "/usr/lib64/php8.4/lib/extensions/no-debug-non-zts-20240924",
+    "module_exists": false
+  },
+  "error": "remote_operation_failed",
+  "safe_diagnostic": {
+    "ok": false,
+    "error": "file_read_or_size_failed",
+    "type": "RepairFailure"
+  }
+}
