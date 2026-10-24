@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "nonce": "f884abe4a3601c4bc80fd86af7e06ab3",
+  "source_sha": "d919dffd780b3a194f77a11b3e4b412e68e67401",
+  "run_id": "40080134474",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40080134474",
+  "production_touched": false,
+  "read_only_host_probe": true,
+  "error_type": "RemoteFailure",
+  "error": "php84_cli_not_found"
+}
