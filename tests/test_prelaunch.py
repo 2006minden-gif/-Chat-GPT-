@@ -17,7 +17,7 @@ class Prelaunch(unittest.TestCase):
   if not dsn.startswith('mysql:host=127.0.0.1;port=') or ';dbname=' in dsn:
    raise RuntimeError('Provide a loopback-only NEURO_TEST_DSN without a database name; never use production credentials')
   cls.dbname='neuro_test_'+secrets.token_hex(8)
-  cls.dbargs={'dsn':dsn,'user':os.environ.get('NEURO_TEST_USER','root'),'password':os.environ.get('NEURO_TEST_PASSWORD','')}
+  cls.dbargs={'dsn':dsn+';charset=utf8mb4','user':os.environ.get('NEURO_TEST_USER','root'),'password':os.environ.get('NEURO_TEST_PASSWORD','')}
   cls.tmp=tempfile.TemporaryDirectory();cls.path=Path(cls.tmp.name)
   for name in ['public','private','database','tests','scripts']:shutil.copytree(ROOT/name,cls.path/name,ignore=shutil.ignore_patterns('config.php','__pycache__'))
   cls.password=secrets.token_urlsafe(24)
@@ -31,7 +31,7 @@ class Prelaunch(unittest.TestCase):
    cls.config.update(privacy_policy_approved=True,privacy_policy_version='test-policy-v1')
    (cls.path/'private/privacy-policy.txt').write_text('SYNTHETIC TEST FIXTURE ONLY. Not a legal policy.')
   cls.write_config()
-  cls.log=(cls.path/'server.log').open('w');cls.proc=subprocess.Popen([cls.php,'-S','127.0.0.1:'+str(cls.port),'-t',str(cls.path/'public'),str(cls.path/'tests/router.php')],stdout=cls.log,stderr=cls.log)
+  cls.log=(cls.path/'server.log').open('w');cls.proc=subprocess.Popen([cls.php,'-d','opcache.enable=0','-d','opcache.enable_cli=0','-S','127.0.0.1:'+str(cls.port),'-t',str(cls.path/'public'),str(cls.path/'tests/router.php')],stdout=cls.log,stderr=cls.log)
   for _ in range(100):
    try:requests.get(cls.base,timeout=1);break
    except requests.ConnectionError:time.sleep(.1)

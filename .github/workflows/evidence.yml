@@ -1,0 +1,28 @@
+name: Record Git-readable automation evidence
+on:
+  workflow_run:
+    workflows: ['NeuroDelo CI/CD', 'Enable approved auto-merge']
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  record:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    concurrency:
+      group: neurodelo-control-evidence
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Export metadata and safe main deployment evidence without PR execution
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/github/evidence.py

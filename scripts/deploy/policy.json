@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "public_files": [".htaccess", "api-client.js", "api.php", "crm.css", "crm.html", "crm.js", "index.html", "index.php", "privacy.php", "script.js", "studio.php", "styles.css"],
+  "private_files": [".htaccess", "app.php"],
+  "keep_backups": 3,
+  "migrations": []
+}
