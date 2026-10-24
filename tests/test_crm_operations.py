@@ -144,6 +144,8 @@ class CrmOperations(unittest.TestCase):
    page.locator('#create').click();page.locator('[name=name]').fill('Несохранённый черновик');page.locator('[name=email]').fill('draft@example.invalid')
    page.route('**/api.php?r=crm/customers',lambda r:r.fulfill(status=200,content_type='text/html',body='<html>unrelated response</html>') if r.request.method=='POST' else r.continue_())
    page.locator('#save').click();page.wait_for_function("() => document.querySelector('#form-message').textContent.includes('неожиданный')");self.assertEqual(page.locator('[name=name]').input_value(),'Несохранённый черновик');page.unroute('**/api.php?r=crm/customers')
+   page.route('**/api.php?r=crm/customers',lambda route:route.fulfill(status=401,content_type='application/json',body='{"detail":"Войдите в CRM"}') if route.request.method=='POST' else route.continue_())
+   page.locator('#save').click();page.wait_for_selector('#editor[open]',state='hidden');page.locator('#owner-password').fill(self.f.password);page.locator('#login-form button').click();page.wait_for_selector('#editor[open]');self.assertEqual(page.locator('[name=name]').input_value(),'Несохранённый черновик');page.unroute('**/api.php?r=crm/customers')
    pending=[]
    page.route('**/api.php?r=crm/customers',lambda route:pending.append(route) if route.request.method=='POST' else route.continue_())
    page.locator('#save').click();page.wait_for_function("() => document.querySelector('#save').disabled")
