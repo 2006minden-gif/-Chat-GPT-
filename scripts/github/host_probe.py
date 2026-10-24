@@ -11,13 +11,25 @@ remote=None
 try:
  remote=Remote(Path('.'),revision,'readonly-probe')
  # Select a PHP 8.4 CLI from known executable names, without changing server configuration.
- candidates=[remote.php,'php8.4','php84','/usr/local/bin/php8.4','/usr/local/php84/bin/php']
  import shlex
- command='for b in '+shlex.join(candidates)+'; do if command -v "$b" >/dev/null 2>&1; then v=$("$b" -r \'echo PHP_VERSION_ID;\' 2>/dev/null) || continue; if [ "$v" -ge 80400 ] 2>/dev/null; then printf \'%s\\n\' "$b"; exit 0; fi; fi; done; exit 1'
- r=subprocess.run(remote.ssh+[remote.target,command],capture_output=True,text=True,timeout=30)
- if r.returncode:raise RemoteFailure('php84_cli_not_found')
+ command="""set -u
+candidates=$( { command -v php 2>/dev/null || true; find /usr/bin /usr/local /opt -maxdepth 6 -type f -name 'php' 2>/dev/null || true; } | sort -u)
+selected=''
+fallback=''
+for b in $candidates; do
+ v=$("$b" -r 'echo PHP_VERSION_ID;' 2>/dev/null) || continue
+ case "$v" in ''|*[!0-9]*) continue;; esac
+ if [ "$v" -ge 80400 ]; then selected="$b"; break; fi
+ if [ "$v" -ge 70400 ]; then fallback="$b"; fi
+done
+if [ -n "$selected" ]; then printf '%s\n' "$selected"; elif [ -n "$fallback" ]; then printf '%s\n' "$fallback"; else exit 1; fi
+"""
+ r=subprocess.run(remote.ssh+[remote.target,command],capture_output=True,text=True,timeout=45)
+ if r.returncode:raise RemoteFailure('readable_php_cli_not_found')
  php=r.stdout.strip()
- if php not in candidates:raise RemoteFailure('unexpected_php_command')
+ import re
+ if not re.fullmatch(r'/[A-Za-z0-9_./+-]+',php):raise RemoteFailure('unexpected_php_command')
+ report['diagnostic_php_binary']=php
  script=Path('scripts/deploy/readonly-probe.php').read_text()
  r=subprocess.run(remote.ssh+[remote.target,shlex.join([php,'/dev/stdin'])],input=script,capture_output=True,text=True,timeout=45)
  if r.returncode:raise RemoteFailure('readonly_probe_failed')
