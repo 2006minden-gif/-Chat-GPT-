@@ -8,6 +8,9 @@ plan=json.loads(Path('.github/control-plan.json').read_text());revision=os.envir
 report={'schema_version':1,'nonce':plan['nonce'],'source_sha':revision,'run_id':os.environ['GITHUB_RUN_ID'],
  'run_url':'https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/'+os.environ['GITHUB_RUN_ID'],'production_touched':False,'read_only_host_probe':True}
 remote=None
+report['secret_presence']={name:bool(os.environ.get(name,'')) for name in ['SSH_HOST','SSH_PORT','SSH_USER','DEPLOY_PATH','SSH_PRIVATE_KEY','SSH_KNOWN_HOSTS']}
+import health
+report['public_health']=health.snapshot()
 try:
  remote=Remote(Path('.'),revision,'readonly-probe')
  # Select a PHP 8.4 CLI from known executable names, without changing server configuration.
