@@ -99,6 +99,11 @@ def protection_payload(old):
 
 def set_variable(base,name,value):
     current=api('GET',base+'/actions/variables/'+name,missing=True)
+    # GitHub rejects empty variable values. Removing a temporary grant clears it.
+    if value == '':
+        if current:
+            api('DELETE',base+'/actions/variables/'+name)
+        return
     api('PATCH' if current else 'POST',base+'/actions/variables/'+name if current else base+'/actions/variables',{'name':name,'value':value})
 
 def verify_environment(base,environment):
