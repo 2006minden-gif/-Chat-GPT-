@@ -2,7 +2,7 @@
 /** Read-only diagnostic; no setup, schema writes, file changes, passwords or raw log lines. */
 if (PHP_SAPI!=='cli') {http_response_code(404);exit;}
 ini_set('display_errors','0');
-$root='/home/n/neurodepro';$out=array('read_only'=>true,'php'=>PHP_VERSION,'files'=>array());
+$root='/home/n/neurodepro';$out=array('read_only'=>true,'php'=>PHP_VERSION,'files'=>array(),'extensions'=>array('pdo_mysql'=>extension_loaded('pdo_mysql'),'mbstring'=>extension_loaded('mbstring')));
 foreach(array('public_html/.htaccess','public_html/privacy.php','public_html/api.php','private/app.php','private/config.php') as $path){
  $full=$root.'/'.$path;$out['files'][$path]=array('exists'=>is_file($full),'readable'=>is_readable($full));
  if(is_file($full)&&is_readable($full)&&$path!=='private/config.php')$out['files'][$path]['sha256']=hash_file('sha256',$full);
