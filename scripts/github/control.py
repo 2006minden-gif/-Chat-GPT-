@@ -34,7 +34,9 @@ def safe_api_probe(token):
         return 'direct_http_'+str(error.code)
     except urllib.error.URLError:
         return 'direct_transport_failure'
-    except (OSError,ValueError):
+    except ValueError:
+        return 'direct_invalid_request_or_header'
+    except OSError:
         return 'direct_connection_failure'
 
 def api(method, path, payload=None, missing=False):
@@ -43,6 +45,12 @@ def api(method, path, payload=None, missing=False):
     runenv=None
     if method=='POST' and path=='repos/'+REPO+'/actions/workflows/deploy.yml/dispatches' and os.environ.get('GITHUB_DISPATCH_TOKEN'):
         runenv=dict(os.environ,GH_TOKEN=os.environ['GITHUB_DISPATCH_TOKEN'])
+    # Pasted GitHub Actions secrets may contain leading/trailing whitespace/newlines.
+    # Normalize a local copy before invoking gh; never print or persist the token.
+    if runenv is None:
+        runenv=dict(os.environ)
+    if 'GH_TOKEN' in runenv:
+        runenv['GH_TOKEN']=runenv['GH_TOKEN'].strip()
     r=subprocess.run(command,input=json.dumps(payload) if payload is not None else None,capture_output=True,text=True,timeout=45,env=runenv)
     if r.returncode:
         # Never expose gh stderr/headers: they can contain URLs, tokens or sensitive context.
