@@ -70,6 +70,7 @@ class ReleaseFilesTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as tmp:
    bundle=Path(tmp)/'release';m=release.build(bundle,'a'*40)
    self.assertEqual(len(m['files']),14);client.validate_bundle(bundle,'a'*40)
+   self.assertIn('database/schema.sql',m['tools']);self.assertTrue(all(not p.startswith('public_html/') for p in m['tools'] if p.endswith('.sql')))
    self.assertNotIn('private/config.php',str(m));self.assertNotIn('setup.php',str(m))
    (bundle/'private/app.php').write_text('tampered')
    with self.assertRaises(ValueError):client.validate_bundle(bundle,'a'*40)
@@ -96,6 +97,8 @@ class RemoteFilesystemTests(unittest.TestCase):
   for folder in ['public_html','private','.neurodelo-deploy/incoming']:(self.root/folder).mkdir(parents=True,exist_ok=True)
   self.id='release0';self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id
   self.manifest=release.build(self.candidate,'a'*40)
+  # Most tests exercise file delivery, not a pending business migration.
+  self.manifest['migrations']=[];(self.candidate/'manifest.json').write_text(json.dumps(self.manifest))
   for path in self.manifest['files']:(self.root/path).write_text('OLD '+path)
   (self.root/'private/config.php').write_text((self.f.path/'private/config.php').read_text().replace(self.f.base,'https://neurodelo.pro'))
   shutil.copyfile(self.f.path/'private/privacy-policy.txt',self.root/'private/privacy-policy.txt')
@@ -180,11 +183,14 @@ class RemoteFilesystemTests(unittest.TestCase):
 
  def test_approved_additive_migration_is_backed_up_and_dump_restorable(self):
   # Synthetic operator: proves orchestration/backup ordering, not Stage 3's unmerged code.
-  version='004_crm_foundation';folder=self.candidate/'database/migrations'/version;folder.mkdir(parents=True)
+  self.agent('apply');self.finish()
+  self.id='migration-release';self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id
+  release.build(self.candidate,'b'*40);(self.candidate/'baseline.json').write_text(json.dumps(good()))
+  version='004_crm_foundation';folder=self.candidate/'database/migrations'/version;folder.mkdir(parents=True,exist_ok=True)
   up='\n'.join('CREATE TABLE nd_ci_'+chr(97+i)+' (id INT PRIMARY KEY) ENGINE=InnoDB;' for i in range(12))
   down='\n'.join('DROP TABLE nd_ci_'+chr(97+i)+';' for i in reversed(range(12)))
   (folder/'up.sql').write_text(up);(folder/'down.sql').write_text(down)
-  (self.candidate/'scripts').mkdir()
+  (self.candidate/'scripts').mkdir(exist_ok=True)
   operator='''<?php
 $c=require dirname(__DIR__).'/private/config.php';
 $p=new PDO('mysql:host='.$c['db_host'].';port='.$c['db_port'].';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
@@ -197,7 +203,10 @@ $p->prepare('INSERT INTO nd_schema_migrations VALUES (?,?,?,?)')->execute(['004_
   manifest=json.loads((self.candidate/'manifest.json').read_text())
   manifest['migrations']=[{'version':version,'kind':'additive','automatic':True,'required':True,'up_sha256':release.digest(folder/'up.sql'),'down_sha256':release.digest(folder/'down.sql')}]
   for path in ['scripts/migrate.php','database/migrations/'+version+'/up.sql','database/migrations/'+version+'/down.sql']:manifest['tools'][path]=release.digest(self.candidate/path)
-  (self.candidate/'manifest.json').write_text(json.dumps(manifest))
+  manifest['verification_contract']='missing-proof';(self.candidate/'manifest.json').write_text(json.dumps(manifest))
+  self.assertEqual(self.agent('apply',1)['error'],'pipeline_backup_recovery_not_verified');self.agent('rollback')
+  old=self.candidate;self.id='migration-release-retry';self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id;shutil.copytree(old,self.candidate)
+  manifest['verification_contract']='ci-mysql57-backup-restore-v1';(self.candidate/'manifest.json').write_text(json.dumps(manifest))
   restore='neuro_test_restore_'+__import__('secrets').token_hex(8)
   try:
    result=self.agent('apply');self.assertEqual(result['migrations'],[version]);self.assert_protected()
@@ -324,5 +333,26 @@ class GovernanceTests(unittest.TestCase):
    with patch.dict(os.environ,{'GITHUB_EVENT_NAME':'workflow_run','GITHUB_EVENT_PATH':str(path)}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_pr_for_validated_branch()
    created=[c for c in calls if c[0]=='POST'];self.assertEqual(len(created),1);self.assertEqual(created[0][2]['base'],'main');self.assertFalse(created[0][2]['draft'])
 
+
+ def test_native_actions_uses_active_review_ruleset_without_admin_token(self):
+  rules=[{'type':'pull_request','parameters':{'required_approving_review_count':1,'dismiss_stale_reviews_on_push':True}}, {'type':'required_status_checks','parameters':{'strict_required_status_checks_policy':True,'required_status_checks':[{'context':'Validate','integration_id':15368}]}}]
+  def fake(method,path,*args,**kwargs):
+   if path.endswith('/protection'):raise control.GitHubFailure('not admin')
+   return rules
+  with patch.object(control,'api',side_effect=fake):self.assertEqual(control.required_policy('repos/'+control.REPO)[1:],(1,['Validate']))
+  rules[0]['parameters']['required_approving_review_count']=0
+  with patch.object(control,'api',side_effect=fake):
+   with self.assertRaises(control.GitHubFailure):control.required_policy('repos/'+control.REPO)
+ def test_token_merge_dispatches_main_ci_automatically_but_not_old_workflow(self):
+  import base64
+  calls=[]
+  def fake(method,path,payload=None,**kwargs):
+   calls.append((method,path,payload))
+   if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
+   if '/runs?' in path:return {'workflow_runs':[]}
+   if '/contents/' in path:return {'content':base64.b64encode(b'name: NeuroDelo CI/CD\noperation:').decode()}
+   return None
+  with patch.dict(os.environ,{'GITHUB_TOKEN_FALLBACK':'true'}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_main_ci()
+  self.assertEqual(calls[-1][0],'POST');self.assertEqual(calls[-1][2],{'ref':'main','inputs':{'operation':'deploy'}})
 
 if __name__=='__main__':unittest.main()
