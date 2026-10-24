@@ -116,6 +116,26 @@ class Gateway:
   return response
 
 
+
+ def prepare_issue8_pr(self,expected_sha):
+  base='repos/'+REPO;head='fix/issue-8-cicd-bootstrap'
+  current=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(head,safe=''))
+  if current['status']!=200 or current.get('data',{}).get('object',{}).get('sha')!=expected_sha:return {'status':409,'error':'fix_head_changed'}
+  body=('Refs #8. Separate fix from main; Stage 3 #4 and Stage 4 #7 remain drafts and unchanged. '
+        'Accepts existing repo/environment SSH secret union; does not change protection or secrets; keeps READY false until proven bootstrap. '
+        'SHA-bound native dispatch, manual-only administrative workflow, actual backup/recovery/hash proof and tested promotion gate. '
+        '77 isolated Python tests and 12 Node tests passed locally. Production deployment has NOT occurred. '
+        'Read-only SpaceWeb probe confirms PHP 8.4.27, valid SSH, and a pre-existing ParseError in private/config.php line 12; health remains red. '
+        'Owner admin access/review and production repairs are still required. See docs/CICD-BOOTSTRAP-ISSUE-8.md. '
+        'Do not close issue #8 or merge dependent stages merely because CI is green.')
+  existing=self.call('GET',base+'/pulls?state=open&base=main&head='+urllib.parse.quote('2006minden-gif:'+head,safe=''))
+  if existing['status']!=200:return {'status':existing['status'],'error':'pr_lookup_unavailable'}
+  if existing.get('data'):
+   p=existing['data'][0];return {'status':200,'data':{k:p.get(k) for k in ['number','html_url','state','draft']}}
+  r=self.call('POST',base+'/pulls',{'head':head,'base':'main','draft':True,'title':'Fix #8: fail-closed CI/CD bootstrap and verified SHA-bound delivery','body':body})
+  if r.get('data'):r['data']={k:r['data'].get(k) for k in ['number','html_url','state','draft']}
+  return r
+
  def issue8_audit(self):
   # Execute gh in the authorized Actions environment. All output selected below is metadata only.
   def gh(path,query=None):
@@ -169,7 +189,8 @@ if __name__=='__main__':
   'run_url':'https://github.com/'+REPO+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],'time':datetime.datetime.now(datetime.timezone.utc).isoformat(),'production_touched':False}
  try:
   report['inspection']=gateway.inspect()
-  if plan['action']=='audit-issue8':report['issue8_audit']=gateway.issue8_audit()
+  if plan['action']=='prepare-issue8-pr':report['issue8_pr']=gateway.prepare_issue8_pr(plan['expected_sha'])
+  elif plan['action']=='audit-issue8':report['issue8_audit']=gateway.issue8_audit()
   elif plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
   elif plan['action']=='prepare-stage4-pr':report['stage4_pr']=gateway.prepare_customer_pr(plan['expected_sha'])
   elif plan['action'] not in ['inspect','readonly-host']:raise ValueError('unsupported_control_action')
