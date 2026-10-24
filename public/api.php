@@ -6,6 +6,7 @@ header('Cache-Control: no-store');header('X-Robots-Tag: noindex, nofollow');
 try {
     $route=$_GET['r'] ?? ''; $method=$_SERVER['REQUEST_METHOD'];
     if(!is_string($route)) fail(404,'Не найдено');
+    if(str_starts_with($route,'crm/')) { require dirname(__DIR__).'/private/crm/routes.php';crm_dispatch(substr($route,4),$method); }
     if($route==='privacy' && $method==='GET') {
         $policy=privacy_settings();unset($policy['hash']);json_response($policy);
     }
