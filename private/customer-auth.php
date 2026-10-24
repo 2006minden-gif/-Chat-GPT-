@@ -133,8 +133,8 @@ function ca_dispatch(string $route,string $method):never {
         $p=privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'policy'=>$p]);
     }
     ca_gate();
-    if(str_starts_with($route,'portal/')){require_once __DIR__.'/crm/portal.php';crm_portal($route,$method);}
     ca_rate('ip',120,$_SERVER['REMOTE_ADDR']??'unknown');
+    if(str_starts_with($route,'portal/')){require_once __DIR__.'/crm/portal.php';crm_portal($route,$method);}
     if(str_starts_with($route,'owner/')) {ca_owner($route,$method);}
     if($route==='session'&&$method==='GET'){
         try{$s=ca_session();}catch(CustomerFailure $e){if($e->status!==401)throw $e;$new=ca_new_session(null);ca_cookie($new['raw'],$new['expiry']);json_response(['ok'=>true,'authenticated'=>false,'csrf'=>$new['csrf']]);}

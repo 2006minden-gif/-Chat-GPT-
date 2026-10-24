@@ -13,7 +13,7 @@ function crm_portal(string $route,string $method):never{
   $columns=$kind==='orders'?'id,number,title,status,total_amount,currency,due_on,created_at':'id,order_id,title,status,starts_on,due_on,completed_at';
   $params=[$customer];$sql='SELECT '.$columns.' FROM nd_'.$kind.' WHERE customer_id=? AND archived_at IS NULL';
   if($id){$sql.=' AND id=?';$params[]=$id;}
-  $page=filter_var($_GET['page']??1,FILTER_VALIDATE_INT);if(!$page||$page<1||$page>100000)crm_fail(422,'Некорректная страница.');
+  $page=$id?1:filter_var($_GET['page']??1,FILTER_VALIDATE_INT);if(!$page||$page<1||$page>100000)crm_fail(422,'Некорректная страница.');
   $sql.=' ORDER BY id DESC LIMIT 25 OFFSET '.(($page-1)*25);$rows=crm_query($sql,$params)->fetchAll();
   if($id&&!$rows)crm_fail(404,'Запись не найдена.');
   if($kind==='projects')foreach($rows as &$r){$r['progress']=crm_progress((int)$r['id']);$r['stages']=crm_query('SELECT id,title,status,position,due_on,completed_at FROM nd_project_stages WHERE project_id=? ORDER BY position,id',[$r['id']])->fetchAll();}unset($r);

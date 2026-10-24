@@ -122,6 +122,7 @@ class CrmOperations(unittest.TestCase):
    login=client.post(url+'login',json={'email':email,'password':password});self.assertEqual(login.status_code,200,login.text)
    r=client.get(url+'portal/orders');self.assertEqual(r.status_code,200,r.text)
    self.assertIn(o['id'],[row['id'] for row in r.json()['items']]);self.assertNotIn(other['id'],[row['id'] for row in r.json()['items']])
+   self.assertEqual(client.get(url+'portal/orders/'+str(o['id'])+'&page=2').status_code,200)
    self.assertNotIn('INTERNAL-NOTE',r.text);self.assertNotIn('notes',r.text);self.assertEqual(client.get(url+'portal/orders/'+str(other['id'])).status_code,404)
    r=client.get(url+'portal/projects/'+str(project['id']));self.assertEqual(r.status_code,200,r.text);self.assertEqual(len(r.json()['record']['stages']),1);self.assertNotIn('description',r.text);self.assertNotIn('employee',r.text)
    from playwright.sync_api import sync_playwright
