@@ -11,6 +11,32 @@ REPO='2006minden-gif/-Chat-GPT-'
 REQUIRED_CHECK='Validate'
 class GitHubFailure(RuntimeError): pass
 
+def safe_api_probe(token):
+    """Read-only fallback diagnosis; never expose token, response body or proxy URLs."""
+    if not token:
+        return 'missing_token'
+    import urllib.request
+    import urllib.error
+    request=urllib.request.Request(
+        'https://api.github.com/repos/'+REPO,
+        headers={'Authorization':'Bearer '+token,
+                 'Accept':'application/vnd.github+json',
+                 'User-Agent':'NeuroDelo-bootstrap-diagnostic'},
+        method='GET')
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, request, fp, code, msg, headers, newurl):
+            return None
+    try:
+        # A token must never follow a redirect, even to another GitHub hostname.
+        with urllib.request.build_opener(NoRedirect()).open(request,timeout=12) as response:
+            return 'direct_http_'+str(response.status)
+    except urllib.error.HTTPError as error:
+        return 'direct_http_'+str(error.code)
+    except urllib.error.URLError:
+        return 'direct_transport_failure'
+    except (OSError,ValueError):
+        return 'direct_connection_failure'
+
 def api(method, path, payload=None, missing=False):
     command=['gh','api',path,'--method',method,'-H','Accept: application/vnd.github+json','-H','X-GitHub-Api-Version: 2022-11-28']
     if payload is not None:command+=['--input','-']
@@ -25,7 +51,9 @@ def api(method, path, payload=None, missing=False):
         status=match.group(1) if match else None
         if missing and status=='404':return None
         category={'401':'invalid_or_expired_token','403':'insufficient_permissions_or_policy','404':'not_found_or_not_authorized','422':'invalid_request','429':'rate_limited'}.get(status,'transport_or_unclassified_failure')
-        raise GitHubFailure('GitHub API access failed: '+method+' '+path.split('?',1)[0]+' [HTTP '+(status or 'unknown')+', '+category+']')
+        token=(runenv or os.environ).get('GH_TOKEN') or (runenv or os.environ).get('GITHUB_TOKEN')
+        probe=safe_api_probe(token) if status is None else 'not_needed'
+        raise GitHubFailure('GitHub API access failed: '+method+' '+path.split('?',1)[0]+' [HTTP '+(status or 'unknown')+', '+category+', safe_probe='+probe+']')
     return json.loads(r.stdout) if r.stdout.strip() else None
 
 def pages(path, field=None):
