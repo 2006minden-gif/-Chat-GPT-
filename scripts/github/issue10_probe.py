@@ -9,6 +9,7 @@ remote=None
 try:
  remote=Remote(Path('.'),os.environ['GITHUB_SHA'],'readonly-issue10')
  report['php_capabilities']=remote.command(shlex.join(['/usr/bin/php8.4','-r',"echo json_encode(['ok'=>true,'tokenizer'=>function_exists('token_get_all'),'extension_dir'=>ini_get('extension_dir'),'module_exists'=>is_file(ini_get('extension_dir').'/tokenizer.so')]);"]),json_output=True)
+ report['file_metadata']=remote.command(shlex.join(['/usr/bin/php8.4','-r',"$o=['ok'=>true,'files'=>[]];foreach(['config'=>'private/config.php','rules'=>'public_html/.htaccess','copy_rules'=>'public_html/~.htaccess','copy_index'=>'public_html/index~.html'] as $label=>$relative){$p='/home/n/neurodepro/'.$relative;$s=is_file($p)&&filesize($p)<4194304?@file_get_contents($p):false;$o['files'][$label]=['bytes'=>is_file($p)?filesize($p):null,'readable'=>is_readable($p),'read_ok'=>is_string($s),'read_bytes'=>is_string($s)?strlen($s):null];}echo json_encode($o);"]),json_output=True)
  report['diagnosis']=remote.command(shlex.join(['/usr/bin/php8.4','/dev/stdin','inspect',ACCOUNT]),Path('scripts/repair/production.php').read_text(),True)
 except Exception as e:
  report['error']=str(e) if isinstance(e,RemoteFailure) else type(e).__name__
