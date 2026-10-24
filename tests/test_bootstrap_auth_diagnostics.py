@@ -77,7 +77,7 @@ class BootstrapAPIDiagnosticsTests(unittest.TestCase):
         def fake_run(command, **kwargs):
             observed["env"] = kwargs["env"]
             return SimpleNamespace(returncode=0, stderr="", stdout='{"ok":true}')
-        with patch.dict(control.os.environ, {"GH_TOKEN":"\\n github_pat_fake_value \\n"}):
+        with patch.dict(control.os.environ, {"GH_TOKEN":"\n github_pat_fake_value \n"}):
             with patch.object(control.subprocess, "run", side_effect=fake_run):
                 self.assertEqual(control.api("GET", "repos/"+control.REPO), {"ok":True})
         self.assertEqual(observed["env"]["GH_TOKEN"], "github_pat_fake_value")
