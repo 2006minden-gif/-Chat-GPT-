@@ -1,6 +1,5 @@
 {
   "schema_version": 1,
-  "nonce": "9e18a227d422744e09c45c655323e7ba",
-  "action": "prepare-stage4-pr",
-  "expected_sha": "92f2b22109509eb6e85e7d5e68160db28f83f633"
+  "nonce": "a597bc2bcf32067010879e2de3c26309",
+  "action": "audit-issue8"
 }

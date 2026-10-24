@@ -115,6 +115,31 @@ class Gateway:
   if response.get('data'):response['data']={k:response['data'].get(k) for k in ['number','html_url','state','draft']}
   return response
 
+
+ def issue8_audit(self):
+  # Execute gh in the authorized Actions environment. All output selected below is metadata only.
+  def gh(path,query=None):
+   command=['gh','api',path]
+   if query:command+=['--method','POST','--input','-']
+   r=subprocess.run(command,input=json.dumps({'query':query}) if query else None,text=True,capture_output=True,timeout=45)
+   if r.returncode:
+    status=re.search(r'HTTP (\d+)',r.stderr)
+    return {'status':int(status.group(1)) if status else None,'available':False}
+   try:return {'status':200,'available':True,'data':json.loads(r.stdout)}
+   except ValueError:return {'status':200,'available':False}
+  base='repos/'+REPO;result={}
+  for label,path in [('protection',base+'/branches/main/protection'),('rules',base+'/rules/branches/main'),('repository_secrets',base+'/actions/secrets'),('variables',base+'/actions/variables'),('workflow_permissions',base+'/actions/permissions/workflow')]:
+   result[label]=gh(path)
+   if label=='variables' and result[label].get('data'):
+    result[label]['data']={'variables':[{'name':v['name'],'value':v['value'] if v['name'] in ['AUTOMATION_READY','AUTOMERGE_ENABLED','DEPLOY_PAUSED','PHP_CLI','BOOTSTRAP_APPROVED_SHA'] else '<not-exported>'} for v in result[label]['data'].get('variables',[])]}
+  result['environments']={}
+  repo=self.call('GET',base).get('data',{})
+  for env in ['production','automation']:
+   result['environments'][env]={'configuration':gh(base+'/environments/'+env),'branches':gh(base+'/environments/'+env+'/deployment-branch-policies'),'secret_names':gh('repositories/'+str(repo.get('id'))+'/environments/'+env+'/secrets')}
+  query='query{repository(owner:"2006minden-gif",name:"-Chat-GPT-"){ref(qualifiedName:"refs/heads/main"){target{oid} branchProtectionRule{pattern isAdminEnforced requiresApprovingReviews requiredApprovingReviewCount dismissesStaleReviews requiresStrictStatusChecks requiresStatusChecks requiredStatusCheckContexts requiredStatusChecks{context app{databaseId}} allowsForcePushes allowsDeletions requiresConversationResolution requiresCodeOwnerReviews requiresLinearHistory}}}}'
+  result['graphql_main_protection']=gh('graphql',query)
+  return result
+
 def publish(report):
  # The evidence ref is a separate managed namespace. Never write/force main or trigger production.
  ref='automation/evidence';url='https://github.com/'+REPO+'.git'
@@ -140,7 +165,8 @@ if __name__=='__main__':
   'run_url':'https://github.com/'+REPO+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],'time':datetime.datetime.now(datetime.timezone.utc).isoformat(),'production_touched':False}
  try:
   report['inspection']=gateway.inspect()
-  if plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
+  if plan['action']=='audit-issue8':report['issue8_audit']=gateway.issue8_audit()
+  elif plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
   elif plan['action']=='prepare-stage4-pr':report['stage4_pr']=gateway.prepare_customer_pr(plan['expected_sha'])
   elif plan['action'] not in ['inspect','readonly-host']:raise ValueError('unsupported_control_action')
  except Exception as error:report['error_type']=type(error).__name__
