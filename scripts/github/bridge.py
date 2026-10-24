@@ -119,7 +119,7 @@ if __name__=='__main__':
  try:
   report['inspection']=gateway.inspect()
   if plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
-  elif plan['action']!='inspect':raise ValueError('unsupported_control_action')
+  elif plan['action'] not in ['inspect','readonly-host']:raise ValueError('unsupported_control_action')
  except Exception as error:report['error_type']=type(error).__name__
  publish(report)
  print('Evidence published to automation/evidence; no production operation executed')

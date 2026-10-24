@@ -1,0 +1,65 @@
+name: Authorized read-only hosting diagnosis
+on:
+  push:
+    branches: [automation/github-control]
+permissions:
+  contents: read
+jobs:
+  gate:
+    if: github.ref == 'refs/heads/automation/github-control'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      enabled: ${{ steps.plan.outputs.enabled }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - id: plan
+        run: python -c "import json,os; p=json.load(open('.github/control-plan.json')); open(os.environ['GITHUB_OUTPUT'],'a').write('enabled='+str(p['action']=='readonly-host').lower()+'\n')"
+      - name: Require successful isolated CI before credentials become available
+        if: steps.plan.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json,os,time,urllib.request
+          for attempt in range(120):
+              request=urllib.request.Request('https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/actions/runs?head_sha='+os.environ['GITHUB_SHA']+'&per_page=20',headers={'Authorization':'Bearer '+os.environ['GH_TOKEN']})
+              with urllib.request.urlopen(request) as response:runs=json.load(response)['workflow_runs']
+              run=next((r for r in runs if r['path']=='.github/workflows/deploy.yml' and r['head_sha']==os.environ['GITHUB_SHA']),None)
+              if run and run['status']=='completed':
+                  if run['conclusion']!='success':raise SystemExit('CI failed; no hosting access allowed')
+                  break
+              time.sleep(5)
+          else:raise SystemExit('CI not verified; no hosting access allowed')
+          PY
+  deployment-diagnostics:
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    concurrency:
+      group: neurodelo-control-evidence
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Read-only hosting probe without publication or migrations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          PHP_CLI: ${{ vars.PHP_CLI }}
+        run: python scripts/github/host_probe.py
