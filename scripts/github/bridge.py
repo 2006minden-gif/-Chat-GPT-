@@ -174,14 +174,17 @@ def publish(report):
   def git(*args,check=True):return subprocess.run(['git',*args],cwd=work,env=env,text=True,capture_output=True,check=check)
   git('init','-q');git('remote','add','origin',url)
   found=git('ls-remote','--heads','origin','refs/heads/'+ref)
-  if found.stdout.strip():git('fetch','--depth=1','origin','refs/heads/'+ref);git('checkout','-b','evidence','FETCH_HEAD')
-  else:git('checkout','--orphan','evidence')
   git('config','user.name','github-actions[bot]');git('config','user.email','41898282+github-actions[bot]@users.noreply.github.com')
-  name=os.environ['GITHUB_RUN_ID']+'-'+os.environ.get('GITHUB_RUN_ATTEMPT','1')+'.json'
-  (work/'runs').mkdir(exist_ok=True);text=json.dumps(report,ensure_ascii=False,indent=2)
-  (work/'runs'/name).write_text(text);(work/'latest.json').write_text(text)
-  git('add','runs/'+name,'latest.json');git('commit','-m','Record authorized GitHub control evidence')
-  git('push','origin','HEAD:refs/heads/'+ref)
+  name=os.environ['GITHUB_RUN_ID']+'-'+os.environ.get('GITHUB_RUN_ATTEMPT','1')+'.json';text=json.dumps(report,ensure_ascii=False,indent=2)
+  for attempt in range(5):
+   found=git('ls-remote','--heads','origin','refs/heads/'+ref)
+   if found.stdout.strip():git('fetch','--depth=1','origin','refs/heads/'+ref);git('checkout','-B','evidence','FETCH_HEAD')
+   else:git('checkout','--orphan','evidence')
+   (work/'runs').mkdir(exist_ok=True);(work/'runs'/name).write_text(text);(work/'latest.json').write_text(text)
+   git('add','runs/'+name,'latest.json');committed=git('commit','-m','Record authorized GitHub control evidence',check=False)
+   pushed=git('push','origin','HEAD:refs/heads/'+ref,check=False)
+   if pushed.returncode==0:break
+  else:raise RuntimeError('evidence_publish_conflict')
 
 if __name__=='__main__':
  plan=json.loads(Path('.github/control-plan.json').read_text());gateway=Gateway()

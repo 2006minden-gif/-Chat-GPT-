@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     concurrency:
-      group: neurodelo-control-evidence
+      group: neurodelo-host-diagnostics
       cancel-in-progress: false
     permissions:
       contents: write
