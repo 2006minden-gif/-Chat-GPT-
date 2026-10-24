@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "source_sha": "22ff5d7b7d5685f1ee73ec561f670e6a65c444a3",
-  "nonce": "workflow-40097182997",
-  "run_id": "40097185995",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097185995",
-  "time": "2026-10-24T13:13:25.509053+00:00",
+  "nonce": "workflow-40097442722",
+  "run_id": "40097445370",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097445370",
+  "time": "2026-10-24T13:16:47.254307+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40097182997,
+    "id": 40097442722,
     "name": "Enable approved auto-merge",
     "head_sha": "22ff5d7b7d5685f1ee73ec561f670e6a65c444a3",
     "head_branch": "main",
-    "event": "workflow_run",
+    "event": "schedule",
     "status": "completed",
     "conclusion": "skipped",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097182997",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097442722",
     "path": ".github/workflows/auto-merge.yml"
   },
   "inspection": {
@@ -202,18 +202,18 @@
       "status": 200,
       "runs": [
         {
-          "id": 40097185995,
+          "id": 40097445370,
           "name": "Record Git-readable automation evidence",
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "22ff5d7b7d5685f1ee73ec561f670e6a65c444a3",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097185995",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097445370",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
-              "id": 120881781469,
+              "id": 120882545115,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -237,6 +237,72 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40097442722,
+          "name": "Enable approved auto-merge",
+          "event": "schedule",
+          "head_branch": "main",
+          "head_sha": "22ff5d7b7d5685f1ee73ec561f670e6a65c444a3",
+          "status": "completed",
+          "conclusion": "skipped",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097442722",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 120882538749,
+              "name": "approved",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40097185995,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "22ff5d7b7d5685f1ee73ec561f670e6a65c444a3",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40097185995",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 120881781469,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -755,110 +821,6 @@
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40095855872",
           "path": ".github/workflows/deploy.yml",
           "jobs": []
-        },
-        {
-          "id": 40095839392,
-          "name": "Authorized GitHub control relay",
-          "event": "push",
-          "head_branch": "automation/github-control",
-          "head_sha": "d3ac843c090c755e68a10b91c5abbf8ddef500c0",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40095839392",
-          "path": ".github/workflows/github-control.yml",
-          "jobs": [
-            {
-              "id": 120877800729,
-              "name": "control",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Inspect GitHub and prepare review PR without production access",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40095839386,
-          "name": "Authorized read-only hosting diagnosis",
-          "event": "push",
-          "head_branch": "automation/github-control",
-          "head_sha": "d3ac843c090c755e68a10b91c5abbf8ddef500c0",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40095839386",
-          "path": ".github/workflows/readonly-host.yml",
-          "jobs": [
-            {
-              "id": 120877800611,
-              "name": "gate",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run python -c \"import json,os; p=json.load(open('.github/control-plan.json')); open(os.environ['GITHUB_OUTPUT'],'a').write('enabled='+str(p['action']=='readonly-host').lower()+'\\n')\"",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Require successful isolated CI before credentials become available",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 120877821004,
-              "name": "deployment-diagnostics",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
         }
       ]
     }
