@@ -26,12 +26,16 @@ class ApacheSecurity(unittest.TestCase):
         cls.backups = ['~.htaccess', 'index~.html', 'index.html~', '#index.html#',
                        'config.php.bak', 'config.php.BAK', 'index.old', 'index.orig',
                        'index.save', 'index.swp', 'index.swo', 'index.tmp',
-                       'index.temp', 'index.backup', 'index.bkp', 'index.bak.1',
+                       'index.temp', 'index.backup', 'index.bkp', 'index.bak.1', 'backup.zip', 'db.sql', 'error.log', 'config.php', 'private.pem',
                        'config.bak.php', 'index.old.html', 'index.backup.zip', '.env']
         for name in cls.backups:
             (public / name).write_text('SYNTHETIC_PRIVATE_MARKER')
         (public / 'assets').mkdir()
         (public / 'assets/config.php.bak').write_text('SYNTHETIC_PRIVATE_MARKER')
+        for folder in ['.git','assets/.git','.well-known/acme-challenge']:(public/folder).mkdir(parents=True,exist_ok=True)
+        (public/'.git/config').write_text('SYNTHETIC_PRIVATE_MARKER')
+        (public/'assets/.git/config').write_text('SYNTHETIC_PRIVATE_MARKER')
+        (public/'.well-known/acme-challenge/valid_token-test').write_text('ACME_TEST')
         (public / 'allowed-backup-description.txt').write_text('PUBLIC_TEST_ASSET')
         sock = socket.socket(); sock.bind(('127.0.0.1', 0))
         cls.port = sock.getsockname()[1]; sock.close()
@@ -74,13 +78,15 @@ DocumentRoot "{public}"
 
     def test_backups_denied_get_and_head(self):
         from urllib.parse import quote
-        for name in self.backups + ['assets/config.php.bak', 'index.html', 'crm.html']:
+        for name in self.backups + ['assets/config.php.bak', '.git/config', 'assets/.git/config', 'index.html', 'crm.html']:
             for method in ['GET', 'HEAD']:
                 with self.subTest(name=name, method=method):
                     status, body = self.request('/' + quote(name), method)
                     self.assertEqual(status, 403)
                     self.assertNotIn(b'SYNTHETIC_PRIVATE_MARKER', body)
         self.assertEqual(self.request('/index%7E.html')[0], 403)
+        self.assertEqual(self.request('/%2egit/config')[0],403)
+        self.assertEqual(self.request('/.well-known/acme-challenge/valid_token-test')[0],200)
         self.assertEqual(self.request('/%7E.htaccess')[0], 403)
 
     def test_legitimate_assets_preserved(self):

@@ -11,3 +11,17 @@ DirectoryIndex index.php
 <FilesMatch "(?i)(~|^#.*#$|\.(bak|bkp|backup|old|orig|save|swp|swo|tmp|temp)(\.|$))">
     Require all denied
 </FilesMatch>
+
+# BEGIN NEURODELO ISSUE10 SECURITY
+# Public code/assets remain available. Private backups and diagnostic copies never do.
+<FilesMatch "(?i)(~|^#.*#$|^\.|\.(bak|bkp|backup|old|orig|save|swp|swo|tmp|temp)(\.|$)|\.(sql|sqlite3?|dump|ini|log|pem|key|p12|pfx|zip|tar|tgz|gz|7z|rar)$)">
+    Require all denied
+</FilesMatch>
+<FilesMatch "(?i)^(config(\.example)?\.php|phpinfo\.php|diagnose\.php|debug\.php)$">
+    Require all denied
+</FilesMatch>
+# Block hidden directories as well as files, preserving ACME certificate renewal.
+<If "%{REQUEST_URI} =~ m#(^|/)(\.|%2[eE])# && %{REQUEST_URI} !~ m#^/(\.|%2[eE])well-known/acme-challenge/[A-Za-z0-9_-]+$#">
+    Require all denied
+</If>
+# END NEURODELO ISSUE10 SECURITY
