@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "nonce": "df56c5839cc5b2d952e9c7548f7d7312",
+  "source_sha": "40bab4d7e1287d8fe892fa675be06d14f47440ee",
+  "run_id": "40081764172",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40081764172",
+  "production_touched": false,
+  "read_only_host_probe": true,
+  "ssh_exit_code": 1,
+  "transport_diagnostic": "This account is currently not available.\n\n",
+  "error_type": "RemoteFailure",
+  "error": "ssh_session_unavailable"
+}
