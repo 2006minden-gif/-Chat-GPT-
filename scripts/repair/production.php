@@ -75,6 +75,11 @@ function rp_config_candidate(string $s):array {
         $pos=$previous['end'];$candidate=substr($s,0,$pos).','.substr($s,$pos);
         if(rp_static_config($candidate)&&hash_equals(rp_literal_signature($s),rp_literal_signature($candidate)))$candidates[]=['content'=>$candidate,'kind'=>'missing_comma','line'=>substr_count(substr($s,0,$pos),"\n")+1];
     }
+    $last=end($t);
+    if($last&&in_array($last['text'],[']',')'],true)){
+        $pos=$last['end'];$candidate=substr($s,0,$pos).';'.substr($s,$pos);
+        if(rp_static_config($candidate)&&hash_equals(rp_literal_signature($s),rp_literal_signature($candidate)))$candidates[]=['content'=>$candidate,'kind'=>'missing_terminal_semicolon','line'=>substr_count(substr($s,0,$pos),"\n")+1];
+    }
     rp_assert(count($candidates)===1,'unique_literal_preserving_repair_not_found');return $candidates[0];
 }
 function rp_block():string {
@@ -163,7 +168,7 @@ function rp_preflight(string $configFile):array {
     rp_assert(rp_static_config(rp_read($configFile)),'nonliteral_configuration');
     $c=require $configFile;rp_assert(is_array($c),'invalid_configuration');
     foreach(['db_host','db_name','db_user','db_password','app_url'] as $key)rp_assert(isset($c[$key])&&is_string($c[$key]),'invalid_configuration');
-    rp_assert(rtrim($c['app_url'],'/')==='https://neurodelo.pro'||(getenv('NEURO_REPAIR_TEST')==='1'&&str_starts_with($c['app_url'],'http://127.0.0.1:')),'unexpected_application_url');
+    rp_assert(rtrim($c['app_url'],'/')==='https://neurodelo.pro'||(getenv('NEURO_REPAIR_TEST')==='1'&&str_starts_with($configFile,sys_get_temp_dir().'/')&&str_starts_with($c['app_url'],'http://127.0.0.1:')),'unexpected_application_url');
     if(getenv('NEURO_REPAIR_TEST_FAKE_PDO')==='1'&&getenv('NEURO_REPAIR_TEST')==='1'&&str_starts_with($configFile,sys_get_temp_dir().'/'))return ['pdo'=>true,'synthetic'=>true,'privacy_approved'=>($c['privacy_policy_approved']??false)===true];
     $p=new PDO('mysql:host='.$c['db_host'].';port='.($c['db_port']??3306).';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     $p->exec('SET SESSION TRANSACTION READ ONLY');

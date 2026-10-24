@@ -16,6 +16,10 @@ class RepairSyntax(unittest.TestCase):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY',\n'app_url'=>'https://example.invalid'\n'privacy_policy_approved'=>false,'setup_key'=>'','db_port'=>3306];"
   d=self.helper("$c=rp_config_candidate($v);echo json_encode(['kind'=>$c['kind'],'same'=>rp_literal_signature($v)===rp_literal_signature($c['content']),'valid'=>rp_static_config($c['content'])]);",s)
   self.assertEqual(d,{'kind':'missing_comma','same':True,'valid':True})
+ def test_missing_terminal_semicolon_is_single_character_and_literal_preserving(self):
+  s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false]\n"
+  d=self.helper("$c=rp_config_candidate($v);echo json_encode(['kind'=>$c['kind'],'same'=>rp_literal_signature($v)===rp_literal_signature($c['content']),'bytes_added'=>strlen($c['content'])-strlen($v),'valid'=>rp_static_config($c['content'])]);",s)
+  self.assertEqual(d,{'kind':'missing_terminal_semicolon','same':True,'bytes_added':1,'valid':True})
  def test_valid_config_is_unchanged(self):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false];"
   self.assertTrue(self.helper("$c=rp_config_candidate($v);echo json_encode($v===$c['content']);",s))
@@ -90,6 +94,11 @@ class RepairCoordinator(unittest.TestCase):
   receipt={p:{'GET':403,'HEAD':403} for p in self.client.probe_urls('test')};receipt['/~.htaccess']['GET']=200
   r=self.client.coordinate(Server(),'apply','test',snapshot=lambda:next(snapshots),probe=lambda _:receipt)
   self.assertEqual(r['result'],'failed');self.assertEqual(calls,['apply','rollback']);self.assertTrue(r['rollback_bytes_verified'])
+ def test_missing_baseline_transport_stops_before_apply(self):
+  class Server:
+   def rpc(self,*a):raise AssertionError('Must not write without a baseline')
+  r=self.client.coordinate(Server(),'apply','test',snapshot=lambda:{'ok':False,'complete':False,'checks':{}})
+  self.assertEqual(r['error'],'baseline_transport_unavailable')
  def test_real_pdo_http_repair_keeps_database_and_privacy_unchanged(self):
   import base64
   import test_prelaunch as baseline

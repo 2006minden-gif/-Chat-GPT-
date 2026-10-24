@@ -51,11 +51,13 @@ def coordinate(server,operation,plan_id='',snapshot=health.snapshot,probe=protec
   except RemoteFailure:report['error']='rollback_requires_attention'
   return report
  report['before']=snapshot()
+ if not report['before'].get('complete'):
+  report['error']='baseline_transport_unavailable';return report
  try:
   report['server']=server.rpc('apply',plan_id)
   after=snapshot();report['after']=after;protected=probe(plan_id);report['protection']=protected
   assets_unchanged=all(after['checks'].get(path,{}).get('sha256')==before.get('sha256') for path,before in report['before']['checks'].items() if path in health.ASSET_PATHS)
-  ok=after['ok'] and after['complete'] and assets_unchanged and all(status in [403,404] for row in protected.values() for status in row.values())
+  ok=after['ok'] and after['complete'] and assets_unchanged and all(protected.get(path,{}).get(method) in [403,404] for path in probe_urls(plan_id)+['/.git/config','/.env','/config.php','/backup.zip'] for method in ['GET','HEAD'])
   if not ok:raise RemoteFailure('post_repair_health_failed')
   report['confirmed']=server.rpc('confirm',plan_id,{'plan_id':plan_id,'ok':True,'health':after,'protection':protected})
   report['final_health']=snapshot()
