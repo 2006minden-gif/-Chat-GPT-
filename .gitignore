@@ -6,3 +6,30 @@ __pycache__/
 *.sqlite3-*
 private/config.php
 /dist/
+
+# Local credentials and production-only files (templates remain versioned).
+.env.*
+!.env.example
+!.env.sample
+/private/config.*.php
+!/private/config.example.php
+/private/privacy-policy.txt
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# Runtime data and accidental exports; keep database/schema.sql and migrations.
+/backups/
+/dumps/
+/logs/
+/private/backups/
+/private/logs/
+*.log
+*.sql.gz
+*.sql.zip
+*.dump
+*.bak
+*~
