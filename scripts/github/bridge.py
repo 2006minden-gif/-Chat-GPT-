@@ -93,6 +93,28 @@ class Gateway:
   if response.get('data'):response['data']={k:response['data'][k] for k in ['number','html_url','state','draft']}
   return response
 
+
+ def prepare_customer_pr(self,expected_sha):
+  base='repos/'+REPO;head='feature/stage-4-customer-auth'
+  current=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(head,safe=''))
+  if current['status']!=200 or current.get('data',{}).get('object',{}).get('sha')!=expected_sha:
+   return {'status':409,'error':'stage4_head_changed'}
+  body=('Stage 4 customer registration and authentication. Depends on Stage 3 PR #4; do not merge before #4 and verified release pipeline. '
+        'Preserves main CI/CD; migrations 004 and 005 execution flags remain false. No production deployment or data collection enabled. '
+        'Isolated PHP 8.4 / MySQL 5.7 validation: 127 Python tests and 12 Node tests passed. '
+        'See docs/STAGE-4-REPORT.md and docs/CUSTOMER-AUTH.md. Genuine independent review, SMTP staging and legal review are required.')
+  existing=self.call('GET',base+'/pulls?state=open&base=main&head='+urllib.parse.quote('2006minden-gif:'+head,safe=''))
+  if existing['status']!=200:return {'status':existing['status'],'error':'pr_lookup_unavailable'}
+  if existing.get('data'):
+   p=existing['data'][0]
+   if not p.get('draft'):
+    r=self.call('POST','graphql',{'query':'mutation($id:ID!){convertPullRequestToDraft(input:{pullRequestId:$id}){pullRequest{number isDraft}}}','variables':{'id':p['node_id']}})
+    if r['status']!=200 or r.get('data',{}).get('errors'):return {'status':409,'error':'draft_conversion_unavailable'}
+   response=self.call('PATCH',base+'/pulls/'+str(p['number']),{'title':'Stage 4: customer authentication (depends on #4)','body':body})
+  else:response=self.call('POST',base+'/pulls',{'head':head,'base':'main','draft':True,'title':'Stage 4: customer authentication (depends on #4)','body':body})
+  if response.get('data'):response['data']={k:response['data'].get(k) for k in ['number','html_url','state','draft']}
+  return response
+
 def publish(report):
  # The evidence ref is a separate managed namespace. Never write/force main or trigger production.
  ref='automation/evidence';url='https://github.com/'+REPO+'.git'
@@ -119,6 +141,7 @@ if __name__=='__main__':
  try:
   report['inspection']=gateway.inspect()
   if plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
+  elif plan['action']=='prepare-stage4-pr':report['stage4_pr']=gateway.prepare_customer_pr(plan['expected_sha'])
   elif plan['action'] not in ['inspect','readonly-host']:raise ValueError('unsupported_control_action')
  except Exception as error:report['error_type']=type(error).__name__
  publish(report)
