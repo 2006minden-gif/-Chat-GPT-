@@ -14,7 +14,10 @@ class GitHubFailure(RuntimeError): pass
 def api(method, path, payload=None, missing=False):
     command=['gh','api',path,'--method',method,'-H','Accept: application/vnd.github+json','-H','X-GitHub-Api-Version: 2022-11-28']
     if payload is not None:command+=['--input','-']
-    r=subprocess.run(command,input=json.dumps(payload) if payload is not None else None,capture_output=True,text=True,timeout=45)
+    runenv=None
+    if method=='POST' and path=='repos/'+REPO+'/actions/workflows/deploy.yml/dispatches' and os.environ.get('GITHUB_DISPATCH_TOKEN'):
+        runenv=dict(os.environ,GH_TOKEN=os.environ['GITHUB_DISPATCH_TOKEN'])
+    r=subprocess.run(command,input=json.dumps(payload) if payload is not None else None,capture_output=True,text=True,timeout=45,env=runenv)
     if r.returncode:
         if missing and '(HTTP 404)' in r.stderr:return None
         raise GitHubFailure('GitHub API access failed: '+method+' '+path)
@@ -53,39 +56,47 @@ def protection_payload(old):
         raise GitHubFailure('Existing required deployments need reviewed rule reconciliation; not modified')
     return payload
 
-def bootstrap():
-    repo=api('GET','repos/'+REPO)
-    if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):raise GitHubFailure('Repository administrator access required')
-    base='repos/'+REPO
-    old=api('GET',base+'/branches/main/protection',missing=True)
-    payload=protection_payload(old)
-    # Fail closed while the one-time settings are being applied.
-    def variable(name,value):
-        current=api('GET',base+'/actions/variables/'+name,missing=True)
-        api('PATCH' if current else 'POST',base+'/actions/variables/'+name if current else base+'/actions/variables',{'name':name,'value':value})
-    variable('AUTOMATION_READY','false')
-    for environment in ['production','automation']:
-        endpoint=base+'/environments/'+environment
-        api('PUT',endpoint,{'wait_timer':0,'reviewers':[],'deployment_branch_policy':{'protected_branches':False,'custom_branch_policies':True}})
-        policies=api('GET',endpoint+'/deployment-branch-policies')['branch_policies']
-        for policy in policies:
-            if policy['name']!='main' or policy.get('type','branch')!='branch':api('DELETE',endpoint+'/deployment-branch-policies/'+str(policy['id']))
-        if not any(p['name']=='main' and p.get('type','branch')=='branch' for p in policies):api('POST',endpoint+'/deployment-branch-policies',{'name':'main','type':'branch'})
-    api('PUT',base+'/branches/main/protection',payload)
-    api('PATCH',base,{'allow_auto_merge':True})
-    # Names/metadata only. Existing secret values are neither retrieved nor overwritten.
-    secretsBase='repositories/'+str(repo['id'])+'/environments'
-    production={v['name'] for v in api('GET',secretsBase+'/production/secrets')['secrets']}
+def set_variable(base,name,value):
+    current=api('GET',base+'/actions/variables/'+name,missing=True)
+    api('PATCH' if current else 'POST',base+'/actions/variables/'+name if current else base+'/actions/variables',{'name':name,'value':value})
+
+def verify_environment(base,environment):
+    endpoint=base+'/environments/'+environment
+    config=api('GET',endpoint)
+    if config.get('deployment_branch_policy')!={'protected_branches':False,'custom_branch_policies':True}:
+        raise GitHubFailure(environment+' must have a custom main-only branch policy; existing settings were preserved')
+    policies=pages(endpoint+'/deployment-branch-policies','branch_policies')
+    if not policies or any(p['name']!='main' or p.get('type','branch')!='branch' for p in policies):
+        raise GitHubFailure(environment+' must permit only branch main, not tags or wildcards')
+    # Existing reviewer/wait protections are never reset by automation.
+    return config
+
+def secret_metadata(base,repo_id):
+    repository={v['name'] for v in pages(base+'/actions/secrets','secrets')}
+    production={v['name'] for v in pages('repositories/'+str(repo_id)+'/environments/production/secrets','secrets')}
     expected={'SSH_HOST','SSH_PORT','SSH_USER','DEPLOY_PATH','SSH_PRIVATE_KEY','SSH_KNOWN_HOSTS'}
-    if not expected<=production:raise GitHubFailure('Missing environment-scoped production secret names: '+','.join(sorted(expected-production)))
-    repository_secrets={v['name'] for v in api('GET',base+'/actions/secrets')['secrets']}
-    if 'SSH_PRIVATE_KEY' in repository_secrets:raise GitHubFailure('After secure environment transfer, remove the legacy repository-scoped SSH_PRIVATE_KEY; no secret was deleted by this script')
-    automation={v['name'] for v in api('GET',secretsBase+'/automation/secrets')['secrets']}
+    missing=expected-(repository|production)
+    if missing:raise GitHubFailure('Missing production secret names in both supported scopes: '+','.join(sorted(missing)))
+    return {'repository':repository,'production':production}
+
+def bootstrap():
+    base='repos/'+REPO;repo=api('GET',base)
+    if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):raise GitHubFailure('Repository administrator access required')
+    # Never publishes or promotes READY. Valid names are metadata, not proof of a working key/server.
+    set_variable(base,'AUTOMATION_READY','false')
+    required_policy(base)
+    for environment in ['production','automation']:verify_environment(base,environment)
+    scopes=secret_metadata(base,repo['id'])
     app=api('GET',base+'/actions/variables/AUTOMERGE_APP_ID',missing=True)
-    if app and app.get('value') and ('AUTOMERGE_APP_PRIVATE_KEY' not in automation or not app['value'].isdigit()):raise GitHubFailure('Configured GitHub App requires valid ID and automation-scoped key')
-    verify_protection(api('GET',base+'/branches/main/protection'))
-    variable('AUTOMERGE_ENABLED','true');variable('AUTOMATION_READY','true')
-    print('Repository gates configured; real CI/deployment verification still required')
+    if app and app.get('value'):
+        automation={v['name'] for v in pages('repositories/'+str(repo['id'])+'/environments/automation/secrets','secrets')}
+        if not app['value'].isdigit() or 'AUTOMERGE_APP_PRIVATE_KEY' not in (automation|scopes['repository']):
+            raise GitHubFailure('Configured GitHub App requires valid ID and available key metadata')
+    if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository native auto-merge must be enabled by its administrator')
+    set_variable(base,'BOOTSTRAP_CONFIGURED_SHA',api('GET',base+'/git/ref/heads/main')['object']['sha'])
+    set_variable(base,'BOOTSTRAP_APPROVED_SHA','')
+    set_variable(base,'AUTOMERGE_ENABLED','true')
+    print('Existing protection and secret scopes verified; AUTOMATION_READY remains false until verified bootstrap delivery')
 
 def verify_protection(protection):
     reviews=protection.get('required_pull_request_reviews') or {}
@@ -111,7 +122,7 @@ def eligible(pr,reviews,checks,statuses,permissions,required_count,required_chec
         if check['conclusion']=='success' and (check['name']!=REQUIRED_CHECK or check['app']['id']==15368):passed.add(check['name'])
     for status in statuses:
         if status['state']!='success':return False
-        passed.add(status['context'])
+        if status['context']!=REQUIRED_CHECK:passed.add(status['context'])
     return set(required_checks)<=passed
 
 def ensure_pr_for_validated_branch():
@@ -151,17 +162,31 @@ def required_policy(base):
         return {},reviews['required_approving_review_count'],[c['context'] for c in required]
 
 def ensure_main_ci():
-    # GITHUB_TOKEN merges suppress push workflows. Explicit API dispatch is automatic, not an owner button.
-    if os.environ.get('GITHUB_TOKEN_FALLBACK')!='true':return
+    # Native GITHUB_TOKEN merges suppress push CI. Always dispatch an exact main SHA, never assume push ran.
     base='repos/'+REPO;head=api('GET',base+'/git/ref/heads/main')['object']['sha']
+    ready=os.environ.get('AUTOMATION_READY')=='true'
+    approved=os.environ.get('BOOTSTRAP_APPROVED_SHA')==head and os.environ.get('BOOTSTRAP_CONFIGURED_SHA')==head
+    native=os.environ.get('GITHUB_TOKEN_FALLBACK')=='true'
+    if ready and not native:return
     runs=api('GET',base+'/actions/workflows/deploy.yml/runs?branch=main&per_page=30')['workflow_runs']
-    if any(r['head_sha']==head for r in runs):return
+    current=[r for r in runs if r['head_sha']==head]
+    operation='deploy' if ready else 'preview'
+    if not ready and approved:
+        if any(r.get('event')=='workflow_dispatch' and r.get('display_title')=='bootstrap '+head for r in current):return
+        validated=False
+        for run in current:
+            if run.get('status')!='completed' or run.get('conclusion')!='success':continue
+            jobs=api('GET',base+'/actions/runs/'+str(run['id'])+'/jobs?per_page=100')['jobs']
+            if any(j['name']=='Validate' and j['conclusion']=='success' for j in jobs):validated=True;break
+        if validated:operation='bootstrap'
+        elif current:return
+    elif current or not native:return
     source=api('GET',base+'/contents/.github/workflows/deploy.yml?ref=main')
     import base64
     text=base64.b64decode(source['content']).decode()
-    if 'name: NeuroDelo CI/CD' not in text or 'operation:' not in text:raise GitHubFailure('Automatic delivery workflow not integrated yet')
-    api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':'main','inputs':{'operation':'deploy'}})
-    print('Requested tested main delivery automatically for',head)
+    if 'name: NeuroDelo CI/CD' not in text or 'operation:' not in text or 'expected_revision:' not in text:raise GitHubFailure('SHA-gated delivery workflow not integrated yet')
+    api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':'main','inputs':{'operation':operation,'expected_revision':head}})
+    print('Requested tested main operation automatically:',operation,head)
 
 def auto_merge():
     base='repos/'+REPO;repo=api('GET',base)

@@ -1,5 +1,7 @@
 # NeuroDelo: автоматический CI/CD
 
+> Актуальное состояние bootstrap, административные действия и реальные SpaceWeb blockers: [CICD-BOOTSTRAP-ISSUE-8.md](CICD-BOOTSTRAP-ISSUE-8.md). Этот отчёт заменяет устаревшие выводы о недоступности SSH, обязательном переносе secret scope и раннем включении READY.
+
 > Актуальные результаты GitHub Actions, штатный GITHUB_TOKEN вместо обязательного App и подтверждённые блокировки: [AUTOMATION-VERIFICATION.md](AUTOMATION-VERIFICATION.md). Противоречащие этому отчёту сведения ниже описывают прежнее состояние.
 
 ## Что меняется

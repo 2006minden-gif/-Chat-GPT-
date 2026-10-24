@@ -47,6 +47,42 @@ class DeploymentSafety(unittest.TestCase):
   self.assertEqual(job['steps'][0]['with']['ref'],'main')
   self.assertTrue(any(s.get('uses','').startswith('actions/create-github-app-token@') for s in job['steps']))
   self.assertNotIn('SSH_PRIVATE_KEY',str(w));self.assertNotIn('download-artifact',str(w))
+ def test_bootstrap_and_native_dispatch_are_sha_bound_and_keep_ready_closed(self):
+  inputs=self.w['on']['workflow_dispatch']['inputs'];self.assertIn('bootstrap',inputs['operation']['options']);self.assertIn('expected_revision',inputs)
+  job=self.w['jobs']['deploy'];self.assertIn("vars.AUTOMATION_READY == 'true'",job['if']);self.assertIn('BOOTSTRAP_CONFIGURED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_APPROVED_SHA == github.sha',job['if']);self.assertIn('BOOTSTRAP_VERIFIED_RUN',job['if']);self.assertNotIn("inputs.operation != 'deploy'",job['if']);self.assertIn("inputs.operation == 'rollback'",job['if'])
+  names=[s.get('name') for s in job['steps']];self.assertLess(names.index('Recheck production environment before secret use'),names.index('Publish or maintain checked release'))
+  code='\n'.join(s.get('run','') for s in self.w['jobs']['validate']['steps']);self.assertIn('$EXPECTED',code);self.assertIn('$REVISION',code)
+ def test_release_gate_bootstraps_without_circular_proof_but_never_bypasses_validation(self):
+  # Execute the actual workflow expression with synthetic GitHub contexts.
+  expression=self.w['jobs']['deploy']['if']
+  def allowed(**changes):
+   context={'inputs.validation_only':False,'vars.AUTOMATION_READY':'false',
+    'vars.BOOTSTRAP_VERIFIED_RUN':'','vars.BOOTSTRAP_VERIFIED_SHA':'',
+    'vars.BOOTSTRAP_APPROVED_SHA':'a'*40,'vars.BOOTSTRAP_CONFIGURED_SHA':'a'*40,
+    'vars.DEPLOY_PAUSED':'false','github.ref':'refs/heads/main',
+    'github.event_name':'workflow_dispatch','inputs.operation':'bootstrap','github.sha':'a'*40}
+   context.update(changes)
+   code=expression
+   for key in sorted(context,key=len,reverse=True):code=code.replace(key,repr(context[key]))
+   code=code.replace('&&',' and ').replace('||',' or ')
+   code=re.sub(r'\btrue\b','True',code)
+   return eval(' '.join(code.split()),{'__builtins__':{}},{})
+  self.assertTrue(allowed())
+  for changes in [{'inputs.validation_only':True},{'vars.BOOTSTRAP_APPROVED_SHA':'b'*40},
+   {'vars.BOOTSTRAP_CONFIGURED_SHA':''},{'vars.DEPLOY_PAUSED':'true'},
+   {'github.ref':'refs/heads/feature'},{'github.event_name':'push'},
+   {'inputs.operation':'deploy'},{'github.event_name':'pull_request'}]:
+   with self.subTest(changes=changes):self.assertFalse(allowed(**changes))
+  routine={'github.event_name':'push','inputs.operation':'','vars.AUTOMATION_READY':'true',
+   'vars.BOOTSTRAP_VERIFIED_RUN':'123','vars.BOOTSTRAP_VERIFIED_SHA':'b'*40}
+  self.assertTrue(allowed(**routine))
+  for missing in ['vars.BOOTSTRAP_VERIFIED_RUN','vars.BOOTSTRAP_VERIFIED_SHA']:
+   self.assertFalse(allowed(**dict(routine,**{missing:''})))
+  self.assertFalse(allowed(**dict(routine,**{'inputs.validation_only':True})))
+  repair=yaml.load((ROOT/'.github/workflows/production-repair.yml').read_text(),Loader=yaml.BaseLoader)
+  self.assertEqual(repair['jobs']['validate']['with']['validation_only'],'true')
+  self.assertEqual(repair['jobs']['repair']['needs'],'validate')
+  self.assertEqual(repair['jobs']['repair']['concurrency']['group'],'spaceweb-production')
  def test_shell_syntax(self):
   for path in (ROOT/'.github/workflows').glob('*.yml'):
    w=yaml.load(path.read_text(),Loader=yaml.BaseLoader)

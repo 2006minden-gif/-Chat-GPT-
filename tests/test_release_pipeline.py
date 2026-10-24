@@ -118,10 +118,10 @@ class RemoteFilesystemTests(unittest.TestCase):
  def test_readonly_preflight_creates_no_backup_or_lock(self):
   before=set(self.root.rglob('*'));self.agent('preflight');self.assertEqual(set(self.root.rglob('*')),before);self.assert_protected()
  def test_apply_verified_backup_and_rollback_preserve_uploads_and_config(self):
-  self.agent('apply');self.assert_protected()
+  applied=self.agent('apply');self.assertTrue(applied['backup_verified']);self.assertTrue(applied['recovery_verified']);self.assertEqual(applied['files_sha256'],self.manifest['files']);self.assert_protected()
   backup=self.root/'.neurodelo-deploy/backups'/self.id
   for path,digest in self.before.items():self.assertEqual(release.digest(backup/'files'/path),digest);self.assertEqual(release.digest(self.root/path),self.manifest['files'][path])
-  self.assertFalse((backup/'files/private/config.php').exists())
+  self.assertFalse((backup/'files/private/config.php').exists());self.assertFalse((backup/'recovery-check').exists())
   result=self.agent('rollback');self.assertTrue(result['files_restored']);self.assertFalse(result['health_verified'])
   for path,digest in self.before.items():self.assertEqual(release.digest(self.root/path),digest)
   self.agent('confirm-rollback');self.assert_protected()
@@ -232,6 +232,7 @@ class SSHIsolationTests(unittest.TestCase):
    bundle=Path(tmp)/'bundle';release.build(bundle,'a'*40)
    env={'SSH_HOST':'fixture.invalid','SSH_USER':'fixture','SSH_PORT':'22','DEPLOY_PATH':client.ACCOUNT+'/public_html','SSH_PRIVATE_KEY':'SYNTHETIC_NOT_A_REAL_KEY','SSH_KNOWN_HOSTS':'SYNTHETIC_NOT_A_REAL_HOST_KEY'}
    with patch.dict(os.environ,env):remote=client.Remote(bundle,'a'*40,'fixture')
+   self.assertEqual(remote.php,os.environ.get('PHP_CLI') or '/usr/bin/php8.4')
    key=Path(remote.ssh[remote.ssh.index('-i')+1]);self.assertEqual(key.stat().st_mode&0o777,0o600)
    self.assertIn('StrictHostKeyChecking=yes',remote.ssh);self.assertIn('IdentitiesOnly=yes',remote.ssh);self.assertIn('BatchMode=yes',remote.ssh)
    try:
@@ -295,25 +296,24 @@ class GovernanceTests(unittest.TestCase):
   self.assertFalse(allowed(c=[{**check,'conclusion':'failure'}]));self.assertFalse(allowed(c=[{**check,'app':{'id':999}}]))
   self.assertFalse(allowed(c=[{**check,'conclusion':'skipped'}]));self.assertFalse(allowed(c=[]))
   self.assertTrue(allowed(p={**pr,'checked_sha':'c'*40},c=[{**check,'head_sha':'c'*40}]))
- def test_bootstrap_sets_ready_only_after_protection_and_secret_metadata(self):
-  calls=[];variables={'AUTOMERGE_APP_ID':'42'};protected={}
+ def test_bootstrap_accepts_repo_secrets_without_weakening_protection_or_environments(self):
+  calls=[];variables={};protected={'enforce_admins':{'enabled':True},'required_status_checks':{'strict':True,'checks':[{'context':'Validate','app_id':15368}]},'required_pull_request_reviews':{'required_approving_review_count':1,'dismiss_stale_reviews':True}}
   def fake(method,path,payload=None,missing=False):
    calls.append((method,path,payload))
-   if path=='repos/'+control.REPO and method=='GET':return {'id':123,'full_name':control.REPO,'permissions':{'admin':True}}
-   if path.endswith('/branches/main/protection'):
-    if method=='GET':return protected or None
-    protected.update(payload);protected['enforce_admins']={'enabled':True};return None
+   if path=='repos/'+control.REPO and method=='GET':return {'id':123,'full_name':control.REPO,'permissions':{'admin':True},'allow_auto_merge':True}
+   if path.endswith('/branches/main/protection'):return protected
+   if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
    if '/actions/variables/' in path and method=='GET':
     value=variables.get(path.rsplit('/',1)[1]);return {'value':value} if value is not None else None
    if '/actions/variables' in path and method in ['POST','PATCH']:variables[payload['name']]=payload['value'];return None
-   if path.endswith('/deployment-branch-policies') and method=='GET':return {'branch_policies':[]}
-   if path=='repositories/123/environments/production/secrets':return {'secrets':[{'name':n} for n in ['SSH_HOST','SSH_PORT','SSH_USER','DEPLOY_PATH','SSH_PRIVATE_KEY','SSH_KNOWN_HOSTS']]}
-   if path=='repositories/123/environments/automation/secrets':return {'secrets':[{'name':'AUTOMERGE_APP_PRIVATE_KEY'}]}
-   if path.endswith('/actions/secrets'):return {'secrets':[]}
-   return None
+   if '/deployment-branch-policies?' in path:return {'branch_policies':[{'name':'main','type':'branch'}]}
+   if path.endswith('/production') or path.endswith('/automation'):return {'deployment_branch_policy':{'protected_branches':False,'custom_branch_policies':True},'protection_rules':[{'type':'required_reviewers'}]}
+   if '/actions/secrets?' in path:return {'secrets':[{'name':n} for n in ['SSH_HOST','SSH_PORT','SSH_USER','DEPLOY_PATH','SSH_PRIVATE_KEY','SSH_KNOWN_HOSTS']]}
+   if '/secrets?' in path:return {'secrets':[]}
+   raise AssertionError('Unexpected API call '+method+' '+path)
   with patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.bootstrap()
-  self.assertEqual(variables['AUTOMATION_READY'],'true');self.assertEqual(variables['AUTOMERGE_ENABLED'],'true')
-  self.assertEqual(calls[-1][2],{'name':'AUTOMATION_READY','value':'true'})
+  self.assertEqual(variables['AUTOMATION_READY'],'false');self.assertEqual(variables['AUTOMERGE_ENABLED'],'true');self.assertEqual(variables['BOOTSTRAP_CONFIGURED_SHA'],'a'*40)
+  self.assertFalse(any(m in ['PUT','DELETE'] or ('/secrets' in p and m!='GET') for m,p,v in calls))
   self.assertTrue(protected['required_pull_request_reviews']['dismiss_stale_reviews'])
  def test_bootstrap_never_mutates_when_admin_read_is_blocked(self):
   with patch.object(control,'api',side_effect=control.GitHubFailure('blocked')) as api:
@@ -351,9 +351,9 @@ class GovernanceTests(unittest.TestCase):
    calls.append((method,path,payload))
    if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
    if '/runs?' in path:return {'workflow_runs':[]}
-   if '/contents/' in path:return {'content':base64.b64encode(b'name: NeuroDelo CI/CD\noperation:').decode()}
+   if '/contents/' in path:return {'content':base64.b64encode(b'name: NeuroDelo CI/CD\noperation:\nexpected_revision:').decode()}
    return None
-  with patch.dict(os.environ,{'GITHUB_TOKEN_FALLBACK':'true'}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_main_ci()
-  self.assertEqual(calls[-1][0],'POST');self.assertEqual(calls[-1][2],{'ref':'main','inputs':{'operation':'deploy'}})
+  with patch.dict(os.environ,{'GITHUB_TOKEN_FALLBACK':'true','AUTOMATION_READY':'true'}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_main_ci()
+  self.assertEqual(calls[-1][0],'POST');self.assertEqual(calls[-1][2],{'ref':'main','inputs':{'operation':'deploy','expected_revision':'a'*40}})
 
 if __name__=='__main__':unittest.main()

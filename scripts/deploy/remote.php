@@ -236,13 +236,21 @@ try {
             $before=hash_file_safe($root.'/'.$path);$entries[$path]=['before'=>$before,'candidate'=>$m['files'][$path],'mode'=>$before!==null?(fileperms($root.'/'.$path)&0777):0644];
             if($before!==null) {if(!is_dir(dirname($backup.'/files/'.$path)))mkdir(dirname($backup.'/files/'.$path),0700,true);insist(copy($root.'/'.$path,$backup.'/files/'.$path),'backup_copy_failed');chmod($backup.'/files/'.$path,0600);insist(hash_file_safe($backup.'/files/'.$path)===$before,'backup_checksum_mismatch');}
         }
+        // Prove recovery by restoring each backed-up code file to private scratch and hashing it.
+        $scratch=$backup.'/recovery-check';insist(mkdir($scratch,0700),'recovery_test_failed');
+        foreach($entries as $path=>$entry)if($entry['before']!==null) {
+            $target=$scratch.'/'.$path;if(!is_dir(dirname($target)))mkdir(dirname($target),0700,true);
+            insist(copy($backup.'/files/'.$path,$target)&&hash_file_safe($target)===$entry['before'],'recovery_test_failed');
+        }
+        remove_tree($scratch);
         $meta=['revision'=>$m['revision'],'files'=>$entries,'protected'=>$protected,'baseline'=>$baseline,'keep_backups'=>$m['keep_backups']];
         save_json($backup.'/backup.json',$meta);
         $state['active']=$id;if(($baseline['ok']??false)===true)$state['known_good_backup']=$id;save_json($stateRoot.'/state.json',$state);
         $migrated=migrate_approved($root,$candidate,$m,$backup);
         foreach(paths() as $path)atomic_copy($candidate.'/'.$path,$root.'/'.$path,$id);
         assert_protected($root,$protected);
-        $result=['ok'=>true,'applied'=>true,'revision'=>$m['revision'],'migrations'=>$migrated,'baseline_healthy'=>$baseline['ok']??false];
+        $actual=[];foreach(paths() as $path){$actual[$path]=hash_file_safe($root.'/'.$path);insist($actual[$path]===$m['files'][$path],'deployed_hash_mismatch');}
+        $result=['backup_verified'=>true,'recovery_verified'=>true,'files_sha256'=>$actual,'ok'=>true,'applied'=>true,'revision'=>$m['revision'],'migrations'=>$migrated,'baseline_healthy'=>$baseline['ok']??false];
     }
     echo json_encode($result,JSON_UNESCAPED_SLASHES),PHP_EOL;
 } catch(Throwable $e) {

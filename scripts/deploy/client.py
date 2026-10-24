@@ -39,7 +39,7 @@ class Remote:
         if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9.-]*',host) or not re.fullmatch(r'[A-Za-z0-9_][A-Za-z0-9_-]*',user) or not port.isdigit() or not 1<=int(port)<=65535:
             raise ValueError('invalid_ssh_target')
         if os.environ.get('DEPLOY_PATH')!=ACCOUNT+'/public_html': raise ValueError('unexpected_deployment_path')
-        self.php=os.environ.get('PHP_CLI') or 'php'
+        self.php=os.environ.get('PHP_CLI') or '/usr/bin/php8.4'
         if not re.fullmatch(r'[A-Za-z0-9_/][A-Za-z0-9_./-]*',self.php):raise ValueError('invalid_php_command')
         key=os.environ['SSH_PRIVATE_KEY'];known=os.environ['SSH_KNOWN_HOSTS']
         if not key.strip() or not known.strip(): raise ValueError('ssh_credentials_missing')
@@ -111,6 +111,8 @@ def coordinate(remote, mode='deploy', snapshot=health.snapshot, attempts=3, dela
         return report
     try:
         report['preflight']=remote.preflight()
+        if mode=='bootstrap' and not before['ok']:
+            report['error']='bootstrap_requires_healthy_baseline';return report
         if mode=='preview':
             remote.preview();report['result']='preview_passed' if before['ok'] else 'preview_unhealthy';return report
         remote.stage(before)
@@ -146,10 +148,11 @@ def coordinate(remote, mode='deploy', snapshot=health.snapshot, attempts=3, dela
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--bundle',type=Path,required=True);parser.add_argument('--revision',required=True)
-    parser.add_argument('--operation',choices=['deploy','preview','rollback'],default='deploy');parser.add_argument('--report',type=Path,required=True)
+    parser.add_argument('--operation',choices=['deploy','preview','rollback','bootstrap'],default='deploy');parser.add_argument('--report',type=Path,required=True)
     args=parser.parse_args();report={'result':'failed'}
     try:
         manifest=validate_bundle(args.bundle,args.revision)
+        if args.operation=='bootstrap' and manifest.get('migrations'):raise ValueError('bootstrap_migrations_forbidden')
         run=os.environ.get('GITHUB_RUN_ID','local');attempt=os.environ.get('GITHUB_RUN_ATTEMPT','1')
         if not run.isdigit() or not attempt.isdigit():raise ValueError('invalid_github_run_identity')
         release_id=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'-r'+run+'-a'+attempt+'-'+args.revision[:12]
