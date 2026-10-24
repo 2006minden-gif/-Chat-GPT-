@@ -19,8 +19,13 @@ def api(method, path, payload=None, missing=False):
         runenv=dict(os.environ,GH_TOKEN=os.environ['GITHUB_DISPATCH_TOKEN'])
     r=subprocess.run(command,input=json.dumps(payload) if payload is not None else None,capture_output=True,text=True,timeout=45,env=runenv)
     if r.returncode:
-        if missing and '(HTTP 404)' in r.stderr:return None
-        raise GitHubFailure('GitHub API access failed: '+method+' '+path)
+        # Never expose gh stderr/headers: they can contain URLs, tokens or sensitive context.
+        # Surface only a bounded HTTP code and a predetermined failure category.
+        match=re.search(r'\bHTTP\s+(401|403|404|422|429)\b',r.stderr or '')
+        status=match.group(1) if match else None
+        if missing and status=='404':return None
+        category={'401':'invalid_or_expired_token','403':'insufficient_permissions_or_policy','404':'not_found_or_not_authorized','422':'invalid_request','429':'rate_limited'}.get(status,'transport_or_unclassified_failure')
+        raise GitHubFailure('GitHub API access failed: '+method+' '+path.split('?',1)[0]+' [HTTP '+(status or 'unknown')+', '+category+']')
     return json.loads(r.stdout) if r.stdout.strip() else None
 
 def pages(path, field=None):
