@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 function crm_enrich(string $kind,array $row):array{
+ if($kind==='leads')$row['created_at']=gmdate('Y-m-d H:i:s',(int)$row['created']);
  if($kind==='tasks'){$link=crm_query('SELECT tp.project_id,tp.stage_id,p.title AS project_name,s.title AS stage_name FROM nd_task_projects tp JOIN nd_projects p ON p.id=tp.project_id LEFT JOIN nd_project_stages s ON s.id=tp.stage_id WHERE tp.task_id=?',[$row['id']])->fetch();if($link)$row=array_replace($row,$link);}
  foreach(['owner_employee_id','manager_employee_id','assignee_employee_id'] as $f)if(!empty($row[$f])){$row['responsible_name']=crm_record('employees',(int)$row[$f])['name'];break;}
  return $row;
@@ -37,7 +38,7 @@ function crm_list(string $kind,array $filters=[]):array{
  return ['ok'=>true,'items'=>$rows,'page'=>$page,'total'=>$total,'page_size'=>$limit];
 }
 function crm_detail(string $kind,int $id):array{
- if($kind==='leads'){$r=crm_query('SELECT * FROM nd_leads WHERE id=?',[$id])->fetch();if(!$r)crm_fail(404,'Заявка не найдена.');return ['ok'=>true,'record'=>$r];}
+ if($kind==='leads'){$r=crm_query('SELECT * FROM nd_leads WHERE id=?',[$id])->fetch();if(!$r)crm_fail(404,'Заявка не найдена.');return ['ok'=>true,'record'=>crm_enrich('leads',$r)];}
  $r=crm_enrich($kind,crm_record($kind,$id));if(isset($r['customer_id']))$r['customer_name']=crm_record('customers',(int)$r['customer_id'])['name'];$related=[];
  if($kind==='customers')foreach(['leads','deals','orders','projects','activity'] as $k)$related[$k]=crm_list($k,['customer_id'=>$id,'archived'=>'all']);
  if($kind==='projects'){

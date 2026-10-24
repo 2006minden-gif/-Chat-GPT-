@@ -40,6 +40,7 @@ class CrmOperations(unittest.TestCase):
  def customer(self,**d):return self.create('customers',name='Клиент '+secrets.token_hex(3),email='synthetic@example.invalid',**d)
  def test_02_customer_lifecycle_and_lead_ownership(self):
   a=self.customer();b=self.customer();lead=self.s.post(self.base+'/api.php?r=leads',json={'name':'Исходная заявка','contact':'lead@example.invalid','service':'ИИ-агент','idea':'Синтетический тест','consent':True,'policy_version':'test-policy-v1','idempotency_key':secrets.token_hex(32)}).json()['lead_id']
+  self.assertRegex(self.get('leads/'+str(lead)).json()['record']['created_at'],r'^\d{4}-\d{2}-\d{2} ')
   first=self.patch('customers/'+str(a['id']),version=1,phone='+79991234567');self.assertEqual(first.status_code,200,first.text)
   self.assertEqual(self.patch('customers/'+str(a['id']),version=1,name='Устаревшее изменение').status_code,409)
   linked=self.post('customers/'+str(a['id'])+'/link',version=2,lead_id=lead);self.assertEqual(linked.status_code,200,linked.text)
@@ -162,6 +163,7 @@ class CrmOperations(unittest.TestCase):
     page.goto(self.base+'/workspace.php#'+kind);page.wait_for_function("() => !document.querySelector('#refresh').disabled && document.querySelector('#content').children.length>0")
     self.assertEqual(page.locator('#message').inner_text(),'')
    page.goto(self.base+'/workspace.php#projects');page.wait_for_selector('.card');self.assertFalse(page.locator('script:has-text("alert(1)")').count())
+   page.locator('#content .card > a').first.click();page.wait_for_selector('#details[open]');page.locator('#close-details').click();page.wait_for_selector('#details[open]',state='hidden');page.locator('#content .card > a').first.click();page.wait_for_selector('#details[open]');page.locator('#close-details').click()
    shots=Path(os.environ.get('NEURO_CRM_SCREENSHOTS','/tmp/neuro-stage5-ux'));shots.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(shots/'projects-desktop.png'),full_page=True)
    page.set_viewport_size({'width':390,'height':844})
    for kind in ['dashboard','customers','deals','orders','projects','tasks','employees','notifications','activity','settings']:
