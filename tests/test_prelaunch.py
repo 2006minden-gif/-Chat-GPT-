@@ -304,3 +304,82 @@ class Prelaunch(unittest.TestCase):
    self.sql(file.read_text().replace('nd_leads','nd_leads_legacy'))
   row=self.sql('SELECT * FROM nd_leads_legacy')[0]
   self.assertEqual(row['notes'],'Сохранить');self.assertEqual(row['version'],1);self.assertIsNone(row['consent']);self.assertIsNone(row['request_key'])
+ def test_10_browser_pending_edits_survive_success(self):
+  from playwright.sync_api import sync_playwright
+  with sync_playwright() as p:
+   browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox'])
+   try:
+    for changed in ['name','contact','service','idea','consent','all']:
+     with self.subTest(changed=changed):
+      page=browser.new_page();page.goto(self.base)
+      page.wait_for_function("() => !document.querySelector('#brief-form button').disabled")
+      page.locator('#name').fill('Original '+changed);page.locator('#contact-value').fill('original@example.com')
+      page.locator('#idea').fill('Original idea');page.locator('#consent').check()
+      calls=[];persisted=[]
+      edits={'name':'Edited name','contact':'edited@example.com','service':'Другая идея','idea':'Edited idea','consent':False}
+      selectors={'name':'#name','contact':'#contact-value','service':'#service','idea':'#idea','consent':'#consent'}
+      expected={key:page.locator(selector).is_checked() if key=='consent' else page.locator(selector).input_value() for key,selector in selectors.items()}
+      for key in edits:
+       if changed in [key,'all']:expected[key]=edits[key]
+      def hold_success(route):
+       calls.append(route.request.post_data_json)
+       response=route.fetch();self.assertEqual(response.status,201);persisted.append(response.json()['lead_id'])
+       if len(calls)==1:
+        self.assertTrue(page.locator('#brief-form button').is_disabled())
+        for key,selector in selectors.items():
+         if changed in [key,'all']:
+          page.locator(selector).evaluate('(node,value)=>{if(node.type==="checkbox")node.checked=value;else node.value=value;node.dispatchEvent(new Event("input",{bubbles:true}));}',edits[key])
+        # Repeated submission while pending must not create another request.
+        page.locator('#brief-form').evaluate('(form)=>form.dispatchEvent(new Event("submit",{bubbles:true,cancelable:true}))')
+       route.fulfill(response=response)
+      page.route('**/api.php?r=leads',hold_success)
+      page.locator('#brief-form button').click()
+      page.wait_for_function("() => document.querySelector('#form-status').textContent.includes('Новые правки')")
+      self.assertEqual(len(calls),1)
+      for key,selector in selectors.items():
+       actual=page.locator(selector).is_checked() if key=='consent' else page.locator(selector).input_value()
+       self.assertEqual(actual,expected[key],key)
+      row=self.sql('SELECT name,contact,service,idea FROM nd_leads WHERE id=?',params=[persisted[0]])[0]
+      for key in row:self.assertEqual(row[key],calls[0][key])
+      self.assertFalse(page.locator('#brief-form button').is_disabled())
+      if changed=='all':
+       page.locator('#brief-form button').click();page.wait_for_timeout(50);self.assertEqual(len(calls),1)
+       page.locator('#consent').check();page.locator('#brief-form button').click()
+       page.wait_for_function("() => document.querySelector('#form-status').textContent.includes('Заявка сохранена!')")
+       self.assertEqual(len(calls),2);self.assertNotEqual(calls[0]['idempotency_key'],calls[1]['idempotency_key'])
+       self.assertNotEqual(persisted[0],persisted[1])
+       for key in ['name','contact','service','idea']:self.assertEqual(calls[1][key],edits[key])
+       self.assertEqual(page.locator('#name').input_value(),'');self.assertFalse(page.locator('#consent').is_checked())
+      page.close()
+   finally:browser.close()
+ def test_11_browser_initial_login_and_real_auth_errors(self):
+  from playwright.sync_api import sync_playwright
+  with sync_playwright() as p:
+   browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox'])
+   try:
+    context=browser.new_context();page=context.new_page();page.goto(self.base+'/studio.php');page.wait_for_load_state('networkidle')
+    self.assertTrue(page.locator('#login-panel').is_visible());self.assertEqual(page.locator('#message').inner_text(),'')
+    page.locator('#password').fill('incorrect');page.locator('#login-form button').click()
+    page.wait_for_function("() => document.querySelector('#message').textContent.includes('пароль неверен')")
+    page.locator('#password').fill(self.password);page.locator('#login-form button').click();page.locator('#dashboard').wait_for(state='visible')
+    self.assertEqual(page.locator('#message').inner_text(),'')
+    restored=context.new_page();restored.goto(self.base+'/studio.php');restored.locator('#dashboard').wait_for(state='visible')
+    self.assertEqual(restored.locator('#message').inner_text(),'')
+    # A valid initial session followed by leads 401 is a real expiry, not a quiet first visit.
+    expired=context.new_page();expired.route('**/api.php?r=leads',lambda route:route.fulfill(status=401,content_type='application/json',body='{}'))
+    expired.goto(self.base+'/studio.php')
+    expired.wait_for_function("() => document.querySelector('#message').textContent.includes('Срок входа истёк')")
+    self.assertTrue(expired.locator('#login-panel').is_visible())
+    restored.locator('#logout').click();restored.locator('#login-panel').wait_for(state='visible')
+    self.assertEqual(restored.locator('#message').inner_text(),'');context.close()
+    for failure in ['server','network']:
+     page=browser.new_page()
+     def unavailable(route):
+      if failure=='network':route.abort()
+      else:route.fulfill(status=503,content_type='application/json',body='{}')
+     page.route('**/api.php?r=session',unavailable);page.goto(self.base+'/studio.php')
+     page.wait_for_function("() => document.querySelector('#message').textContent.length>0")
+     message=page.locator('#message').inner_text()
+     self.assertIn('Сервис временно' if failure=='server' else 'Не удалось связаться',message)
+     page.close()
+   finally:browser.close()

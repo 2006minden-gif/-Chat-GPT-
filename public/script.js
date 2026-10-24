@@ -16,6 +16,12 @@ async function loadPrivacy() {
   } catch(error) {document.querySelector('#privacy-status').textContent=error.message;}
 }
 loadPrivacy();
+function briefPayload(form) {
+  const payload = Object.fromEntries(new FormData(form));
+  payload.consent = document.querySelector('#consent').checked;
+  payload.policy_version = privacy.version;
+  return payload;
+}
 briefForm.addEventListener('submit', async event => {
   event.preventDefault();
   const form = event.currentTarget;
@@ -26,9 +32,7 @@ briefForm.addEventListener('submit', async event => {
   button.disabled = true;
   status.textContent = 'Сохраняем заявку…';
   try {
-    const payload = Object.fromEntries(new FormData(form));
-    payload.consent = document.querySelector('#consent').checked;
-    payload.policy_version = privacy.version;
+    const payload = briefPayload(form);
     const snapshot = JSON.stringify(payload);
     if (snapshot !== pendingSnapshot) {
       pendingSnapshot = snapshot;
@@ -37,8 +41,12 @@ briefForm.addEventListener('submit', async event => {
     payload.idempotency_key = pendingKey;
     await NeuroAPI.request('leads', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)},
       data => data.ok === true && Number.isSafeInteger(data.lead_id) && data.lead_id > 0, 201);
-    status.textContent = 'Заявка сохранена! Свяжемся с вами по указанному контакту.';
-    form.reset();
+    if (JSON.stringify(briefPayload(form)) === snapshot) {
+      form.reset();
+      status.textContent = 'Заявка сохранена! Свяжемся с вами по указанному контакту.';
+    } else {
+      status.textContent = 'Отправленная заявка сохранена. Новые правки остались в форме и ещё не отправлены.';
+    }
     pendingSnapshot = null; pendingKey = null;
   } catch (error) {
     status.textContent = error.message;
