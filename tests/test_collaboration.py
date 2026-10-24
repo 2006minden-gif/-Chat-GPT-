@@ -86,3 +86,55 @@ class Collaboration(unittest.TestCase):
   r=self.upload(self.owner,'spec.docx',buf.getvalue());self.assertEqual(r.status_code,200 if zip_enabled else 503,r.text)
   with zipfile.ZipFile(buf,'a') as z:z.writestr('word/vbaProject.bin',b'evil')
   r=self.upload(self.owner,'macro.docx',buf.getvalue());self.assertEqual(r.status_code,422 if zip_enabled else 503,r.text)
+ def document(self,kind='specification',files=None,**extra):
+  d={'title':'Техническое задание','kind':kind,'fields':{'title':'Техническое задание','description':'Описание реальной тестовой задачи','acceptance':'Проверить согласованные требования'},'file_ids':files or []};d.update(extra)
+  r=self.post(self.owner,f'projects/{self.project_id}/documents',**d);self.assertEqual(r.status_code,200,r.text);return r.json()['revision']
+ def ready_submit(self,rev):
+  rid=rev['id'];r=self.post(self.owner,f'revisions/{rid}/ready',version=int(rev['version']));self.assertEqual(r.status_code,200,r.text)
+  r=self.post(self.owner,f'revisions/{rid}/submit',version=int(r.json()['revision']['version']),confirm=True);self.assertEqual(r.status_code,200,r.text);return r.json()['revision']
+ def decide(self,rev,decision='approved',s=None,**extra):
+  data={'version':int(rev['approval']['version']),'checksum':rev['checksum'],'confirm':True,'decision':decision,'feedback':'Нужно уточнить требования' if decision=='changes_requested' else ''};data.update(extra)
+  return self.post(s or self.customer,'approvals/'+str(rev['approval']['id'])+'/decide',**data)
+ def test_05_specification_revisions_and_immutable_approval(self):
+  v1=self.document();self.assertEqual(self.get(self.customer,'revisions/'+str(v1['id'])).status_code,404)
+  v1=self.ready_submit(v1);self.assertEqual(self.get(self.stranger,'revisions/'+str(v1['id'])).status_code,404)
+  self.assertEqual(self.decide(v1,'changes_requested',feedback='no').status_code,422)
+  r=self.decide(v1,'changes_requested');self.assertEqual(r.status_code,200,r.text)
+  original=self.f.sql('SELECT body,checksum FROM nd_cc_revisions WHERE id=?',params=[v1['id']])[0]
+  self.assertEqual(self.post(self.owner,f'revisions/{v1["id"]}/save',version=int(v1['version']),fields={'title':'Изменить задним числом'}).status_code,409)
+  current=self.get(self.owner,'revisions/'+str(v1['id'])).json()['revision'];doc=current['document']
+  r=self.post(self.owner,f'documents/{doc["id"]}/revise',version=int(doc['version']));self.assertEqual(r.status_code,200,r.text);v2=self.ready_submit(r.json()['revision'])
+  self.assertEqual(self.decide(v1).status_code,409)
+  request=secrets.token_hex(32);r=self.decide(v2,request_key=request);self.assertEqual(r.status_code,200,r.text);self.assertEqual(self.decide(v2,request_key=request).json(),r.json())
+  self.assertEqual(self.decide(v2).status_code,409)
+  self.assertEqual(self.f.sql('SELECT body,checksum FROM nd_cc_revisions WHERE id=?',params=[v1['id']])[0],original)
+  self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_cc_decisions WHERE approval_id=?',params=[v2['approval']['id']])[0]['n'],1)
+  current=self.get(self.owner,'revisions/'+str(v2['id'])).json()['revision'];r=self.post(self.owner,f'revisions/{v2["id"]}/finalize',version=int(current['version']));self.assertEqual(r.status_code,200,r.text)
+  url=self.base+'/collab-print.php?mode=customer&id='+str(v2['id']);page=self.customer.get(url);self.assertEqual(page.status_code,200,page.text);self.assertIn('text/html',page.headers['Content-Type']);self.assertIn(v2['checksum'],page.text);self.assertEqual(self.stranger.get(url).status_code,404)
+  history=self.f.sql("SELECT actor_admin_id,actor_customer_account_id FROM nd_activity_history WHERE project_id=? AND action='cc_decision_recorded'",params=[self.project_id]);self.assertTrue(history);self.assertIsNone(history[0]['actor_admin_id']);self.assertIsNotNone(history[0]['actor_customer_account_id'])
+ def test_06_outdated_pending_review_and_concurrency(self):
+  rev=self.ready_submit(self.document());doc=rev['document']
+  r=self.post(self.owner,f'documents/{doc["id"]}/revise',version=int(doc['version']));self.assertEqual(r.status_code,200,r.text)
+  self.assertEqual(self.decide(rev).status_code,409)
+  draft=r.json()['revision'];fields=dict(draft['fields']);fields['requirements']='Первое изменение'
+  r=self.post(self.owner,f'revisions/{draft["id"]}/save',version=int(draft['version']),fields=fields,file_ids=[]);self.assertEqual(r.status_code,200,r.text)
+  self.assertEqual(self.post(self.owner,f'revisions/{draft["id"]}/save',version=int(draft['version']),fields={'requirements':'Устаревшее изменение'},file_ids=[]).status_code,409)
+  self.assertEqual(self.get(self.owner,f'revisions/{draft["id"]}').json()['revision']['fields']['requirements'],'Первое изменение')
+ def test_07_delivery_files_revision_and_cross_customer_isolation(self):
+  f1=self.upload(self.owner,visibility='customer');self.assertEqual(f1.status_code,200,f1.text)
+  v1=self.ready_submit(self.document('deliverable',[f1.json()['id']]));self.assertEqual(self.decide(v1,'changes_requested').status_code,200)
+  current=self.get(self.owner,f'revisions/{v1["id"]}').json()['revision'];doc=current['document']
+  f2=self.upload(self.owner,name='updated.pdf',visibility='customer');self.assertEqual(f2.status_code,200,f2.text)
+  r=self.post(self.owner,f'documents/{doc["id"]}/revise',version=int(doc['version']),fields=current['fields'],file_ids=[f2.json()['id']]);self.assertEqual(r.status_code,200,r.text);v2=self.ready_submit(r.json()['revision']);self.assertEqual(self.decide(v2).status_code,200)
+  self.assertEqual(len(self.get(self.owner,f'projects/{self.project_id}/documents').json()['items']),2)
+  for route in [f'projects/{self.project_id}/files',f'projects/{self.project_id}/documents',f'projects/{self.project_id}/approvals',f'revisions/{v2["id"]}']:
+   self.assertEqual(self.get(self.stranger,route).status_code,404,route)
+  self.assertEqual(self.decide(v2,s=self.stranger).status_code,404)
+  self.assertEqual(self.post(self.customer,f'projects/{self.project_id}/documents',title='Попытка',kind='plan').status_code,403)
+  self.assertEqual(self.get(self.customer,f'revisions/{v1["id"]}').json()['revision']['files'][0]['id'],f1.json()['id'])
+ def test_08_final_acceptance_requires_completed_milestones(self):
+  doc=self.document('final');r=self.post(self.owner,f'revisions/{doc["id"]}/ready',version=int(doc['version']));self.assertEqual(r.status_code,200,r.text)
+  self.assertEqual(self.post(self.owner,f'revisions/{doc["id"]}/submit',version=int(r.json()['revision']['version']),confirm=True).status_code,409)
+  self.f.sql("INSERT INTO nd_project_stages(project_id,position,title,status) VALUES (?,1,'Готовый этап','completed')",params=[self.project_id])
+  r=self.post(self.owner,f'revisions/{doc["id"]}/submit',version=int(r.json()['revision']['version']),confirm=True);self.assertEqual(r.status_code,200,r.text);sent=r.json()['revision']
+  self.f.sql('UPDATE nd_projects SET version=version+1 WHERE id=?',params=[self.project_id]);self.assertEqual(self.decide(sent).status_code,409)
