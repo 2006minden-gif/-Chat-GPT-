@@ -41,6 +41,10 @@ class RepairSyntax(unittest.TestCase):
   self.assertTrue(self.helper("try{rp_config_candidate($v);echo 'false';}catch(RepairFailure $e){echo 'true';}",s))
   valid="<?php\nreturn [\n 'db_password' => 'SYNTH\\'existing',\n];"
   self.assertTrue(self.helper("echo json_encode(rp_value_normalization($v)['content']===$v);",valid))
+ def test_crlf_quote_repair_preserves_line_endings(self):
+  s="<?php\r\nreturn [\r\n 'setup_key' => 'SYNTH'fragment',\r\n];\r\n"
+  d=self.helper("$c=rp_config_candidate($v);echo json_encode(['kind'=>$c['kind'],'line_endings'=>substr_count($v,chr(13).chr(10))===substr_count($c['content'],chr(13).chr(10)),'valid'=>rp_static_config($c['content'])]);",s)
+  self.assertEqual(d,{'kind':'escape_existing_single_quote','line_endings':True,'valid':True})
  def test_valid_config_is_unchanged(self):
   s="<?php return ['db_password'=>'SYNTHETIC_ONLY','privacy_policy_approved'=>false];"
   self.assertTrue(self.helper("$c=rp_config_candidate($v);echo json_encode($v===$c['content']);",s))
@@ -158,6 +162,7 @@ class RepairWorkflow(unittest.TestCase):
   w=yaml.load((ROOT/'.github/workflows/production-repair.yml').read_text(),Loader=yaml.BaseLoader);self.assertEqual(set(w['on']),{'workflow_dispatch'});self.assertEqual(w['jobs']['validate']['uses'],'./.github/workflows/deploy.yml');self.assertEqual(w['jobs']['validate']['with']['validation_only'],'true')
   job=w['jobs']['repair'];self.assertEqual(job['if'],"github.ref == 'refs/heads/main'");self.assertEqual(job['needs'],'validate');self.assertEqual(job['environment'],'production');self.assertEqual(job['concurrency']['group'],'spaceweb-production');self.assertEqual(job['concurrency']['cancel-in-progress'],'false')
   source=(ROOT/'.github/workflows/deploy.yml').read_text();self.assertIn('inputs.validation_only != true',source);self.assertIn('BOOTSTRAP_VERIFIED_RUN',source)
+  r=subprocess.run([os.environ.get('PHP_BIN','php'),'-r',"define('NEURO_REPAIR_LIBRARY',true);require $argv[1];echo rp_block();",str(ROOT/'scripts/repair/production.php')],text=True,capture_output=True,check=True);self.assertIn(r.stdout,(ROOT/'public/.htaccess').read_text())
   self.assertNotIn('migrate.php',str(w));self.assertNotIn('AUTOMATION_READY',str(w));self.assertNotIn('secrets: inherit',str(w))
 
 if __name__=='__main__':unittest.main()

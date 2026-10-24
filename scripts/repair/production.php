@@ -70,7 +70,7 @@ function rp_value_normalization(string $s):array {
     $tokens=rp_tokens($s);$offsets=[];foreach($tokens as $i=>$t)if($t['id']===T_CONSTANT_ENCAPSED_STRING&&($tokens[$i+1]['id']??null)===T_DOUBLE_ARROW)$offsets[$t['offset']]=true;
     $offset=0;$edits=[];$proofs=[];$lineNumber=1;
     foreach(explode("\n",$s) as $line){
-        if(preg_match("/^([ \\t]*)'([a-z_]+)'([ \\t]*=>[ \\t]*')([^\\r\\n]*)('[ \\t]*,?[ \\t]*)$/D",$line,$m)&&in_array($m[2],$known,true)&&isset($offsets[$offset+strlen($m[1])])&&!str_contains($m[4],'=>')){
+        if(preg_match("/^([ \\t]*)'([a-z_]+)'([ \\t]*=>[ \\t]*')([^\\r\\n]*)('[ \\t]*,?[ \\t]*)(\\r?)$/D",$line,$m)&&in_array($m[2],$known,true)&&isset($offsets[$offset+strlen($m[1])])&&!str_contains($m[4],'=>')){
             $raw=$m[4];$escaped='';$added=0;
             for($j=0;$j<strlen($raw);$j++){
                 if($raw[$j]==='\\'&&isset($raw[$j+1])&&in_array($raw[$j+1],['\\',"'"],true)){$escaped.=$raw[$j].$raw[++$j];continue;}
@@ -86,7 +86,7 @@ function rp_value_normalization(string $s):array {
     return ['content'=>$content,'edits'=>$edits,'proofs'=>$proofs];
 }
 function rp_literal_signature(string $s):string {
-    // Scalar token spellings, flags, comments and whitespace remain byte-identical, not reserialized.
+    // Only supported quote syntax is canonicalized; native value hashes verify decoded bytes separately.
     $s=rp_value_normalization(rp_key_normalization($s)['content'])['content'];$out=[];foreach(token_get_all($s) as $t)if(is_array($t))$out[]=[$t[0],$t[1]];
     return hash('sha256',serialize($out));
 }
