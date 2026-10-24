@@ -61,7 +61,7 @@ class DeploymentSafety(unittest.TestCase):
    output=Path(tmp)/'github-output'
    for current,validated,expected in [('b'*40,'a'*40,'current=false'),('a'*40,'a'*40,'current=true')]:
     output.write_text('')
-    script='gh() { printf "%s\\n" "$CURRENT_SHA"; }\n'+steps[0]['run']
+    script='gh() { echo "$CURRENT_SHA"; }\n'+steps[0]['run']
     result=subprocess.run(['bash','-e'],input=script,text=True,env=dict(os.environ,GITHUB_OUTPUT=str(output),GITHUB_REPOSITORY='2006minden-gif/-Chat-GPT-',CURRENT_SHA=current,VALIDATED=validated),capture_output=True)
     self.assertEqual(result.returncode,0,result.stderr)
     self.assertIn(expected,output.read_text())
