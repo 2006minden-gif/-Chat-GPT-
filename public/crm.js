@@ -18,6 +18,7 @@ async function api(path, options = {}, {silentUnauthorized=false} = {}) {
   }
 }
 function showLogin() {
+  document.dispatchEvent(new Event('neuro:owner-logout'));
   if($('#editor').open) {
     const original=leads.find(l=>l.id===selected);
     if(original)draft={...original,version:selectedVersion,status:$('#edit-status').value,notes:$('#notes').value,next_step:$('#next-step').value};
@@ -36,7 +37,7 @@ function render() {
 }
 function openLead(lead) {selected=lead.id;selectedVersion=lead.version;$('#reload-current').hidden=true;$('#client-name').textContent=lead.name;$('#client-contact').textContent=lead.contact+' · '+lead.service;$('#client-consent').textContent=lead.consent===1 ? 'Согласие: '+new Date(lead.consent_at*1000).toLocaleString('ru-RU')+' · версия '+lead.policy_version : 'Согласие не зафиксировано (историческая запись).';$('#client-idea').textContent=lead.idea;$('#edit-status').value=lead.status;$('#notes').value=lead.notes;$('#next-step').value=lead.next_step;$('#edit-message').textContent='';$('#editor').showModal();}
 async function load() {leads=await api('leads');render();}
-async function enter({initial=false} = {}) {const data=await api('session',{}, {silentUnauthorized:initial});csrf=data.csrf;for(const selector of ['#filter','#edit-status']){const target=$(selector);target.replaceChildren();if(selector==='#filter')target.append(new Option('Все статусы',''));data.statuses.forEach(s=>target.append(new Option(s,s)));}await load();$('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#logout').hidden=false;$('#message').textContent='';if(draft){const saved=draft;draft=null;openLead(saved);$('#edit-message').textContent='Черновик восстановлен в этой вкладке. Проверьте его перед сохранением; версия будет проверена сервером.';}}
+async function enter({initial=false} = {}) {const data=await api('session',{}, {silentUnauthorized:initial});csrf=data.csrf;for(const selector of ['#filter','#edit-status']){const target=$(selector);target.replaceChildren();if(selector==='#filter')target.append(new Option('Все статусы',''));data.statuses.forEach(s=>target.append(new Option(s,s)));}await load();document.dispatchEvent(new CustomEvent('neuro:owner-session',{detail:{csrf}}));$('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#logout').hidden=false;$('#message').textContent='';if(draft){const saved=draft;draft=null;openLead(saved);$('#edit-message').textContent='Черновик восстановлен в этой вкладке. Проверьте его перед сохранением; версия будет проверена сервером.';}}
 $('#login-form').onsubmit=async e=>{e.preventDefault();const button=e.currentTarget.querySelector('button');button.disabled=true;try{await api('login',{method:'POST',body:JSON.stringify({password:$('#password').value})});$('#password').value='';await enter();}catch(err){$('#message').textContent=err.message;}finally{button.disabled=false;}};
 $('#logout').onclick=async()=>{try{await api('logout',{method:'POST'});csrf='';draft=null;showLogin();}catch(e){$('#message').textContent=e.message;}};
 $('#refresh').onclick=()=>load().catch(e=>$('#message').textContent=e.message);

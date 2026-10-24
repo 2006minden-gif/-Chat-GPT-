@@ -7,8 +7,13 @@ output.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as z:
     for p in sorted((root/'public').iterdir()):
         if p.is_file():z.write(p,'public_html/'+p.name)
-    for name in ['app.php','config.example.php','.htaccess']:
+    for name in ['app.php','customer-auth.php','customer-mail.php','config.example.php','.htaccess']:
         z.write(root/'private'/name,'private/'+name)
+    for p in sorted((root/'private/crm').glob('*.php')):
+        z.write(p,p.relative_to(root))
+    z.write(root/'scripts/migrate-crm.php','scripts/migrate-crm.php')
+    z.write(root/'scripts/migrate.php','scripts/migrate.php')
+    z.write(root/'scripts/migrate-customer.php','scripts/migrate-customer.php')
     for p in sorted((root/'database').rglob('*.sql')):
         z.write(p,p.relative_to(root))
     z.write(root/'README.md','INSTALL.md')

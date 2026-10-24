@@ -1,6 +1,8 @@
 <?php
 // Copy to config.php OUTSIDE the site's public directory. Never upload into public_html.
 return [
+    // Stage 5 stays disabled until legal approval, migrations and review.
+    'crm_operations_enabled' => false,
     'db_host' => 'localhost',
     'db_port' => 3306,
     'db_name' => 'YOUR_DATABASE',
@@ -13,4 +15,12 @@ return [
     // Enable only after owner/legal review; place approved text in private/privacy-policy.txt.
     'privacy_policy_approved' => false,
     'privacy_policy_version' => '',
+    // Keep both false until Stage 3/4 migrations, mail and customer/invitation legal review pass.
+    'customer_auth_enabled' => false,
+    'customer_auth_privacy_approved' => false,
+    // SMTP acceptance is not guaranteed inbox delivery. Store actual credentials only in config.php.
+    'customer_mail' => [
+        'transport' => 'smtp', 'host' => '', 'port' => 587, 'encryption' => 'starttls',
+        'from' => '', 'username' => '', 'password' => '',
+    ],
 ];
