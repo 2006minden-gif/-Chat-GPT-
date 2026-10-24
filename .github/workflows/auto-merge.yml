@@ -12,6 +12,45 @@ permissions:
   contents: read
 
 jobs:
+  configure_validated_main:
+    name: Configure CI/CD after validated main
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.conclusion == 'success' &&
+      vars.AUTOMATION_READY != 'true' &&
+      vars.BOOTSTRAP_CONFIGURED_SHA != github.event.workflow_run.head_sha
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: automation
+    concurrency:
+      group: spaceweb-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - name: Ensure successful validated SHA is still current main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VALIDATED: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          head=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+          test "$head" = "$VALIDATED" || { echo 'Stale validated SHA: not configuring'; exit 1; }
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Configure fail-closed repository gates using existing automation grant
+        env:
+          GH_TOKEN: ${{ secrets.BOOTSTRAP_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN" || { echo '::error::Missing automation environment admin secret'; exit 1; }
+          python scripts/github/control.py bootstrap --apply
+
   approved:
     if: >-
       vars.AUTOMERGE_ENABLED == 'true' && github.ref == 'refs/heads/main' &&
