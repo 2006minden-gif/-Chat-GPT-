@@ -15,6 +15,22 @@ sys.path.insert(0,str(ROOT/'scripts/deploy'))
 import client
 
 class BootstrapSafety(unittest.TestCase):
+
+ def test_empty_variable_removes_existing_grant_without_posting_empty_value(self):
+  base='repos/'+control.REPO
+  for existing in [None, {'name':'BOOTSTRAP_APPROVED_SHA','value':'a'*40}]:
+   with self.subTest(existing=bool(existing)),patch.object(control,'api',return_value=existing) as request:
+    control.set_variable(base,'BOOTSTRAP_APPROVED_SHA','')
+    methods=[call.args[0] for call in request.call_args_list]
+    self.assertEqual(methods,['GET','DELETE'] if existing else ['GET'])
+ def test_nonempty_variable_is_created_or_updated(self):
+  base='repos/'+control.REPO
+  for existing,method in [(None,'POST'),({'name':'AUTOMATION_READY','value':'false'},'PATCH')]:
+   with patch.object(control,'api',return_value=existing) as request:
+    control.set_variable(base,'AUTOMATION_READY','true')
+    self.assertEqual(request.call_args.args[0],method)
+    self.assertEqual(request.call_args.args[2],{'name':'AUTOMATION_READY','value':'true'})
+
  def proof(self):
   policy=json.loads((ROOT/'scripts/deploy/policy.json').read_text());hashes={prefix+'/'+name:'b'*64 for prefix,key in [('public_html','public_files'),('private','private_files')] for name in policy[key]};checks={'/':{'ok':True}}
   checks.update({'/'+path.split('/',1)[1]:{'ok':True,'sha256':digest} for path,digest in hashes.items() if path.startswith('public_html/') and path.endswith(('.js','.css'))})
