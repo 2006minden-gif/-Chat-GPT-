@@ -12,7 +12,7 @@ REQUIRED_CHECK='Validate'
 class GitHubFailure(RuntimeError): pass
 
 def api(method, path, payload=None, missing=False):
-    command=['gh','api',path,'--method',method]
+    command=['gh','api',path,'--method',method,'-H','Accept: application/vnd.github+json','-H','X-GitHub-Api-Version: 2022-11-28']
     if payload is not None:command+=['--input','-']
     r=subprocess.run(command,input=json.dumps(payload) if payload is not None else None,capture_output=True,text=True,timeout=45)
     if r.returncode:
@@ -50,7 +50,7 @@ def protection_payload(old):
     for key in ['required_linear_history','block_creations','lock_branch','allow_fork_syncing']:
         if key in old:payload[key]=old[key].get('enabled',False)
     if old.get('required_deployments',{}).get('environments'):
-        payload['required_deployments']={'strict_required_status_checks_policy':old['required_deployments'].get('strict_required_status_checks_policy',False),'environments':old['required_deployments']['environments']}
+        raise GitHubFailure('Existing required deployments need reviewed rule reconciliation; not modified')
     return payload
 
 def bootstrap():
@@ -58,6 +58,7 @@ def bootstrap():
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):raise GitHubFailure('Repository administrator access required')
     base='repos/'+REPO
     old=api('GET',base+'/branches/main/protection',missing=True)
+    payload=protection_payload(old)
     # Fail closed while the one-time settings are being applied.
     def variable(name,value):
         current=api('GET',base+'/actions/variables/'+name,missing=True)
@@ -70,15 +71,16 @@ def bootstrap():
         for policy in policies:
             if policy['name']!='main' or policy.get('type','branch')!='branch':api('DELETE',endpoint+'/deployment-branch-policies/'+str(policy['id']))
         if not any(p['name']=='main' and p.get('type','branch')=='branch' for p in policies):api('POST',endpoint+'/deployment-branch-policies',{'name':'main','type':'branch'})
-    api('PUT',base+'/branches/main/protection',protection_payload(old))
+    api('PUT',base+'/branches/main/protection',payload)
     api('PATCH',base,{'allow_auto_merge':True})
     # Names/metadata only. Existing secret values are neither retrieved nor overwritten.
-    production={v['name'] for v in api('GET',base+'/environments/production/secrets')['secrets']}
+    secretsBase='repositories/'+str(repo['id'])+'/environments'
+    production={v['name'] for v in api('GET',secretsBase+'/production/secrets')['secrets']}
     expected={'SSH_HOST','SSH_PORT','SSH_USER','DEPLOY_PATH','SSH_PRIVATE_KEY','SSH_KNOWN_HOSTS'}
     if not expected<=production:raise GitHubFailure('Missing environment-scoped production secret names: '+','.join(sorted(expected-production)))
     repository_secrets={v['name'] for v in api('GET',base+'/actions/secrets')['secrets']}
     if 'SSH_PRIVATE_KEY' in repository_secrets:raise GitHubFailure('After secure environment transfer, remove the legacy repository-scoped SSH_PRIVATE_KEY; no secret was deleted by this script')
-    automation={v['name'] for v in api('GET',base+'/environments/automation/secrets')['secrets']}
+    automation={v['name'] for v in api('GET',secretsBase+'/automation/secrets')['secrets']}
     if 'AUTOMERGE_APP_PRIVATE_KEY' not in automation:raise GitHubFailure('Missing automation environment AUTOMERGE_APP_PRIVATE_KEY')
     app=api('GET',base+'/actions/variables/AUTOMERGE_APP_ID',missing=True)
     if not app or not app.get('value','').isdigit():raise GitHubFailure('Set repository variable AUTOMERGE_APP_ID')

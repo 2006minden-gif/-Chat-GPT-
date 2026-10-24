@@ -47,7 +47,8 @@ function preflight(string $root):array {
             'privacy_approved'=>($c['privacy_policy_approved']??false)===true];
 }
 function remove_tree(string $path):void {
-    insist(!is_link($path),'symlink_refused');
+    // Only managed backup/staging trees call this; unlink a leftover link, never follow it.
+    if(is_link($path)){insist(unlink($path),'cleanup_failed');return;}
     if(is_dir($path)) {foreach(scandir($path) as $name)if($name!=='.'&&$name!=='..')remove_tree($path.'/'.$name);insist(rmdir($path),'cleanup_failed');}
     elseif(file_exists($path))insist(unlink($path),'cleanup_failed');
 }
@@ -122,7 +123,7 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
         $help=proc_open(['mysqldump','--help'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','w']],$helpPipes);
         insist(is_resource($help),'dump_client_unavailable');$options=(string)stream_get_contents($helpPipes[1],1048576);fclose($helpPipes[1]);insist(proc_close($help)===0,'dump_client_unavailable');
         insist(str_contains($options,'no-tablespaces'),'dump_client_not_supported');
-        $command=['mysqldump','--defaults-extra-file='.$defaults,'--single-transaction','--quick','--skip-lock-tables','--no-tablespaces'];
+        $command=['mysqldump','--defaults-file='.$defaults,'--single-transaction','--quick','--skip-lock-tables','--no-tablespaces'];
         if(str_contains($options,'set-gtid-purged'))$command[]='--set-gtid-purged=OFF';
         if(str_contains($options,'column-statistics'))$command[]='--column-statistics=0';
         $command[]='--databases';$command[]=$c['db_name'];execute_private($command,$backup.'/database.sql');

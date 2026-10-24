@@ -152,6 +152,7 @@ class RemoteFilesystemTests(unittest.TestCase):
   self.assertTrue((snapshot/'backup.json').is_file());self.assertEqual(release.digest(snapshot/'files/private/app.php'),self.manifest['files']['private/app.php'])
  def test_retention_is_bounded_and_keeps_recovery_points(self):
   self.agent('apply');self.finish()
+  (self.candidate/'leftover-config-link').symlink_to(self.root/'private/config.php')
   for number in range(1,5):
    self.id='release'+str(number);self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id
    release.build(self.candidate,format(number,'040x'));(self.candidate/'baseline.json').write_text(json.dumps(good()))
@@ -284,5 +285,44 @@ class GovernanceTests(unittest.TestCase):
   self.assertFalse(allowed(c=[{**check,'conclusion':'failure'}]));self.assertFalse(allowed(c=[{**check,'app':{'id':999}}]))
   self.assertFalse(allowed(c=[{**check,'conclusion':'skipped'}]));self.assertFalse(allowed(c=[]))
   self.assertTrue(allowed(p={**pr,'checked_sha':'c'*40},c=[{**check,'head_sha':'c'*40}]))
+ def test_bootstrap_sets_ready_only_after_protection_and_secret_metadata(self):
+  calls=[];variables={'AUTOMERGE_APP_ID':'42'};protected={}
+  def fake(method,path,payload=None,missing=False):
+   calls.append((method,path,payload))
+   if path=='repos/'+control.REPO and method=='GET':return {'id':123,'full_name':control.REPO,'permissions':{'admin':True}}
+   if path.endswith('/branches/main/protection'):
+    if method=='GET':return protected or None
+    protected.update(payload);protected['enforce_admins']={'enabled':True};return None
+   if '/actions/variables/' in path and method=='GET':
+    value=variables.get(path.rsplit('/',1)[1]);return {'value':value} if value is not None else None
+   if '/actions/variables' in path and method in ['POST','PATCH']:variables[payload['name']]=payload['value'];return None
+   if path.endswith('/deployment-branch-policies') and method=='GET':return {'branch_policies':[]}
+   if path=='repositories/123/environments/production/secrets':return {'secrets':[{'name':n} for n in ['SSH_HOST','SSH_PORT','SSH_USER','DEPLOY_PATH','SSH_PRIVATE_KEY','SSH_KNOWN_HOSTS']]}
+   if path=='repositories/123/environments/automation/secrets':return {'secrets':[{'name':'AUTOMERGE_APP_PRIVATE_KEY'}]}
+   if path.endswith('/actions/secrets'):return {'secrets':[]}
+   return None
+  with patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.bootstrap()
+  self.assertEqual(variables['AUTOMATION_READY'],'true');self.assertEqual(variables['AUTOMERGE_ENABLED'],'true')
+  self.assertEqual(calls[-1][2],{'name':'AUTOMATION_READY','value':'true'})
+  self.assertTrue(protected['required_pull_request_reviews']['dismiss_stale_reviews'])
+ def test_bootstrap_never_mutates_when_admin_read_is_blocked(self):
+  with patch.object(control,'api',side_effect=control.GitHubFailure('blocked')) as api:
+   with self.assertRaises(control.GitHubFailure):control.bootstrap()
+  self.assertEqual(api.call_count,1);self.assertEqual(api.call_args.args[0],'GET')
+ def test_validated_branch_creates_pr_without_executing_branch_code(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   path=Path(tmp)/'event.json';sha='a'*40
+   path.write_text(json.dumps({'workflow_run':{'id':77,'head_sha':sha,'head_branch':'feature/example','event':'push','conclusion':'success','head_repository':{'full_name':control.REPO}}}))
+   calls=[]
+   def fake(method,endpoint,payload=None,missing=False):
+    calls.append((method,endpoint,payload))
+    if '/actions/runs/' in endpoint:return {'head_sha':sha,'conclusion':'success','path':'.github/workflows/deploy.yml'}
+    if '/git/ref/' in endpoint:return {'object':{'sha':sha}}
+    if '/compare/' in endpoint:return {'ahead_by':1}
+    if method=='GET':return []
+    return {'number':1}
+   with patch.dict(os.environ,{'GITHUB_EVENT_NAME':'workflow_run','GITHUB_EVENT_PATH':str(path)}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_pr_for_validated_branch()
+   created=[c for c in calls if c[0]=='POST'];self.assertEqual(len(created),1);self.assertEqual(created[0][2]['base'],'main');self.assertFalse(created[0][2]['draft'])
+
 
 if __name__=='__main__':unittest.main()
