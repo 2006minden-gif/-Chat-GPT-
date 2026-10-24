@@ -56,14 +56,16 @@ def build(output, revision, root=ROOT):
                 raise ValueError('forbidden_release_path')
             copy(root / source_dir / name, prefix + '/' + name, files)
     copy(root / 'scripts/deploy/remote.php', 'remote.php', tools)
-    if policy['migrations']:
-        copy(root / 'scripts/migrate.php', 'scripts/migrate.php', tools)
-        for entry in policy['migrations']:
-            for direction in ['up', 'down']:
-                path = 'database/migrations/' + entry['version'] + '/' + direction + '.sql'
-                copy(root / path, path, tools)
+    # Delivery is independent from execution approval. All versioned SQL/CLI stays private.
+    for source in sorted((root / 'database').rglob('*.sql')):
+        path=source.relative_to(root).as_posix()
+        if not re.fullmatch(r'database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)',path):
+            raise ValueError('unapproved_sql_file_path')
+        copy(source,path,tools)
+    if (root / 'scripts/migrate.php').is_file():copy(root / 'scripts/migrate.php','scripts/migrate.php',tools)
     manifest = {'schema_version':1,'revision':revision,'files':files,'tools':tools,
-                'keep_backups':policy['keep_backups'],'migrations':policy['migrations']}
+                'keep_backups':policy['keep_backups'],'migrations':policy['migrations'],
+                'verification_contract':'ci-mysql57-backup-restore-v1'}
     (output / 'manifest.json').write_text(json.dumps(manifest, sort_keys=True, indent=2))
     return manifest
 

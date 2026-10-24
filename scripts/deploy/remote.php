@@ -58,7 +58,7 @@ function verify_bundle(string $candidate,string $id):array {
     $actual=array_keys($m['files']??[]);$expected=paths();sort($actual);sort($expected);insist($actual===$expected,'release_allowlist_mismatch');
     insist(($m['keep_backups']??0)>=2&&($m['keep_backups']??0)<=20,'invalid_retention');
     foreach(array_merge($m['files'],$m['tools']) as $path=>$hash) {
-        insist(preg_match('#^(public_html/[A-Za-z0-9_.-]+|private/(app.php|\.htaccess)|remote.php|scripts/migrate.php|database/migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
+        insist(preg_match('#^(public_html/[A-Za-z0-9_.-]+|private/(app.php|\.htaccess)|remote.php|scripts/migrate.php|database/schema\.sql|database/migrations/[0-9]{3}_[a-z_]+\.sql|database/migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
     $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
@@ -112,6 +112,13 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
         $pending[]=$entry['version'];
     }
     if(!$pending)return [];
+    // A prior genuinely healthy delivery and this CI's real dump/restore test are mandatory.
+    $state=read_json(dirname(dirname($backup)).'/state.json');$previous=$state['last_release']??'';
+    insist(is_string($previous)&&preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$previous)===1&&($m['verification_contract']??'')==='ci-mysql57-backup-restore-v1','pipeline_backup_recovery_not_verified');
+    $good=read_json(dirname(dirname($backup)).'/backups/good-'.$previous.'/backup.json');
+    $current=read_json($backup.'/backup.json');
+    insist(($good['baseline']['ok']??false)===true&&($current['baseline']['ok']??false)===true,'pipeline_backup_recovery_not_verified');
+    foreach($good['files'] as $path=>$entry)insist(hash_file_safe(dirname(dirname($backup)).'/backups/good-'.$previous.'/files/'.$path)===$entry['before'],'verified_recovery_snapshot_corrupt');
     // credentials are read from the existing protected config, never from GitHub or command arguments.
     $defaults=$backup.'/.mysql-client.cnf';
     $quote=static fn($v)=>'"'.str_replace(["\\","\"","\n","\r"],["\\\\","\\\"","\\n","\\r"],(string)$v).'"';
