@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "nonce": "0dc4518343af94951ce079c08bd5af20",
-  "source_sha": "0fe45772fc66592e0583b3152414c767fcdd762d",
-  "run_id": "40078111463",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078111463",
-  "time": "2026-10-24T08:27:37.097033+00:00",
+  "nonce": "8fd10e612612ad47dbe6170aafca054e",
+  "source_sha": "39f05e7c6db8dea66f259f45e450d2cf395a8de6",
+  "run_id": "40078683940",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078683940",
+  "time": "2026-10-24T08:36:20.454470+00:00",
   "production_touched": false,
   "inspection": {
     "repository": {
@@ -100,18 +100,18 @@
       "status": 200,
       "runs": [
         {
-          "id": 40078111463,
+          "id": 40078683940,
           "name": "Authorized GitHub control relay",
           "event": "push",
           "head_branch": "automation/github-control",
-          "head_sha": "0fe45772fc66592e0583b3152414c767fcdd762d",
+          "head_sha": "39f05e7c6db8dea66f259f45e450d2cf395a8de6",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078111463",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078683940",
           "path": ".github/workflows/github-control.yml",
           "jobs": [
             {
-              "id": 120825769727,
+              "id": 120827469219,
               "name": "control",
               "status": "in_progress",
               "conclusion": null,
@@ -141,38 +141,18 @@
           ]
         },
         {
-          "id": 40078111438,
+          "id": 40078683890,
           "name": "NeuroDelo CI/CD",
           "event": "push",
           "head_branch": "automation/github-control",
-          "head_sha": "0fe45772fc66592e0583b3152414c767fcdd762d",
-          "status": "pending",
-          "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078111438",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 120825769976,
-              "name": "Validate",
-              "status": "pending",
-              "conclusion": null,
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40078110118,
-          "name": "NeuroDelo CI/CD",
-          "event": "push",
-          "head_branch": "ci/automatic-spaceweb",
-          "head_sha": "1c418b10b01ee330763d6d4bf3546e656dbeb651",
+          "head_sha": "39f05e7c6db8dea66f259f45e450d2cf395a8de6",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078110118",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078683890",
           "path": ".github/workflows/deploy.yml",
           "jobs": [
             {
-              "id": 120825765960,
+              "id": 120827469171,
               "name": "Validate",
               "status": "in_progress",
               "conclusion": null,
@@ -242,6 +222,382 @@
           ]
         },
         {
+          "id": 40078681924,
+          "name": "NeuroDelo CI/CD",
+          "event": "push",
+          "head_branch": "verify/stage3-integration",
+          "head_sha": "96683a25f23ec6e5a393e07484c1bc119cb43e93",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078681924",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 120827463001,
+              "name": "Validate",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40078111463,
+          "name": "Authorized GitHub control relay",
+          "event": "push",
+          "head_branch": "automation/github-control",
+          "head_sha": "0fe45772fc66592e0583b3152414c767fcdd762d",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078111463",
+          "path": ".github/workflows/github-control.yml",
+          "jobs": [
+            {
+              "id": 120825769727,
+              "name": "control",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Inspect GitHub and prepare review PR without production access",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40078111438,
+          "name": "NeuroDelo CI/CD",
+          "event": "push",
+          "head_branch": "automation/github-control",
+          "head_sha": "0fe45772fc66592e0583b3152414c767fcdd762d",
+          "status": "completed",
+          "conclusion": "failure",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078111438",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 120825769976,
+              "name": "Validate",
+              "status": "completed",
+              "conclusion": "failure",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": "failure",
+                  "status": "completed"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 120826248024,
+              "name": "Publish approved main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40078110118,
+          "name": "NeuroDelo CI/CD",
+          "event": "push",
+          "head_branch": "ci/automatic-spaceweb",
+          "head_sha": "1c418b10b01ee330763d6d4bf3546e656dbeb651",
+          "status": "completed",
+          "conclusion": "failure",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078110118",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 120825765960,
+              "name": "Validate",
+              "status": "completed",
+              "conclusion": "failure",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": "failure",
+                  "status": "completed"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ],
+              "diagnostics": {
+                "errors": [
+                  "2026-10-24T08:30:09.6901966Z ",
+                  "2026-10-24T08:30:09.6902565Z ======================================================================",
+                  "2026-10-24T08:30:09.6903969Z ERROR: test_05_browser_consent_and_safe_retry (test_prelaunch.Prelaunch.test_05_browser_consent_and_safe_retry)",
+                  "2026-10-24T08:30:09.6905534Z ----------------------------------------------------------------------",
+                  "2026-10-24T08:30:09.6906528Z Traceback (most recent call last):",
+                  "2026-10-24T08:30:09.6907758Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 187, in test_05_browser_consent_and_safe_retry",
+                  "2026-10-24T08:30:09.6910022Z     page.wait_for_function(\"() => document.querySelector('#form-status').textContent.includes('Документы обновлены')\")",
+                  "2026-10-24T08:30:09.6911782Z   File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/playwright/sync_api/_generated.py\", line 21235, in wait_for_function",
+                  "2026-10-24T08:30:09.6912967Z     self._sync(",
+                  "2026-10-24T08:30:09.6930545Z ",
+                  "2026-10-24T08:30:09.6931041Z ======================================================================",
+                  "2026-10-24T08:30:09.6932068Z FAIL: test_04_safe_errors (test_prelaunch.Prelaunch.test_04_safe_errors)",
+                  "2026-10-24T08:30:09.6933042Z ----------------------------------------------------------------------",
+                  "2026-10-24T08:30:09.6933814Z Traceback (most recent call last):",
+                  "2026-10-24T08:30:09.6934885Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 109, in test_04_safe_errors",
+                  "2026-10-24T08:30:09.6936091Z     failed=owner.get(self.api('leads'));self.assertEqual(failed.status_code,503)",
+                  "2026-10-24T08:30:09.6937025Z                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+                  "2026-10-24T08:30:09.6937748Z AssertionError: 200 != 503",
+                  "2026-10-24T08:30:09.6938164Z ",
+                  "2026-10-24T08:30:09.6939015Z ----------------------------------------------------------------------",
+                  "2026-10-24T08:30:09.6939749Z Ran 62 tests in 61.840s",
+                  "2026-10-24T08:30:09.6940147Z ",
+                  "2026-10-24T08:30:09.6940496Z FAILED (failures=1, errors=1)",
+                  "2026-10-24T08:30:09.7288535Z ##[error]Process completed with exit code 1.",
+                  "2026-10-24T08:30:09.7436666Z Post job cleanup.",
+                  "2026-10-24T08:30:09.8389963Z [command]/usr/bin/git version",
+                  "2026-10-24T08:30:09.8469909Z git version 2.55.0",
+                  "2026-10-24T08:30:09.8539686Z Temporarily overriding HOME='/home/runner/work/_temp/726a7360-d45b-407a-a704-feaea1568507' before making global git config changes",
+                  "2026-10-24T08:30:09.8547135Z Adding repository directory to the temporary git global config as a safe directory"
+                ]
+              }
+            },
+            {
+              "id": 120826285305,
+              "name": "Publish approved main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
           "id": 40078005517,
           "name": "Authorized GitHub control relay",
           "event": "push",
@@ -293,8 +649,8 @@
           "event": "push",
           "head_branch": "automation/github-control",
           "head_sha": "76642022b4413f66115bc04ff8d50f49c6850161",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "cancelled",
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40078005510",
           "path": ".github/workflows/deploy.yml",
           "jobs": [
@@ -1058,219 +1414,6 @@
           "jobs": [
             {
               "id": 120388497950,
-              "name": "deploy",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@v4",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Check PHP syntax and client tests",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Configure SSH",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Verify server and existing installation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Back up current files before publishing",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Publish or preview files",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Remove temporary SSH credentials",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@v4",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 39924216688,
-          "name": "Deploy to SpaceWeb",
-          "event": "workflow_dispatch",
-          "head_branch": "main",
-          "head_sha": "37df861a895757c4ff091daefbfe625a86086a8b",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/39924216688",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 120316533292,
-              "name": "deploy",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@v4",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Check PHP syntax and client tests",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Configure SSH",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Verify server and existing installation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Back up current files before publishing",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Publish or preview files",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Remove temporary SSH credentials",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@v4",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 39923747554,
-          "name": "Deploy to SpaceWeb",
-          "event": "workflow_dispatch",
-          "head_branch": "main",
-          "head_sha": "37df861a895757c4ff091daefbfe625a86086a8b",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/39923747554",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 120314975848,
-              "name": "deploy",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@v4",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Check PHP syntax and client tests",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Configure SSH",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Verify server and existing installation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Back up current files before publishing",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Publish or preview files",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Remove temporary SSH credentials",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@v4",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 39923064286,
-          "name": "Deploy to SpaceWeb",
-          "event": "push",
-          "head_branch": "main",
-          "head_sha": "37df861a895757c4ff091daefbfe625a86086a8b",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/39923064286",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 120312701012,
               "name": "deploy",
               "status": "completed",
               "conclusion": "success",
