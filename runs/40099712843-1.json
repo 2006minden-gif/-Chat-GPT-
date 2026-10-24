@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "source_sha": "f261513fd20d4f34019925eaac844d9296b58c12",
+  "nonce": "f85c0368616d490536d074aeb29eca49",
+  "run_id": "40099712843",
+  "production_touched": false,
+  "issue10_inspection": true,
+  "php_capabilities": {
+    "ok": true,
+    "tokenizer": true,
+    "extension_dir": "/usr/lib64/php8.4/lib/extensions/no-debug-non-zts-20240924",
+    "module_exists": false
+  },
+  "file_metadata": {
+    "ok": true,
+    "files": {
+      "config": {
+        "bytes": 506,
+        "readable": true,
+        "read_ok": true,
+        "read_bytes": 506
+      },
+      "rules": {
+        "bytes": 170,
+        "readable": true,
+        "read_ok": true,
+        "read_bytes": 170
+      },
+      "copy_rules": {
+        "bytes": 0,
+        "readable": true,
+        "read_ok": true,
+        "read_bytes": 0
+      },
+      "copy_index": {
+        "bytes": 349694,
+        "readable": true,
+        "read_ok": true,
+        "read_bytes": 349694
+      }
+    }
+  },
+  "diagnosis": {
+    "ok": true,
+    "read_only": true,
+    "php": "8.4.27",
+    "configuration": {
+      "syntax_valid": false,
+      "error_type": "ParseError",
+      "error_line": 12,
+      "error_category": "unexpected_identifier",
+      "structure": {
+        "line_count": 13,
+        "return_present": true,
+        "delimiter_balance": {
+          "square": 0,
+          "round": 0,
+          "curly": 0
+        },
+        "nonliteral_token_counts": {
+          "T_STRING": 1
+        },
+        "missing_comma_sites": 0,
+        "repeated_commas": 0,
+        "ends_with_array_closer": false
+      },
+      "automatic_repair_available": false,
+      "repair_kind": null,
+      "repair_line": null
+    },
+    "backup_copies": {
+      "~.htaccess": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 0,
+        "scan_complete": true,
+        "private_key_marker": false,
+        "credential_assignment_marker": false,
+        "php_config_marker": false
+      },
+      "index~.html": {
+        "exists": true,
+        "symlink": false,
+        "bytes": 349694,
+        "scan_complete": false,
+        "private_key_marker": false,
+        "credential_assignment_marker": false,
+        "php_config_marker": false
+      }
+    },
+    "public_inventory": {
+      "complete": true,
+      "scanned": 20,
+      "backup_style": 2,
+      "hidden_entry": 2,
+      "dump_or_archive": 0,
+      "symlinks": 0
+    },
+    "managed_rules_present": false
+  }
+}
