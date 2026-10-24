@@ -54,7 +54,7 @@ class Gateway:
    safe={k:run.get(k) for k in ['id','name','event','head_branch','head_sha','status','conclusion','html_url','path']}
    jobs=self.call('GET',base+'/actions/runs/'+str(run['id'])+'/jobs?per_page=30')
    safe['jobs']=[{'id':j['id'],'name':j['name'],'status':j['status'],'conclusion':j['conclusion'],'steps':[{'name':s['name'],'conclusion':s.get('conclusion'),'status':s['status']} for s in j.get('steps',[])]} for j in jobs.get('data',{}).get('jobs',[])]
-   if run.get('head_branch')=='ci/automatic-spaceweb' and run.get('conclusion')=='failure':
+   if run.get('head_branch') in ['ci/automatic-spaceweb','verify/stage3-integration'] and run.get('conclusion')=='failure':
     for job in safe['jobs']:
      if job['name']=='Validate' and job['conclusion']=='failure':job['diagnostics']=self.validation_errors(job['id'])
    result['runs']['runs'].append(safe)
