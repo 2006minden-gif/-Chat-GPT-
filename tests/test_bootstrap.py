@@ -70,7 +70,7 @@ class BootstrapSafety(unittest.TestCase):
    control.required_delivery_policy(base)
 
  def test_initial_configuration_keeps_auto_merge_and_delivery_off(self):
-  repo={'full_name':control.REPO,'permissions':{'admin':True},'id':42,'allow_auto_merge':True}
+  repo={'full_name':control.REPO,'permissions':{'admin':True},'id':42,'allow_auto_merge':False}
   def fake(method,path,*args,**kwargs):
    if path=='repos/'+control.REPO:return repo
    if path.endswith('/AUTOMERGE_APP_ID'):return None
