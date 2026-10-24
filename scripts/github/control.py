@@ -81,9 +81,8 @@ def bootstrap():
     repository_secrets={v['name'] for v in api('GET',base+'/actions/secrets')['secrets']}
     if 'SSH_PRIVATE_KEY' in repository_secrets:raise GitHubFailure('After secure environment transfer, remove the legacy repository-scoped SSH_PRIVATE_KEY; no secret was deleted by this script')
     automation={v['name'] for v in api('GET',secretsBase+'/automation/secrets')['secrets']}
-    if 'AUTOMERGE_APP_PRIVATE_KEY' not in automation:raise GitHubFailure('Missing automation environment AUTOMERGE_APP_PRIVATE_KEY')
     app=api('GET',base+'/actions/variables/AUTOMERGE_APP_ID',missing=True)
-    if not app or not app.get('value','').isdigit():raise GitHubFailure('Set repository variable AUTOMERGE_APP_ID')
+    if app and app.get('value') and ('AUTOMERGE_APP_PRIVATE_KEY' not in automation or not app['value'].isdigit()):raise GitHubFailure('Configured GitHub App requires valid ID and automation-scoped key')
     verify_protection(api('GET',base+'/branches/main/protection'))
     variable('AUTOMERGE_ENABLED','true');variable('AUTOMATION_READY','true')
     print('Repository gates configured; real CI/deployment verification still required')
@@ -137,20 +136,47 @@ def ensure_pr_for_validated_branch():
         'body':'Created automatically after Validate passed for '+sha+'. Independent review is required before auto-merge. No deployment from this branch.'})
     print('Created review PR for validated branch',branch)
 
+def required_policy(base):
+    try:
+        protection=api('GET',base+'/branches/main/protection')
+        count,required=verify_protection(protection);return protection,count,required
+    except GitHubFailure:
+        rules=api('GET',base+'/rules/branches/main')
+        reviews=next((r.get('parameters',{}) for r in rules if r['type']=='pull_request'),{})
+        checks=next((r.get('parameters',{}) for r in rules if r['type']=='required_status_checks'),{})
+        required=checks.get('required_status_checks',[])
+        if reviews.get('required_approving_review_count',0)<1 or not reviews.get('dismiss_stale_reviews_on_push') or not checks.get('strict_required_status_checks_policy'):
+            raise GitHubFailure('Active main ruleset must require current reviews and strict checks')
+        if not any(c['context']==REQUIRED_CHECK and c.get('integration_id')==15368 for c in required):raise GitHubFailure('Required Actions Validate ruleset missing')
+        return {},reviews['required_approving_review_count'],[c['context'] for c in required]
+
+def ensure_main_ci():
+    # GITHUB_TOKEN merges suppress push workflows. Explicit API dispatch is automatic, not an owner button.
+    if os.environ.get('GITHUB_TOKEN_FALLBACK')!='true':return
+    base='repos/'+REPO;head=api('GET',base+'/git/ref/heads/main')['object']['sha']
+    runs=api('GET',base+'/actions/workflows/deploy.yml/runs?branch=main&per_page=30')['workflow_runs']
+    if any(r['head_sha']==head for r in runs):return
+    source=api('GET',base+'/contents/.github/workflows/deploy.yml?ref=main')
+    import base64
+    text=base64.b64decode(source['content']).decode()
+    if 'name: NeuroDelo CI/CD' not in text or 'operation:' not in text:raise GitHubFailure('Automatic delivery workflow not integrated yet')
+    api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':'main','inputs':{'operation':'deploy'}})
+    print('Requested tested main delivery automatically for',head)
+
 def auto_merge():
     base='repos/'+REPO;repo=api('GET',base)
     if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository auto-merge is disabled')
-    protection=api('GET',base+'/branches/main/protection');count,required=verify_protection(protection)
+    protection,count,required=required_policy(base)
     ensure_pr_for_validated_branch()
     for pr in pages(base+'/pulls?state=open&base=main'):
         if pr['draft'] or pr['head']['repo'] is None or pr['head']['repo']['full_name']!=REPO:continue
         number=pr['number'];pr=api('GET',base+'/pulls/'+str(number))
         if pr.get('mergeable') is False:continue
         head=pr['head']['sha'];reviews=pages(base+'/pulls/'+str(number)+'/reviews')
-        permissions={}
-        for reviewer in {r['user']['login'] for r in reviews}:
-            permission=api('GET',base+'/collaborators/'+reviewer+'/permission',missing=True)
-            permissions[reviewer]=permission['permission'] if permission else 'none'
+        review=api('POST','graphql',{'query':'query($n:Int!){repository(owner:"2006minden-gif",name:"-Chat-GPT-"){pullRequest(number:$n){reviewDecision headRefOid}}}','variables':{'n':number}})
+        decision=review.get('data',{}).get('repository',{}).get('pullRequest',{})
+        if decision.get('reviewDecision')!='APPROVED' or decision.get('headRefOid')!=head:continue
+        permissions={r['user']['login']:'write' if r.get('author_association') in ['OWNER','MEMBER','COLLABORATOR'] else 'none' for r in reviews}
         checked=head
         merge=pr.get('merge_commit_sha')
         if merge:
@@ -167,6 +193,7 @@ def auto_merge():
         r=subprocess.run(['gh','pr','merge',str(number),'--repo',REPO,'--auto',method,'--match-head-commit',head],capture_output=True,text=True,timeout=45)
         if r.returncode:raise GitHubFailure('Could not enable auto-merge for PR '+str(number))
         print('Auto-merge prepared for approved, passing PR',number)
+    ensure_main_ci()
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['bootstrap','auto-merge']);parser.add_argument('--apply',action='store_true');args=parser.parse_args()
