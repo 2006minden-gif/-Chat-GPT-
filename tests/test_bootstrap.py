@@ -31,6 +31,36 @@ class BootstrapSafety(unittest.TestCase):
     self.assertEqual(request.call_args.args[0],method)
     self.assertEqual(request.call_args.args[2],{'name':'AUTOMATION_READY','value':'true'})
 
+
+ def test_current_run_promotion_rejects_other_jobs_and_runs(self):
+  run={'status':'in_progress','conclusion':None,'head_sha':'a'*40,'display_title':'bootstrap '+'a'*40,
+       'head_branch':'main','head_repository':{'full_name':control.REPO},'path':'.github/workflows/deploy.yml','event':'workflow_dispatch'}
+  env={'GITHUB_RUN_ID':'123','GITHUB_JOB':'promote_bootstrap','GITHUB_EVENT_NAME':'workflow_dispatch','GITHUB_REF':'refs/heads/main','GITHUB_SHA':'a'*40}
+  with patch.dict(control.os.environ,env),patch.object(bootstrap,'api',return_value=run),patch.object(bootstrap.subprocess,'run'):
+   for key,value in [('GITHUB_RUN_ID','999'),('GITHUB_JOB','deploy'),('GITHUB_REF','refs/heads/feature'),('GITHUB_SHA','b'*40)]:
+    with patch.dict(control.os.environ,{key:value}),self.assertRaises(control.GitHubFailure):
+     bootstrap.read_report('repos/'+control.REPO,'123',allow_current=True)
+  with patch.object(bootstrap,'api',return_value=run),self.assertRaises(control.GitHubFailure):
+   bootstrap.read_report('repos/'+control.REPO,'123')
+ def test_current_run_promotion_requires_successful_publish_jobs(self):
+  run={'status':'in_progress','conclusion':None,'head_sha':'a'*40,'display_title':'bootstrap '+'a'*40,
+       'head_branch':'main','head_repository':{'full_name':control.REPO},'path':'.github/workflows/deploy.yml','event':'workflow_dispatch'}
+  env={'GITHUB_RUN_ID':'123','GITHUB_JOB':'promote_bootstrap','GITHUB_EVENT_NAME':'workflow_dispatch','GITHUB_REF':'refs/heads/main','GITHUB_SHA':'a'*40}
+  def fake(method,path,*a,**kw):
+   if path.endswith('/123'):return run
+   return {'jobs':[{'name':'Validate','conclusion':'success'},{'name':'Publish approved main','conclusion':'skipped'}]}
+  with patch.dict(control.os.environ,env),patch.object(bootstrap,'api',side_effect=fake),self.assertRaises(control.GitHubFailure):
+   bootstrap.read_report('repos/'+control.REPO,'123',allow_current=True)
+ def test_post_publish_promotion_is_main_bootstrap_only(self):
+  import yaml
+  w=yaml.load((ROOT/'.github/workflows/deploy.yml').read_text(),Loader=yaml.BaseLoader)
+  job=w['jobs']['promote_bootstrap']
+  self.assertEqual(job['needs'],['validate','deploy'])
+  for condition in ["inputs.operation == 'bootstrap'","needs.deploy.result == 'success'","github.ref == 'refs/heads/main'"]:
+   self.assertIn(condition,job['if'])
+  self.assertEqual(job['environment'],'automation')
+  self.assertIn('--current-run --apply',job['steps'][-1]['run'])
+
  def proof(self):
   policy=json.loads((ROOT/'scripts/deploy/policy.json').read_text());hashes={prefix+'/'+name:'b'*64 for prefix,key in [('public_html','public_files'),('private','private_files')] for name in policy[key]};checks={'/':{'ok':True}}
   checks.update({'/'+path.split('/',1)[1]:{'ok':True,'sha256':digest} for path,digest in hashes.items() if path.startswith('public_html/') and path.endswith(('.js','.css'))})
