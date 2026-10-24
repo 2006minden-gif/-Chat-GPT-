@@ -31,7 +31,7 @@ function cc_mutation(array $a,string $route,array $d,callable $fn):array{
 function cc_page():int{$p=filter_var($_GET['page']??1,FILTER_VALIDATE_INT);if(!$p||$p<1||$p>100000)crm_fail(422,'Некорректная страница.');return (int)$p;}
 function cc_files_for(array $a,int $project,array $ids,bool $publication=false):array{
  if(count($ids)>10||count(array_unique($ids))!==count($ids))crm_fail(422,'Не более 10 разных вложений.');$out=[];
- foreach($ids as $id){cc_id($id);$f=cc_file($a,$id);if((int)$f['project_id']!==$project||$f['archived_at']!==null||($publication&&$f['visibility']!=='customer'))crm_fail(422,'Вложение недоступно для этого проекта или клиента.');$out[]=$f;}
+ foreach($ids as $id){cc_id($id);$f=cc_file($a,$id);if((int)$f['project_id']!==$project||$f['archived_at']!==null||($publication&&$f['visibility']!=='customer'))crm_fail(422,'Вложение недоступно для этого проекта или клиента.');cc_file_path($f);$out[]=$f;}
  return $out;
 }
 function cc_public_file(array $r):array{unset($r['storage_key']);return $r;}

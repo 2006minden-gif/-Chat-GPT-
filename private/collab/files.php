@@ -15,9 +15,11 @@ function cc_file_path(array $r):string{
  if(is_link($path)||!is_file($path)||filesize($path)!==(int)$r['size_bytes']||!hash_equals($r['checksum'],hash_file('sha256',$path)))crm_fail(503,'Файл временно недоступен. Свяжитесь с владельцем.');return $path;
 }
 function cc_validate_file(array $f):array{
+ if(in_array($f['error']??UPLOAD_ERR_NO_FILE,[UPLOAD_ERR_INI_SIZE,UPLOAD_ERR_FORM_SIZE],true))crm_fail(422,'Файл превышает серверный лимит загрузки.');
  if(($f['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK||!isset($f['tmp_name'])||!is_string($f['tmp_name'])||!is_uploaded_file($f['tmp_name']))crm_fail(422,'Файл не загружен полностью. Выберите его и повторите отправку.');
  $size=filesize($f['tmp_name']);$max=min(10485760,max(1,(int)(config()['collaboration_file_max_bytes']??5242880)));
  if(!$size||$size>$max)crm_fail(422,'Файл пустой или превышает допустимый размер. Максимум: '.$max.' байт.');
+ if(isset($f['full_path'])&&$f['full_path']!==($f['name']??''))crm_fail(422,'Пути в имени файла запрещены.');
  $name=$f['name']??'';if(!is_string($name)||!mb_check_encoding($name,'UTF-8')||mb_strlen($name)>190||preg_match('~[\x00-\x1f\x7f/\\\\]~',$name)||$name==='.'||str_contains($name,'..'))crm_fail(422,'Недопустимое имя файла.');
  $ext=strtolower(pathinfo($name,PATHINFO_EXTENSION));$allowed=['pdf'=>'application/pdf','jpg'=>'image/jpeg','jpeg'=>'image/jpeg','png'=>'image/png','webp'=>'image/webp','docx'=>'application/vnd.openxmlformats-officedocument.wordprocessingml.document','xlsx'=>'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
  if(!isset($allowed[$ext]))crm_fail(422,'Разрешены PDF, JPG, PNG, WebP, DOCX, XLSX.');

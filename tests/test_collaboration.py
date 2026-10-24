@@ -50,3 +50,39 @@ class Collaboration(unittest.TestCase):
   self.assertEqual(self.post(self.customer,route,body=' ').status_code,422);self.assertEqual(self.post(self.customer,route,body='x'*5001).status_code,422)
   no=requests.Session();no.cookies.update(self.customer.cookies);self.assertEqual(no.post(self.url(self.customer,route),json=payload).status_code,403)
   self.f.sql('UPDATE nd_projects SET archived_at=UTC_TIMESTAMP() WHERE id=?',params=[self.project_id]);self.assertEqual(self.get(self.customer,route).status_code,200);self.assertEqual(self.post(self.customer,route,body='Закрытый').status_code,409)
+ def pdf(self):return b'%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n'
+ def upload(self,s,name='test.pdf',body=None,**data):
+  fields={'project_id':str(self.project_id),'request_key':secrets.token_hex(32),'visibility':'internal'};fields.update(data)
+  return s.post(self.url(s,'upload'),data=fields,files={'file':(name,self.pdf() if body is None else body,'application/octet-stream')})
+ def test_02_private_files_visibility_download_and_missing_bytes(self):
+  key=secrets.token_hex(32);r=self.upload(self.owner,request_key=key);self.assertEqual(r.status_code,200,r.text);fid=r.json()['id'];self.assertNotIn('storage_key',r.text)
+  self.assertEqual(self.upload(self.owner,request_key=key).json()['id'],fid)
+  url=self.base+'/collab-download.php?mode=customer&id='+str(fid)
+  self.assertEqual(self.customer.get(url).status_code,404);self.assertEqual(self.stranger.get(url).status_code,404);self.assertEqual(requests.get(url).status_code,401)
+  r=self.post(self.owner,'files/'+str(fid),version=1,visibility='customer',archived=False);self.assertEqual(r.status_code,200,r.text)
+  r=self.customer.get(url);self.assertEqual(r.status_code,200,r.text);self.assertEqual(r.content,self.pdf());self.assertEqual(r.headers['X-Content-Type-Options'],'nosniff');self.assertIn('attachment',r.headers['Content-Disposition'])
+  self.assertEqual(self.stranger.get(url).status_code,404)
+  self.assertEqual(self.post(self.customer,f'projects/{self.project_id}/messages',body='Прикреплён файл',file_ids=[fid]).status_code,200)
+  row=self.f.sql('SELECT storage_key FROM nd_cc_files WHERE id=?',params=[fid])[0];path=self.f.path/'private/collaboration-files'/row['storage_key'];self.assertEqual(path.stat().st_mode&0o777,0o600);path.unlink()
+  r=self.customer.get(url);self.assertEqual(r.status_code,503);self.assertNotIn(str(self.f.path),r.text)
+  self.assertEqual(self.customer.get(self.base+'/private/collaboration-files/'+row['storage_key']).status_code,404)
+ def test_03_invalid_uploads_quotas_and_clean_failures(self):
+  for name,body in [('run.php',b'<?php echo 1;'),('fake.pdf',b'<?php echo 1;'),('active.pdf',b'%PDF-1.4\n/JavaScript x\n%%EOF'),('../evil.pdf',self.pdf()),('fake.png',self.pdf()),('empty.pdf',b''),('page.html',b'<html>x</html>')]:
+   r=self.upload(self.owner,name,body);self.assertEqual(r.status_code,422,(name,r.text))
+  before=self.f.sql('SELECT COUNT(*) n FROM nd_cc_files')[0]['n'];config=dict(self.f.config)
+  try:
+   self.f.config['collaboration_file_max_bytes']=1;self.f.write_config();self.assertEqual(self.upload(self.owner).status_code,422)
+   self.f.config['collaboration_file_max_bytes']=5242880;self.f.config['collaboration_total_max_bytes']=1;self.f.write_config();self.assertEqual(self.upload(self.owner).status_code,507)
+  finally:self.f.config=config;self.f.write_config()
+  self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_cc_files')[0]['n'],before)
+  r=self.owner.post(self.url(self.owner,'upload'),data={'project_id':self.project_id,'request_key':secrets.token_hex(32)});self.assertEqual(r.status_code,422)
+  self.assertEqual(self.upload(self.stranger).status_code,404)
+ def test_04_office_archive_validation(self):
+  import io,zipfile
+  buf=io.BytesIO()
+  with zipfile.ZipFile(buf,'w') as z:
+   z.writestr('[Content_Types].xml','<Types><Override ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');z.writestr('_rels/.rels','<Relationships/>');z.writestr('word/document.xml','<document/>')
+  zip_enabled=self.f.php_eval('echo class_exists("ZipArchive")?"yes":"no";',{})=='yes'
+  r=self.upload(self.owner,'spec.docx',buf.getvalue());self.assertEqual(r.status_code,200 if zip_enabled else 503,r.text)
+  with zipfile.ZipFile(buf,'a') as z:z.writestr('word/vbaProject.bin',b'evil')
+  r=self.upload(self.owner,'macro.docx',buf.getvalue());self.assertEqual(r.status_code,422 if zip_enabled else 503,r.text)
