@@ -209,3 +209,30 @@ jobs:
           path: ${{ runner.temp }}/deployment-report.json
           if-no-files-found: warn
           retention-days: 14
+
+  promote_bootstrap:
+    name: Enable verified routine publication
+    needs: [validate, deploy]
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main' &&
+      inputs.operation == 'bootstrap' &&
+      needs.validate.result == 'success' && needs.deploy.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: automation
+    concurrency:
+      group: spaceweb-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Promote actual uploaded evidence from this bootstrap only
+        env:
+          GH_TOKEN: ${{ secrets.BOOTSTRAP_ADMIN_TOKEN }}
+          RUN_ID: ${{ github.run_id }}
+        run: python scripts/github/bootstrap.py promote --run-id "$RUN_ID" --current-run --apply
