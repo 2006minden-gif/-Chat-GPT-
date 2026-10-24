@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "nonce": "e041358ab728593e2c511eed80f8726f",
+  "source_sha": "0785e48d41cb3dec0a57d2134ebd53c7e30641dd",
+  "run_id": "40080435308",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40080435308",
+  "production_touched": false,
+  "read_only_host_probe": true,
+  "error_type": "RemoteFailure",
+  "error": "readable_php_cli_not_found"
+}
