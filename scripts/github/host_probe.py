@@ -29,6 +29,13 @@ if [ -n "$selected" ]; then printf '%s\n' "$selected"; elif [ -n "$fallback" ]; 
  if 'ND_SSH_OK' not in r.stdout:
   categories={'Permission denied':'ssh_authentication_failed','Connection refused':'ssh_connection_refused','timed out':'ssh_connection_timeout','Host key verification failed':'ssh_host_key_verification_failed','REMOTE HOST IDENTIFICATION HAS CHANGED':'ssh_host_key_changed','Could not resolve hostname':'ssh_dns_failed'}
   report['ssh_exit_code']=r.returncode
+  diagnostic=r.stdout+'\n'+r.stderr
+  for name in ['GH_TOKEN','SSH_PRIVATE_KEY','SSH_KNOWN_HOSTS','SSH_HOST','SSH_USER','DEPLOY_PATH']:
+   secret=os.environ.get(name,'')
+   if secret:diagnostic=diagnostic.replace(secret,'<redacted>')
+  import re
+  diagnostic=re.sub(r'-----BEGIN [^-]*PRIVATE KEY-----[\s\S]*?-----END [^-]*PRIVATE KEY-----','<redacted key>',diagnostic)
+  report['transport_diagnostic']=diagnostic[:800]
   raise RemoteFailure(next((name for marker,name in categories.items() if marker in r.stderr),'ssh_session_unavailable'))
  report['ssh_connected']=True
  if r.returncode:
