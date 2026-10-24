@@ -4,7 +4,7 @@ let csrf = '', leads = [], selected = null, selectedVersion = null;
 let draft = null;
 const isLead = d => d && Number.isSafeInteger(d.id) && d.id>0 && Number.isInteger(d.version) && d.version>0 &&
   ['name','contact','service','idea','status','notes','next_step'].every(k=>typeof d[k]==='string') && Number.isFinite(d.created);
-async function api(path, options = {}) {
+async function api(path, options = {}, {silentUnauthorized=false} = {}) {
   let validate;
   if(path==='leads') validate=d=>Array.isArray(d)&&d.every(isLead);
   else if(path==='session') validate=d=>typeof d.csrf==='string'&&Array.isArray(d.statuses)&&d.statuses.every(s=>typeof s==='string');
@@ -13,7 +13,7 @@ async function api(path, options = {}) {
   try {
     return await NeuroAPI.request(path,{...options,headers:{'Content-Type':'application/json','X-CSRF-Token':csrf,...options.headers}},validate);
   } catch(error) {
-    if(error.status===401) {showLogin();$('#message').textContent=error.message;}
+    if(error.status===401) {showLogin();$('#message').textContent=silentUnauthorized?'':error.message;}
     throw error;
   }
 }
@@ -36,13 +36,13 @@ function render() {
 }
 function openLead(lead) {selected=lead.id;selectedVersion=lead.version;$('#reload-current').hidden=true;$('#client-name').textContent=lead.name;$('#client-contact').textContent=lead.contact+' · '+lead.service;$('#client-consent').textContent=lead.consent===1 ? 'Согласие: '+new Date(lead.consent_at*1000).toLocaleString('ru-RU')+' · версия '+lead.policy_version : 'Согласие не зафиксировано (историческая запись).';$('#client-idea').textContent=lead.idea;$('#edit-status').value=lead.status;$('#notes').value=lead.notes;$('#next-step').value=lead.next_step;$('#edit-message').textContent='';$('#editor').showModal();}
 async function load() {leads=await api('leads');render();}
-async function enter() {const data=await api('session');csrf=data.csrf;for(const selector of ['#filter','#edit-status']){const target=$(selector);target.replaceChildren();if(selector==='#filter')target.append(new Option('Все статусы',''));data.statuses.forEach(s=>target.append(new Option(s,s)));}await load();$('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#logout').hidden=false;$('#message').textContent='';if(draft){const saved=draft;draft=null;openLead(saved);$('#edit-message').textContent='Черновик восстановлен в этой вкладке. Проверьте его перед сохранением; версия будет проверена сервером.';}}
+async function enter({initial=false} = {}) {const data=await api('session',{}, {silentUnauthorized:initial});csrf=data.csrf;for(const selector of ['#filter','#edit-status']){const target=$(selector);target.replaceChildren();if(selector==='#filter')target.append(new Option('Все статусы',''));data.statuses.forEach(s=>target.append(new Option(s,s)));}await load();$('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#logout').hidden=false;$('#message').textContent='';if(draft){const saved=draft;draft=null;openLead(saved);$('#edit-message').textContent='Черновик восстановлен в этой вкладке. Проверьте его перед сохранением; версия будет проверена сервером.';}}
 $('#login-form').onsubmit=async e=>{e.preventDefault();const button=e.currentTarget.querySelector('button');button.disabled=true;try{await api('login',{method:'POST',body:JSON.stringify({password:$('#password').value})});$('#password').value='';await enter();}catch(err){$('#message').textContent=err.message;}finally{button.disabled=false;}};
 $('#logout').onclick=async()=>{try{await api('logout',{method:'POST'});csrf='';draft=null;showLogin();}catch(e){$('#message').textContent=e.message;}};
 $('#refresh').onclick=()=>load().catch(e=>$('#message').textContent=e.message);
 $('#search').oninput=render;$('#filter').onchange=render;$('#close-editor').onclick=()=>$('#editor').close();
 $('#edit-form').onsubmit=async e=>{e.preventDefault();$('#save').disabled=true;try{await api('leads/'+selected,{method:'PATCH',body:JSON.stringify({version:selectedVersion,status:$('#edit-status').value,notes:$('#notes').value,next_step:$('#next-step').value})});await load();$('#editor').close();draft=null;}catch(err){$('#edit-message').textContent=err.message;if(err.status===409)$('#reload-current').hidden=false;}finally{$('#save').disabled=false;}};
-enter().catch(e=>{if(e.message!=='Войдите в CRM')$('#message').textContent=e.message;});
+enter({initial:true}).catch(e=>{if(e.status!==401)$('#message').textContent=e.message;});
 
 $('#reload-current').onclick=async()=>{
   if(!confirm('Загрузить актуальную версию? Несохранённые правки в этом окне будут заменены.'))return;
