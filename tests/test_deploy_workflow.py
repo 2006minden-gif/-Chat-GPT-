@@ -102,6 +102,25 @@ class DeploymentSafety(unittest.TestCase):
   self.assertEqual(repair['jobs']['validate']['with']['validation_only'],'true')
   self.assertEqual(repair['jobs']['repair']['needs'],'validate')
   self.assertEqual(repair['jobs']['repair']['concurrency']['group'],'spaceweb-production')
+
+ def test_initial_delivery_and_promotion_require_validated_main_and_evidence(self):
+  w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
+  job=w['jobs']['configure_validated_main']
+  self.assertIn("github.event.workflow_run.conclusion == 'success'",job['if'])
+  self.assertIn("github.event.workflow_run.head_branch == 'main'",job['if'])
+  self.assertEqual(job['permissions']['actions'],'write')
+  start=job['steps'][-1]
+  self.assertEqual(start['if'],"steps.current.outputs.current == 'true'")
+  self.assertIn("configured['value'] != sha",start['run'])
+  self.assertIn("'operation': 'bootstrap', 'expected_revision': sha",start['run'])
+  self.assertNotIn("'AUTOMATION_READY', 'true'",start['run'])
+  promote=w['jobs']['promote_verified_delivery']
+  self.assertIn("github.event.workflow_run.event == 'workflow_dispatch'",promote['if'])
+  self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository",promote['if'])
+  self.assertIn("github.event.workflow_run.conclusion == 'success'",promote['if'])
+  self.assertEqual(promote['environment'],'automation')
+  self.assertIn('bootstrap.py promote --run-id',promote['steps'][-1]['run'])
+
  def test_shell_syntax(self):
   for path in (ROOT/'.github/workflows').glob('*.yml'):
    w=yaml.load(path.read_text(),Loader=yaml.BaseLoader)
