@@ -137,6 +137,24 @@ class Gateway:
   return r
 
 
+ def prepare_stage5_pr(self,expected_sha):
+  base='repos/'+REPO;head='feature/stage-5-crm-operations'
+  current=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(head,safe=''))
+  if current['status']!=200 or current.get('data',{}).get('object',{}).get('sha')!=expected_sha:return {'status':409,'error':'stage5_head_changed'}
+  existing=self.call('GET',base+'/pulls?state=open&base=main&head='+urllib.parse.quote('2006minden-gif:'+head,safe=''))
+  if existing.get('data'):
+   p=existing['data'][0];return {'status':200,'number':p['number'],'html_url':p['html_url'],'created':False,'draft':p['draft']}
+  body="""Implement the gated owner CRM and customer project portal on the Stage 3/4 dependency chain. Real SQL dashboard, customers and explicit lead links, sales pipeline with confirmed idempotent order conversion, orders/projects/milestones/tasks/employees, activity/notifications, and customer-scoped read projections.
+
+Depends on #4 and #7; their commits are included only in this development branch. Do not merge into automatically publishing main until those dependencies, migrations, legal gates and a complete release manifest are separately approved. Production workflows and scripts/deploy remain identical to the starting main. No production writes, migrations, config/secret changes or signup activation.
+
+Validation: 186 Python integration/security/migration/browser tests and 12 Node tests passed locally using isolated PHP 8.4/MySQL 5.7/Apache/Chromium. Migration 006 empty rollback and legacy preservation tested; populated or partial rollback refused. Hosted CI must pass for the final head as well.
+
+See docs/STAGE-5-REPORT.md, docs/STAGE-5-ARCHITECTURE.md and docs/STAGE-5-UX.md for API contracts, actual tests, synthetic screenshots and deployment blockers. Current production allowlist intentionally does not ship the new CRM files; this draft is for development review, not release authorization."""
+  response=self.call('POST',base+'/pulls',{'head':head,'base':'main','draft':True,'title':'Stage 5: gated owner CRM and customer project management','body':body})
+  if response.get('data'):response['data']={k:response['data'][k] for k in ['number','html_url','state','draft']}
+  return response
+
  def prepare_issue10_pr(self,expected_sha):
   base='repos/'+REPO;head='fix/issue-10-production-repair'
   current=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(head,safe=''))
@@ -212,7 +230,8 @@ if __name__=='__main__':
   'run_url':'https://github.com/'+REPO+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],'time':datetime.datetime.now(datetime.timezone.utc).isoformat(),'production_touched':False}
  try:
   report['inspection']=gateway.inspect()
-  if plan['action']=='prepare-issue10-pr':report['issue10_pr']=gateway.prepare_issue10_pr(plan['expected_sha'])
+  if plan['action']=='prepare-stage5-pr':report['stage5_pr']=gateway.prepare_stage5_pr(plan['expected_sha'])
+  elif plan['action']=='prepare-issue10-pr':report['issue10_pr']=gateway.prepare_issue10_pr(plan['expected_sha'])
   elif plan['action']=='prepare-issue8-pr':report['issue8_pr']=gateway.prepare_issue8_pr(plan['expected_sha'])
   elif plan['action']=='audit-issue8':report['issue8_audit']=gateway.issue8_audit()
   elif plan['action']=='prepare-ci-pr':report['prepare_pr']=gateway.prepare_pr()
