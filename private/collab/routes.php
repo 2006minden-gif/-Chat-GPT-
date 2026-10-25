@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+ini_set('display_errors','0');
 require_once __DIR__.'/core.php';require_once __DIR__.'/files.php';require_once __DIR__.'/messages.php';require_once __DIR__.'/documents.php';require_once __DIR__.'/approvals.php';
 function cc_dispatch(bool $customer,string $route,string $method):never{
  try{
