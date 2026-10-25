@@ -66,3 +66,7 @@ No production tests/customer writes, live emails/payments/AI, new secret service
 [Архитектура/API](STAGE-9-ARCHITECTURE.md) · [Проверка владельцем](STAGE-9-OWNER-CHECKLIST-RU.md) · [Примеры конфигурации](stage-9-examples/) · [Customer mobile](stage-9-ux/customer-confirmed-mobile.png) · [Owner proposal](stage-9-ux/owner-offer.png).
 
 Следующая безопасная работа — review/интеграция восстановленной зависимости в Stage11 test branch и отдельное исправление текущего release mechanism по Stage12 gates. Не новый deployment framework, не автоматическое применение SQL в этом задании. Дополнительный per-release confirmation не запрашивался.
+
+## GitHub review
+
+Ветка опубликована в origin. Создание draft PR через GitHub API вернуло `Forbidden`; git read/push работают, защита и deployment настройки не менялись для обхода ограничения. Подготовлено [сравнение Stage11 integration → Stage9 completion](https://github.com/2006minden-gif/-Chat-GPT-/compare/integrate/stage-11-system...feature/stage-9-completion?expand=1): можно выбрать **Create draft pull request**, base `integrate/stage-11-system`. Diff включает Stage12 documentation-only assessment из родительской истории, без изменений automation. Это открытие review, не per-release confirmation и не разрешение обхода технических gates. Main merge/deploy не выполнялись.
