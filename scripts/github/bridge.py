@@ -137,6 +137,26 @@ class Gateway:
   return r
 
 
+ def prepare_stage6_pr(self,expected_sha):
+  base='repos/'+REPO;head='feature/stage-6-client-collaboration';parent='feature/stage-5-crm-operations'
+  current=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(head,safe=''))
+  dependency=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(parent,safe=''))
+  if current['status']!=200 or current.get('data',{}).get('object',{}).get('sha')!=expected_sha:return {'status':409,'error':'stage6_head_changed'}
+  if dependency['status']!=200 or dependency.get('data',{}).get('object',{}).get('sha')!='a6a7b8c1cae096729979d44eeac8831b28bf134b':return {'status':409,'error':'stage5_dependency_changed'}
+  existing=self.call('GET',base+'/pulls?state=open&base='+urllib.parse.quote(parent,safe='')+'&head='+urllib.parse.quote('2006minden-gif:'+head,safe=''))
+  if existing.get('data'):
+   p=existing['data'][0];return {'status':200,'number':p['number'],'html_url':p['html_url'],'created':False,'draft':p['draft']}
+  body="""Build secure client collaboration on the Stage 5 dependency branch: owner/customer messaging, private validated uploads and authorized downloads, immutable project document revisions, exact-checksum approvals/change requests, work delivery and customer review dashboard.
+
+Stacked on #21 (Stage 5), which depends on #4 and #7. This draft deliberately targets feature/stage-5-crm-operations so its diff contains Stage 6 only. No merge, deployment, production migration, legal gate activation, new credentials, GitHub settings or workflow changes are authorized. Current main workflows and scripts/deploy are preserved. Migration 007 is explicit CLI-only, empty rollback/partial recovery tested.
+
+Local verification: 208 Python tests, 12 Node tests, PHP 8.4 lint, JS syntax, actionlint and redacted secret scan passed. Real loopback MySQL 5.7/HTTP/Chromium tests cover messages/unread/replay, quotas/storage failures, cross-customer 404 isolation, immutable v1→feedback→v2 approval, delivery and mobile UX. Fileinfo/ZipArchive were available locally; host extensions/limits remain activation prerequisites. No antivirus, legal-signature, payment or PDF-generation claims.
+
+See docs/STAGE-6-REPORT.md, STAGE-6-ARCHITECTURE.md, STAGE-6-STORAGE-SECURITY.md and STAGE-6-UX.md for actual evidence and limitations. The existing main-only PR CI trigger does not target this feature-base PR; branch push CI validates the complete dependency source. Before any future main integration, retarget/review and required main checks plus the complete release manifest/migrations/DB+storage backup must be explicitly approved."""
+  response=self.call('POST',base+'/pulls',{'head':head,'base':parent,'draft':True,'title':'Stage 6: private client collaboration files documents and approvals','body':body})
+  if response.get('data'):response['data']={k:response['data'][k] for k in ['number','html_url','state','draft']}
+  return response
+
  def prepare_stage5_pr(self,expected_sha):
   base='repos/'+REPO;head='feature/stage-5-crm-operations'
   current=self.call('GET',base+'/git/ref/heads/'+urllib.parse.quote(head,safe=''))
@@ -230,7 +250,8 @@ if __name__=='__main__':
   'run_url':'https://github.com/'+REPO+'/actions/runs/'+os.environ['GITHUB_RUN_ID'],'time':datetime.datetime.now(datetime.timezone.utc).isoformat(),'production_touched':False}
  try:
   report['inspection']=gateway.inspect()
-  if plan['action']=='prepare-stage5-pr':report['stage5_pr']=gateway.prepare_stage5_pr(plan['expected_sha'])
+  if plan['action']=='prepare-stage6-pr':report['stage6_pr']=gateway.prepare_stage6_pr(plan['expected_sha'])
+  elif plan['action']=='prepare-stage5-pr':report['stage5_pr']=gateway.prepare_stage5_pr(plan['expected_sha'])
   elif plan['action']=='prepare-issue10-pr':report['issue10_pr']=gateway.prepare_issue10_pr(plan['expected_sha'])
   elif plan['action']=='prepare-issue8-pr':report['issue8_pr']=gateway.prepare_issue8_pr(plan['expected_sha'])
   elif plan['action']=='audit-issue8':report['issue8_audit']=gateway.issue8_audit()
