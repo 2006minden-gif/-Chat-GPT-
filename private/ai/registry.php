@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__).'/production/registry.php';
 function ai_registry():array{
  $definitions=[
  'cost_estimator'=>['ИИ-оценщик затрат','Пакеты работ, трудозатраты и потребление ресурсов; цены рассчитывает только сервер.',['project'],['estimate_costs'],['work_packages'=>'packages','uncertainties'=>'list']],
@@ -13,7 +14,7 @@ function ai_registry():array{
  'project_monitor'=>['ИИ-контролёр проектов','Проверенные сроки и прогресс отдельно от оценок ИИ.',['project'],['internal_alert'],['risk_interpretation'=>'text','suggested_actions'=>'list','estimated_risk'=>'risk']],
  'document_assistant'=>['ИИ-помощник по документам','Анализ доступной редакции, без чтения произвольных файлов.',['revision'],[],['summary'=>'text','changes'=>'list','missing_sections'=>'list','suggested_revisions'=>'list','acceptance_checklist'=>'list']],
  'business_analyst'=>['ИИ-бизнес-аналитик','Факты CRM и поступления отдельно от интерпретаций.',['none'],[],['interpretation'=>'text','demand_patterns'=>'list','process_improvements'=>'list','limitations'=>'list']]
- ];$out=[];
+ ];$definitions=array_merge($definitions,prod_agent_definitions());$out=[];
  foreach($definitions as $id=>[$name,$purpose,$targets,$actions,$schema])$out[$id]=['id'=>$id,'name'=>$name,'purpose'=>$purpose,'version'=>1,'targets'=>$targets,'roles'=>$id==='consultant'?['owner','customer','visitor']:['owner'],'read_capabilities'=>$targets,'proposed_actions'=>$actions,'execution_mode'=>in_array($id,['specification','project_monitor'],true)?'authorized_draft_or_internal_alert':'advisory_or_owner_approval','approval'=>'Финансы, обязательства и администрирование всегда запрещены. Внешняя отправка — только точное согласование владельца.','input_schema'=>['question'=>'string <=4000','target_id'=>'authorized integer or absent','intent'=>'explicit dispatcher route only'],'output_schema'=>$schema,'max_tokens'=>4096,'max_context_bytes'=>24000,'max_output_bytes'=>32000,'max_seconds'=>15,'max_attempts'=>3,'max_depth'=>1,'max_estimated_micro'=>1000000];
  return $out;
 }

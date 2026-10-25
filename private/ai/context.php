@@ -29,6 +29,7 @@ function ai_context(array $t):array{
   if((config()['billing_enabled']??false)===true){bill_gate();$r=bill_report(['type'=>'owner','id'=>1]);$facts[]=['source'=>'finance','currency'=>'RUB','totals'=>$r['totals'],'meaning'=>$r['meaning']];}else $context['limitations'][]='Финансовый модуль выключен; данных о выручке нет.';
  }
  if($t['agent_id']==='proposal'){$q=pricing_require_approved((int)$t['project_id']);$context['approved_price']=['quotation_id'=>(int)$q['id'],'checksum'=>$q['checksum'],'selling_minor'=>(int)$q['calculation']['selling_minor'],'currency'=>'RUB'];$facts[]=['source'=>'approved_quotation',...$context['approved_price']];}
+ if(str_starts_with($t['agent_id'],'production_'))$context['production']=prod_ai_context($t);
  $context['versions']=$versions;if(strlen(ai_json($context))>ai_agent($t['agent_id'])['max_context_bytes'])crm_fail(422,'Контекст слишком большой. Уточните запрос.');return $context;
 }
 function ai_target_versions(array $t,bool $lock=false):array{

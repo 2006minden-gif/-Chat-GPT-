@@ -50,10 +50,12 @@ function cc_update_revision(array $a,int $id,array $d):array{
  cc_owner($a);return cc_mutation($a,'revision-update/'.$id,$d,function()use($a,$id,$d){$r=cc_revision($a,$id);$doc=cc_document($a,(int)$r['document_id'],true);$r=cc_revision($a,$id,true);cc_project($a,(int)$doc['project_id'],true,true);if((int)$r['revision_number']!==(int)$doc['head_revision']||$doc['archived_at']!==null)crm_fail(409,'Эта редакция уже не текущая.');return cc_save_revision($a,$doc,$d,$r);});
 }
 function cc_ready(array $a,int $id,array $d):array{
- cc_owner($a);return cc_mutation($a,'revision-ready/'.$id,$d,function()use($a,$id,$d){$r=cc_revision($a,$id);$doc=cc_document($a,(int)$r['document_id'],true);$r=cc_revision($a,$id,true);cc_project($a,(int)$doc['project_id'],true,true);crm_version($d,$r);
+ cc_owner($a);return cc_mutation($a,'revision-ready/'.$id,$d,fn()=>cc_ready_effect($a,$id,$d));
+}
+function cc_ready_effect(array $a,int $id,array $d):array{cc_owner($a);$r=cc_revision($a,$id);$doc=cc_document($a,(int)$r['document_id'],true);$r=cc_revision($a,$id,true);cc_project($a,(int)$doc['project_id'],true,true);crm_version($d,$r);
  if($r['status']!=='draft'||(int)$r['revision_number']!==(int)$doc['head_revision']||$doc['archived_at']!==null)crm_fail(409,'Подготовить можно только текущий черновик.');
  if($r['fields']['title']===''||mb_strlen($r['fields']['acceptance'])<5)crm_fail(422,'Заполните название и понятные критерии приёмки.');
- crm_query("UPDATE nd_cc_revisions SET status='ready',version=version+1 WHERE id=?",[$id]);cc_event($a,(int)$doc['project_id'],'document_ready');return ['ok'=>true,'id'=>$id,'revision'=>cc_revision($a,$id)];});
+ crm_query("UPDATE nd_cc_revisions SET status='ready',version=version+1 WHERE id=?",[$id]);cc_event($a,(int)$doc['project_id'],'document_ready');return ['ok'=>true,'id'=>$id,'revision'=>cc_revision($a,$id)];
 }
 function cc_document_lists(array $a,int $project):array{
  cc_project($a,$project);$where=$a['type']==='customer'?" AND r.status IN ('sent','approved','changes_requested','finalized')":'';

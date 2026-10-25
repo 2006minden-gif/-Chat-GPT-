@@ -7,7 +7,9 @@ function cc_acceptance_target(array $a,array $doc,bool $lock=true):?int{
  return null;
 }
 function cc_submit(array $a,int $id,array $d):array{
- cc_owner($a);return cc_mutation($a,'submit/'.$id,$d,function()use($a,$id,$d){$r=cc_revision($a,$id);$doc=cc_document($a,(int)$r['document_id'],true);$r=cc_revision($a,$id,true);cc_project($a,(int)$doc['project_id'],true,true);crm_version($d,$r);
+ cc_owner($a);return cc_mutation($a,'submit/'.$id,$d,fn()=>cc_submit_effect($a,$id,$d));
+}
+function cc_submit_effect(array $a,int $id,array $d):array{cc_owner($a);$r=cc_revision($a,$id);$doc=cc_document($a,(int)$r['document_id'],true);$r=cc_revision($a,$id,true);cc_project($a,(int)$doc['project_id'],true,true);crm_version($d,$r);
  if($r['status']!=='ready'||(int)$r['revision_number']!==(int)$doc['head_revision']||$doc['archived_at']!==null)crm_fail(409,'Отправить можно только подготовленную текущую версию.');
  if(($d['confirm']??false)!==true)crm_fail(422,'Подтвердите отправку клиенту точной версии документа.');
  $ids=array_map(fn($row)=>(int)$row['file_id'],crm_query('SELECT file_id FROM nd_cc_revision_files WHERE revision_id=? ORDER BY file_id',[$id])->fetchAll());$files=cc_files_for($a,(int)$doc['project_id'],$ids,true);
@@ -15,7 +17,7 @@ function cc_submit(array $a,int $id,array $d):array{
  if($doc['kind']==='deliverable'&&!$files)crm_fail(422,'Прикрепите результат работы и явно откройте доступ клиенту.');
  $target=cc_acceptance_target($a,$doc);$due=$d['due_on']??null;if($due!==null){if(!is_string($due))crm_fail(422,'Проверьте срок согласования.');$date=DateTimeImmutable::createFromFormat('!Y-m-d',$due);if(!$date||$date->format('Y-m-d')!==$due)crm_fail(422,'Проверьте срок согласования.');}
  crm_query("UPDATE nd_cc_revisions SET status='sent',sent_at=UTC_TIMESTAMP(),version=version+1 WHERE id=?",[$id]);
- crm_query('INSERT INTO nd_cc_approvals(revision_id,checksum,target_version,due_on) VALUES (?,?,?,?)',[$id,$r['checksum'],$target,$due]);$aid=(int)db()->lastInsertId();cc_event($a,(int)$doc['project_id'],'submitted',['document_kind'=>$doc['kind']]);return ['ok'=>true,'id'=>$aid,'revision'=>cc_revision($a,$id)];});
+ crm_query('INSERT INTO nd_cc_approvals(revision_id,checksum,target_version,due_on) VALUES (?,?,?,?)',[$id,$r['checksum'],$target,$due]);$aid=(int)db()->lastInsertId();cc_event($a,(int)$doc['project_id'],'submitted',['document_kind'=>$doc['kind']]);return ['ok'=>true,'id'=>$aid,'revision'=>cc_revision($a,$id)];
 }
 function cc_approval(array $a,int $id,bool $lock=false):array{
  $r=crm_query('SELECT * FROM nd_cc_approvals WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');$rev=cc_revision($a,(int)$r['revision_id'],$lock);$r['revision']=$rev;return $r;

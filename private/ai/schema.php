@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 function ai_schema_value(mixed $v,string $type):void{
+ if($type==='production_plan'){prod_plan_contract($v);return;}if($type==='production_files'){prod_files_contract($v);return;}if($type==='production_findings'){prod_findings_contract($v);return;}if($type==='draft_status'){if($v!=='DRAFT_ONLY')crm_fail(422,'Неподтверждённое выполнение кода.');return;}
  if($type==='packages'){pricing_packages($v);return;}
  $bad=static fn()=>crm_fail(422,'ИИ вернул результат, не соответствующий схеме.');
  if(in_array($type,['text','short'],true)){if(!is_string($v)||!mb_check_encoding($v,'UTF-8')||str_contains($v,"\0")||mb_strlen($v)>($type==='short'?190:5000))$bad();return;}

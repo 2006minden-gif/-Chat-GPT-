@@ -1,0 +1,27 @@
+<?php
+declare(strict_types=1);
+function prod_create_plan_effect(int $project,int $spec,array $body,?int $artifact=null):array{
+ $body=prod_plan_contract($body);$source=prod_source($project,$spec,true);$actual=[];foreach($body['requirements'] as $r)$actual[$r['id']]=$r['description'];if($actual!==$source['requirements'])crm_fail(422,'План должен покрывать точные критерии принятого ТЗ в исходном порядке.');
+ $files=[];foreach($body['steps'] as $s)foreach($s['files'] as $f){if(isset($files[strtolower($f)]))crm_fail(422,'Разные шаги не должны перезаписывать файл с тем же именем.');$files[strtolower($f)]=true;}
+ foreach(['installation.md','limitations.md'] as $f)if(!isset($files[$f]))crm_fail(422,'Нужны installation.md и limitations.md.');foreach($body['requirements'] as $r)if(!isset($files[strtolower($r['file'])]))crm_fail(422,'Для каждого требования нужен запланированный файл.');
+ $old=crm_query('SELECT id FROM nd_prod_plans WHERE project_id=? ORDER BY revision_number DESC LIMIT 1 FOR UPDATE',[$project])->fetchColumn();$n=(int)crm_query('SELECT COALESCE(MAX(revision_number),0) FROM nd_prod_plans WHERE project_id=?',[$project])->fetchColumn()+1;
+ $raw=ai_json($body);$src=ai_json($source);crm_query('INSERT INTO nd_prod_plans(project_id,order_id,customer_id,spec_revision_id,quotation_id,revision_number,previous_id,ai_artifact_id,service_type,body,checksum,source_json,source_hash) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',[$project,$source['order_id'],$source['customer_id'],$spec,$source['quotation_id'],$n,$old?:null,$artifact,$source['service_type'],$raw,hash('sha256',$raw),$src,hash('sha256',$src)]);$id=(int)db()->lastInsertId();prod_event($id,null,'plan_draft_created');return ['ok'=>true,'id'=>$id,'record'=>prod_plan($id)];
+}
+function prod_plan_action(int $id,string $action,array $d):array{
+ return crm_idempotent('production:plan:'.$id.':'.$action,$d,function()use($id,$action,$d){$p=prod_plan($id,true);crm_version($d,$p);prod_current_source($p,true);if(!is_string($d['checksum']??null)||!hash_equals($p['checksum'],$d['checksum']))crm_fail(409,'Подтвердите точную редакцию плана.');
+  if($action==='validate'){
+   if($p['state']!=='DRAFT')crm_fail(409,'План уже проверен.');prod_plan_contract(json_decode($p['body'],true));crm_query("UPDATE nd_prod_plans SET state='VALIDATED',version=version+1 WHERE id=?",[$id]);prod_event($id,null,'plan_validated');crm_query("UPDATE nd_prod_plans SET state='AWAITING_OWNER_APPROVAL',version=version+1 WHERE id=?",[$id]);prod_event($id,null,'plan_awaiting_owner');
+  }elseif(in_array($action,['approve','reject'],true)){
+   if($p['state']!=='AWAITING_OWNER_APPROVAL'||($d['confirm']??false)!==true)crm_fail(409,'План не ожидает подтверждённого решения.');$state=$action==='approve'?'APPROVED':'REJECTED';crm_query('INSERT INTO nd_prod_decisions(entity,record_id,owner_id,decision,checksum,source_hash) VALUES (\'plan\',?,1,?,?,?)',[$id,strtolower($state),$p['checksum'],$p['source_hash']]);crm_query('UPDATE nd_prod_plans SET state=?,version=version+1 WHERE id=?',[$state,$id]);prod_event($id,null,'plan_'.strtolower($state));
+  }else crm_fail(404,'Действие не найдено.');return ['ok'=>true,'id'=>$id,'record'=>prod_plan($id)];
+ });
+}
+function prod_start(int $planId,array $d):array{
+ return crm_idempotent('production:start:'.$planId,$d,function()use($planId,$d){$p=prod_plan($planId,true);prod_current_source($p,true);$old=crm_query('SELECT id FROM nd_prod_runs WHERE plan_id=?',[$planId])->fetchColumn();if($old)return ['ok'=>true,'id'=>(int)$old];crm_version($d,$p);
+  if((config()['production_execution_enabled']??false)!==true)crm_fail(503,'Выполнение производства не разрешено владельцем.');if($p['state']!=='APPROVED'||($d['confirm']??false)!==true)crm_fail(409,'Запуск возможен только по одобренному плану.');if(ai_provider_status()!=='available_mock')crm_fail(503,'Исполнитель недоступен; результат выполнения не подтверждён.');
+  $body=json_decode($p['body'],true);$planning=0;if($p['ai_artifact_id']){$aid=crm_query('SELECT task_id FROM nd_ai_artifacts WHERE id=?',[$p['ai_artifact_id']])->fetchColumn();foreach(crm_query('SELECT u.currency,u.estimated_micro FROM nd_ai_usage u JOIN nd_ai_attempts a ON a.id=u.attempt_id WHERE a.task_id=?',[$aid])->fetchAll() as $u){if($u['currency']!==$body['cost_currency'])crm_fail(409,'NEEDS_COST_REVIEW: валюта планирования отличается.');$planning+=(int)$u['estimated_micro'];}}if($planning>=$body['budget_micro'])crm_fail(409,'Бюджет уже исчерпан на планирование.');crm_query("INSERT INTO nd_prod_runs(plan_id,state,planning_estimated_micro) VALUES (?,'EXECUTING',?)",[$planId,$planning]);$run=(int)db()->lastInsertId();$body=json_decode($p['body'],true);$ids=[];
+  foreach($body['steps'] as $s){crm_query("INSERT INTO nd_prod_steps(run_id,step_key,agent_id,state) VALUES (?,?,?,'WAITING_FOR_DEPENDENCY')",[$run,$s['key'],$s['agent']]);$ids[$s['key']]=(int)db()->lastInsertId();}
+  foreach($body['steps'] as $s)foreach($s['depends_on'] as $dep)crm_query('INSERT INTO nd_prod_dependencies(run_id,step_id,predecessor_id) VALUES (?,?,?)',[$run,$ids[$s['key']],$ids[$dep]]);
+  crm_query("INSERT INTO nd_prod_steps(run_id,step_key,agent_id,state) VALUES (?,'__qa','production_qa','WAITING_FOR_DEPENDENCY')",[$run]);$qa=(int)db()->lastInsertId();foreach($ids as $pred)crm_query('INSERT INTO nd_prod_dependencies VALUES (?,?,?)',[$run,$qa,$pred]);crm_query("UPDATE nd_prod_plans SET state='EXECUTING',version=version+1 WHERE id=?",[$planId]);prod_event($planId,$run,'execution_started_draft_mode');return ['ok'=>true,'id'=>$run];
+ });
+}

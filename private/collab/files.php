@@ -9,7 +9,7 @@ function cc_storage(bool $create=false):string{
 }
 function cc_file(array $a,int $id,bool $lock=false):array{
  $r=crm_query('SELECT * FROM nd_cc_files WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');cc_project($a,(int)$r['project_id']);
- if($a['type']==='customer'&&($r['visibility']!=='customer'||$r['archived_at']!==null))crm_fail(404,'Запись не найдена.');return $r;
+ if($a['type']==='customer'&&($r['visibility']!=='customer'||$r['archived_at']!==null))crm_fail(404,'Запись не найдена.');if($r['mime']==='application/json'){require_once dirname(__DIR__).'/production/seal.php';prod_managed_file($a,$r);}return $r;
 }
 function cc_file_path(array $r):string{
  if(!preg_match('/^[a-f0-9]{64}$/D',$r['storage_key']))crm_fail(503,'Файл временно недоступен.');$path=cc_storage().'/'.$r['storage_key'];
@@ -74,7 +74,7 @@ function cc_upload(array $a):array{
  }catch(Throwable $e){if($stored)cc_cleanup_upload($stored);throw $e;}finally{flock($lock,LOCK_UN);fclose($lock);}
 }
 function cc_file_update(array $a,int $id,array $d):array{
- cc_owner($a);return cc_mutation($a,'file/'.$id,$d,function()use($a,$id,$d){$f=cc_file($a,$id,true);cc_project($a,(int)$f['project_id'],true,true);crm_version($d,$f);
+ cc_owner($a);return cc_mutation($a,'file/'.$id,$d,function()use($a,$id,$d){$f=cc_file($a,$id,true);if($f['mime']==='application/json'){require_once dirname(__DIR__).'/production/seal.php';prod_managed_file($a,$f,true);}cc_project($a,(int)$f['project_id'],true,true);crm_version($d,$f);
  $visibility=$d['visibility']??$f['visibility'];if(!in_array($visibility,['internal','customer'],true)||!isset($d['archived'])||!is_bool($d['archived']))crm_fail(422,'Проверьте параметры доступа.');
  crm_query('UPDATE nd_cc_files SET visibility=?,archived_at=?,version=version+1 WHERE id=?',[$visibility,$d['archived']?gmdate('Y-m-d H:i:s'):null,$id]);cc_event($a,(int)$f['project_id'],'file_access_changed');return ['ok'=>true,'file'=>cc_public_file(cc_file($a,$id))];});
 }
