@@ -24,7 +24,10 @@ function cc_approval(array $a,int $id,bool $lock=false):array{
 }
 function cc_decide(array $a,int $id,array $d):array{
  if($a['type']!=='customer')crm_fail(403,'Решение принимает клиент.');
- return cc_mutation($a,'decide/'.$id,$d,function()use($a,$id,$d){
+ return cc_mutation($a,'decide/'.$id,$d,fn()=>cc_decide_effect($a,$id,$d));
+}
+function cc_decide_effect(array $a,int $id,array $d):array{
+ if($a['type']!=='customer')crm_fail(403,'Решение принимает клиент.');
   $approval=cc_approval($a,$id);$doc=cc_document($a,(int)$approval['revision']['document_id'],true);cc_project($a,(int)$doc['project_id'],true,true);
   $approval=cc_approval($a,$id,true);crm_version($d,$approval);$r=$approval['revision'];
   if($approval['status']!=='pending'||$r['status']!=='sent'||(int)$r['revision_number']!==(int)$doc['head_revision']||$doc['archived_at']!==null)crm_fail(409,'Эта версия больше не ожидает решения. Откройте актуальную редакцию.');
@@ -37,7 +40,7 @@ function cc_decide(array $a,int $id,array $d):array{
   $feedback=cc_text($d,'feedback',5000,false);if($decision==='changes_requested'&&(mb_strlen($feedback)<5||!preg_match('/[\p{L}\p{N}]/u',$feedback)))crm_fail(422,'Опишите необходимые изменения: минимум 5 символов.');
   crm_query('INSERT INTO nd_cc_decisions(approval_id,account_id,decision,feedback,checksum) VALUES (?,?,?,?,?)',[$id,$a['id'],$decision,$feedback,$checksum]);
   crm_query('UPDATE nd_cc_approvals SET status=?,version=version+1 WHERE id=?',[$decision,$id]);crm_query('UPDATE nd_cc_revisions SET status=?,version=version+1 WHERE id=?',[$decision,$r['id']]);cc_event($a,(int)$doc['project_id'],'decision_recorded',['decision'=>$decision]);return ['ok'=>true,'id'=>$id,'status'=>$decision,'checksum'=>$checksum];
- });
+
 }
 function cc_withdraw(array $a,int $id,array $d):array{
  cc_owner($a);return cc_mutation($a,'withdraw/'.$id,$d,function()use($a,$id,$d){$approval=cc_approval($a,$id);$doc=cc_document($a,(int)$approval['revision']['document_id'],true);cc_project($a,(int)$doc['project_id'],true,true);$approval=cc_approval($a,$id,true);crm_version($d,$approval);

@@ -28,7 +28,7 @@ function pricing_quote(array $estimate,?string $override=null,?int $replaces=nul
 }
 function pricing_detail(int $id,bool $lock=false):array{$q=crm_query('SELECT * FROM nd_quotations WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$q)crm_fail(404,'Расчёт не найден.');if(!hash_equals($q['checksum'],hash('sha256',$q['calculation_json'])))crm_fail(409,'Снимок расчёта повреждён.');$q['calculation']=json_decode($q['calculation_json'],true);unset($q['calculation_json']);return $q;}
 function pricing_fresh(array $q):bool{
- $r=$q['calculation'];try{$currentScope=pricing_scope((int)$q['project_id']);}catch(CrmFailure $e){if(in_array($e->status,[404,409],true))return false;throw $e;}if(hash('sha256',ai_json($currentScope))!==hash('sha256',ai_json($r['scope'])))return false;$policy=crm_query('SELECT id FROM nd_pricing_policies ORDER BY id DESC LIMIT 1'.(db()->inTransaction()?' FOR UPDATE':''))->fetchColumn();if((int)$policy!==(int)$q['policy_id'])return false;
+ $r=$q['calculation'];try{$currentScope=pricing_scope((int)$q['project_id']);}catch(CrmFailure $e){if(in_array($e->status,[404,409],true))return false;throw $e;}if(hash('sha256',ai_json($currentScope))!==hash('sha256',ai_json($r['scope']))){require_once dirname(__DIR__).'/catalog/bindings.php';if(!cat_quote_scope_matches($q,$currentScope))return false;}$policy=crm_query('SELECT id FROM nd_pricing_policies ORDER BY id DESC LIMIT 1'.(db()->inTransaction()?' FOR UPDATE':''))->fetchColumn();if((int)$policy!==(int)$q['policy_id'])return false;
  foreach($r['rates'] as $category=>$old){$current=pricing_rate($category);if(!$current||(int)$current['id']!==(int)$old['id'])return false;}return true;
 }
 function pricing_require_approved(int $project):array{

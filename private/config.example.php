@@ -4,6 +4,9 @@ return [
     // Stage 5 stays disabled until legal approval, migrations and review.
     'crm_operations_enabled' => false,
     // Stage 8. No live adapter until documented API and processing approval.
+    'catalog_enabled'=>false,
+    'catalog_requests_enabled'=>false,
+    'catalog_privacy_approved'=>false,
     'manual_handoff_enabled'=>false, // Manual copy/import only; no Codex API.
     'production_enabled' => false, 'production_execution_enabled' => false, 'production_auto_revisions_enabled' => false,
     'ai_enabled' => false, 'ai_public_enabled' => false, 'ai_data_processing_approved' => false,

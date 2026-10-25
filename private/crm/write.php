@@ -2,14 +2,7 @@
 declare(strict_types=1);
 function crm_write(string $kind,int $id,string $action,array $d,string $method):array{
  if($method==='POST'&&$id===0)return crm_idempotent($kind,$d,fn()=>crm_insert($kind,$d));
- if($action==='convert'&&$kind==='deals')return crm_idempotent('convert/'.$id,$d,function()use($id,$d){
-  $row=crm_record('deals',$id,true);crm_version($d,$row);if($row['status']!=='won'||$row['archived_at']!==null||($d['confirm']??false)!==true)crm_fail(422,'Подтвердите создание заказа из успешной сделки.');
-  $q=crm_query('SELECT order_id FROM nd_crm_conversions WHERE deal_id=?',[$id]);$existing=$q->fetchColumn();
-  if(!$existing)$existing=crm_query('SELECT id FROM nd_orders WHERE deal_id=? LIMIT 1',[$id])->fetchColumn();
-  if($existing)return ['ok'=>true,'record'=>crm_record('orders',(int)$existing)];
-  $order=crm_insert('orders',['title'=>$row['title'],'customer_id'=>(int)$row['customer_id'],'total_amount'=>$row['estimated_amount']??'0.00','currency'=>'RUB']);
-  $orderId=(int)$order['record']['id'];crm_query('UPDATE nd_orders SET deal_id=? WHERE id=?',[$id,$orderId]);crm_query('INSERT INTO nd_crm_conversions VALUES (?,?)',[$id,$orderId]);$order['record']['deal_id']=$id;return $order;
- });
+ if($action==='convert'&&$kind==='deals')return crm_idempotent('convert/'.$id,$d,fn()=>crm_convert_effect($id,$d));
  return crm_atomic(function()use($kind,$id,$action,$d,$method){
   $old=crm_record($kind,$id,true);crm_version($d,$old);
   if($action==='link'&&$kind==='customers'){
@@ -51,4 +44,15 @@ function crm_write(string $kind,int $id,string $action,array $d,string $method):
   if($kind==='stages')crm_query('UPDATE nd_projects SET version=version+1 WHERE id=?',[$old['project_id']]);
   crm_event($kind,$id,$action?:'updated',array_replace($old,$v));return ['ok'=>true,'record'=>crm_record($kind,$id)];
  });
+}
+
+/** Shared validated conversion inside an existing transaction. */
+function crm_convert_effect(int $id,array $d):array{
+  $row=crm_record('deals',$id,true);crm_version($d,$row);if($row['status']!=='won'||$row['archived_at']!==null||($d['confirm']??false)!==true)crm_fail(422,'Подтвердите создание заказа из успешной сделки.');
+  $q=crm_query('SELECT order_id FROM nd_crm_conversions WHERE deal_id=?',[$id]);$existing=$q->fetchColumn();
+  if(!$existing)$existing=crm_query('SELECT id FROM nd_orders WHERE deal_id=? LIMIT 1',[$id])->fetchColumn();
+  if($existing)return ['ok'=>true,'record'=>crm_record('orders',(int)$existing)];
+  $order=crm_insert('orders',['title'=>$row['title'],'customer_id'=>(int)$row['customer_id'],'total_amount'=>$row['estimated_amount']??'0.00','currency'=>'RUB']);
+  $orderId=(int)$order['record']['id'];crm_query('UPDATE nd_orders SET deal_id=? WHERE id=?',[$id,$orderId]);crm_query('INSERT INTO nd_crm_conversions VALUES (?,?)',[$id,$orderId]);$order['record']['deal_id']=$id;return $order;
+
 }

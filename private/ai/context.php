@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 function ai_catalog():array{
- if((config()['ai_catalog_approved']??false)!==true)crm_fail(503,'Каталог для ИИ ещё не одобрен владельцем.');$catalog=config()['ai_service_catalog']??[];if(!is_array($catalog)||!array_is_list($catalog)||count($catalog)>8||!count($catalog))crm_fail(503,'Каталог услуг не настроен.');$out=[];
+ if((config()['ai_catalog_approved']??false)!==true)crm_fail(503,'Каталог для ИИ ещё не одобрен владельцем.');if((config()['catalog_enabled']??false)===true){require_once dirname(__DIR__).'/catalog/core.php';require_once dirname(__DIR__).'/catalog/read.php';$rows=cat_public_list()['items'];if(!$rows)crm_fail(503,'Нет опубликованных услуг для ИИ.');return array_map(fn($s)=>['id'=>$s['category']==='integration'?'automation':$s['category'],'name'=>$s['name'],'description'=>mb_substr($s['description'],0,1000)],array_slice($rows,0,8));}$catalog=config()['ai_service_catalog']??[];if(!is_array($catalog)||!array_is_list($catalog)||count($catalog)>8||!count($catalog))crm_fail(503,'Каталог услуг не настроен.');$out=[];
  foreach($catalog as $s){if(!is_array($s)||!in_array($s['id']??'',['website','landing','ecommerce','portal','crm','ai_agent','automation','webapp'],true))crm_fail(503,'Проверьте каталог услуг.');$out[]=['id'=>$s['id'],'name'=>cc_text($s,'name',100),'description'=>cc_text($s,'description',1000)];}return $out;
 }
 function ai_context(array $t):array{

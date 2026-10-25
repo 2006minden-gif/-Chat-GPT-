@@ -4,6 +4,7 @@ function prod_gate():void{
  ai_gate();if((config()['client_collaboration_enabled']??false)!==true||(config()['production_enabled']??false)!==true||crm_query("SELECT state FROM nd_schema_migrations WHERE version='011_ai_production'")->fetchColumn()!=='applied')crm_fail(503,'ИИ-производство пока отключено или не установлено.');
 }
 function prod_stage9_evidence(int $order,int $spec,int $quote):array{
+ require_once dirname(__DIR__).'/catalog/bindings.php';$actual=cat_stage9_evidence($order,$spec,$quote);if($actual!==null)return $actual;
  $c=config();$proof=$c['production_test_acceptances'][(string)$order]??null;
  if(($c['production_test_mode']??false)===true&&in_array(parse_url($c['app_url'],PHP_URL_HOST),['127.0.0.1','localhost','::1'],true)&&is_array($proof)&&($proof['spec_revision_id']??null)===$spec&&($proof['quotation_id']??null)===$quote&&in_array($proof['service_type']??'',prod_services(),true))return ['adapter'=>'stage9_mock_only','accepted'=>true,'spec_revision_id'=>$spec,'quotation_id'=>$quote,'service_type'=>$proof['service_type'],'evidence_hash'=>hash('sha256',ai_json($proof))];
  crm_fail(409,'STAGE9_ACCEPTANCE_UNAVAILABLE: нет проверенного источника принятой клиентом оферты.');
