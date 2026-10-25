@@ -6,6 +6,7 @@ function cat_gate(bool $requests=false):void{
  if((config()['catalog_enabled']??false)!==true||!cat_installed())crm_fail(503,'Каталог услуг пока не открыт.');
  if($requests&&((config()['catalog_requests_enabled']??false)!==true||(config()['catalog_privacy_approved']??false)!==true||!privacy_settings()['enabled']))crm_fail(503,'Приём брифов закрыт до настройки и одобрения документов.');
 }
+function cat_requests_open():bool{require_once dirname(__DIR__).'/customer-auth.php';return (config()['catalog_requests_enabled']??false)===true&&(config()['catalog_privacy_approved']??false)===true&&(config()['crm_operations_enabled']??false)===true&&(config()['client_collaboration_enabled']??false)===true&&ca_enabled();}
 function cat_actor(bool $customer,bool $write):array{$a=cc_actor($customer,$write);cat_gate($customer);return $a;}
 function cat_record(string $type,int $id,bool $lock=false):array{
  $table=match($type){'service'=>'nd_catalog_services','template'=>'nd_catalog_templates','request'=>'nd_catalog_requests','offer'=>'nd_catalog_offers',default=>throw new LogicException('unsupported_catalog_entity')};$r=crm_query('SELECT * FROM '.$table.' WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');return $r;

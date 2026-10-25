@@ -5,7 +5,7 @@ require_once __DIR__.'/core.php';require_once __DIR__.'/files.php';require_once 
 function cc_dispatch(bool $customer,string $route,string $method):never{
  try{
   $a=cc_actor($customer,$method!=='GET');
-  require_once dirname(__DIR__).'/catalog/bindings.php';cat_cc_guard($route,$method);
+  require_once dirname(__DIR__).'/catalog/bindings.php';cat_cc_guard($a,$route,$method);
   if(str_starts_with($route,'manual/')){require_once dirname(__DIR__).'/manual/routes.php';mh_dispatch($a,substr($route,7),$method);}
   if($method==='POST'&&$route==='upload'){json_response(cc_upload($a));}
   if($method==='GET'){

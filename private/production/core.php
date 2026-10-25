@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__).'/catalog/bindings.php';
 function prod_gate():void{
  ai_gate();if((config()['client_collaboration_enabled']??false)!==true||(config()['production_enabled']??false)!==true||crm_query("SELECT state FROM nd_schema_migrations WHERE version='011_ai_production'")->fetchColumn()!=='applied')crm_fail(503,'ИИ-производство пока отключено или не установлено.');
 }

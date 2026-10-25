@@ -24,14 +24,15 @@ function crm_record(string $kind,int $id,bool $lock=false):array {
  $r=crm_query('SELECT * FROM '.crm_table($kind).' WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');return $r;
 }
 function crm_version(array $d,array $row):void{if(!isset($d['version'])||!is_int($d['version'])||$d['version']!==(int)$row['version'])crm_fail(409,'Запись изменена. Ваш черновик сохранён. Загрузите актуальные данные перед повторным сохранением.');}
-function crm_event(string $kind,int $id,string $action,array $row=[]):void {
+function crm_event(string $kind,int $id,string $action,array $row=[],?array $actor=null):void {
  $field=['customers'=>'customer_id','deals'=>'deal_id','orders'=>'order_id','projects'=>'project_id','tasks'=>'task_id','employees'=>'employee_id','stages'=>'stage_id'][$kind];
  $context=[];
  foreach(['customer_id','project_id','lead_id'] as $f)if(isset($row[$f])&&$f!==$field)$context[$f]=$row[$f];
  if($kind==='tasks'){$link=crm_query('SELECT project_id FROM nd_task_projects WHERE task_id=?',[$id])->fetch();if($link)$context['project_id']=$link['project_id'];}
  if(isset($context['project_id'])&&!isset($context['customer_id']))$context['customer_id']=crm_record('projects',(int)$context['project_id'])['customer_id'];
- $columns=['actor_admin_id',$field,'action','summary',...array_keys($context)];
- crm_query('INSERT INTO nd_activity_history('.implode(',',$columns).') VALUES ('.implode(',',array_fill(0,count($columns),'?')).')',[1,$id,$action,'Изменение записи CRM',...array_values($context)]);
+ $customerActor=($actor['type']??'owner')==='customer'?(int)$actor['id']:null;
+ $columns=['actor_admin_id','actor_customer_account_id',$field,'action','summary',...array_keys($context)];
+ crm_query('INSERT INTO nd_activity_history('.implode(',',$columns).') VALUES ('.implode(',',array_fill(0,count($columns),'?')).')',[$customerActor===null?1:null,$customerActor,$id,$action,'Изменение записи CRM',...array_values($context)]);
  $event=(string)db()->lastInsertId();
  if($kind==='projects'&&$action==='updated'&&($row['status']??'')==='completed'&&(config()['billing_enabled']??false)===true){require_once dirname(__DIR__).'/billing/hooks.php';bill_hook_event('activity:'.$event,'project_completed','projects',$id,(int)$row['customer_id']);}
  crm_notice('activity:'.$event,$kind,$id,'Обновлена запись: '.crm_labels()[$kind]);
@@ -112,13 +113,13 @@ function crm_idempotent(string $route,array $d,callable $fn):array{
   $result=$fn();crm_query('UPDATE nd_crm_requests SET result=? WHERE request_key=?',[json_encode($result,JSON_THROW_ON_ERROR),$key]);return $result;
  });
 }
-function crm_insert(string $kind,array $data):array{
+function crm_insert(string $kind,array $data,?array $actor=null):array{
  $v=crm_values($kind,$data);$table=crm_table($kind);$cols=array_keys($v);
  crm_query('INSERT INTO '.$table.' ('.implode(',',$cols).') VALUES ('.implode(',',array_fill(0,count($cols),'?')).')',array_values($v));$id=(int)db()->lastInsertId();
  if($kind==='tasks'&&isset($data['stage_id'])&&!isset($data['project_id']))crm_fail(422,'Для этапа выберите проект.');
  if($kind==='tasks'&&isset($data['project_id']))crm_task_link($id,$data);
  if($kind==='stages')crm_query('UPDATE nd_projects SET version=version+1 WHERE id=?',[$v['project_id']]);
- $row=crm_record($kind,$id);crm_event($kind,$id,'created',$row);return ['ok'=>true,'record'=>$row];
+ $row=crm_record($kind,$id);crm_event($kind,$id,'created',$row,$actor);return ['ok'=>true,'record'=>$row];
 }
 function crm_task_link(int $id,array $d):void{
  $project=$d['project_id']??null;$stage=$d['stage_id']??null;

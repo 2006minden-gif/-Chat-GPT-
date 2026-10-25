@@ -16,11 +16,11 @@ function cat_stage9_evidence(int $order,int $spec,int $quote):?array{
  $v=crm_query('SELECT body,checksum FROM nd_catalog_service_versions WHERE id=?',[$o['service_version_id']])->fetch();if(!$v||!hash_equals($v['checksum'],hash('sha256',$v['body'])))crm_fail(409,'Редакция услуги повреждена.');$category=json_decode($v['body'],true)['category'];$map=['website'=>'website','landing'=>'website','webapp'=>'application','ai_agent'=>'agent_spec','crm'=>'application','automation'=>'integration','integration'=>'integration'];if(!isset($map[$category]))crm_fail(409,'Вид услуги не поддерживает производство.');
  return ['adapter'=>'catalog_customer_acceptance','accepted'=>true,'spec_revision_id'=>$spec,'quotation_id'=>$quote,'service_type'=>$map[$category],'evidence_hash'=>hash('sha256',$o['checksum'].$o['accepted_checksum'].$o['brief_hash'].$o['accepted_at'])];
 }
-function cat_cc_guard(string $route,string $method):void{
+function cat_cc_guard(array $a,string $route,string $method):void{
  if($method==='GET'||!cat_binding_installed())return;$doc=null;$rev=null;
  if(preg_match('~^documents/([1-9][0-9]*)/~D',$route,$m))$doc=(int)$m[1];
  elseif(preg_match('~^revisions/([1-9][0-9]*)/~D',$route,$m))$rev=(int)$m[1];
  elseif(preg_match('~^approvals/([1-9][0-9]*)/~D',$route,$m)){$rev=crm_query('SELECT revision_id FROM nd_cc_approvals WHERE id=?',[(int)$m[1]])->fetchColumn();if(!$rev)return;$rev=(int)$rev;}
- if(!$doc&&!$rev)return;$ids=$doc?crm_query('SELECT id FROM nd_cc_revisions WHERE document_id=?',[$doc])->fetchAll(PDO::FETCH_COLUMN):[$rev];
+ if(!$doc&&!$rev)return;if($doc)cc_document($a,$doc);else cc_revision($a,$rev);$ids=$doc?crm_query('SELECT id FROM nd_cc_revisions WHERE document_id=?',[$doc])->fetchAll(PDO::FETCH_COLUMN):[$rev];
  foreach($ids as $id)if(crm_query('SELECT 1 FROM nd_catalog_briefs WHERE spec_revision_id=? UNION ALL SELECT 1 FROM nd_catalog_offers WHERE proposal_revision_id=? LIMIT 1',[$id,$id])->fetchColumn())crm_fail(409,'Документ связан с брифом и ценой. Используйте страницу заявки каталога для согласования или новой редакции.');
 }
