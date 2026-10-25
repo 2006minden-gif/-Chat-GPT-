@@ -51,6 +51,7 @@
 - Approval before/after source change, exact one-time apply in parallel PHP processes, rejection/expiry/artifact edit preserving old revision, late cancellation result discard.
 - Timeout/retry limits, provider configuration/endpoint refusal (no SSRF/live HTTP), budget exhaustion/circuit, interrupted worker recovery, retained audit after cleanup.
 - Actual overdue facts → deduped owner alert, bounded configured/manual rule and idempotent task creation.
+- Отдельный финальный regression: archived project сохраняет доступ к прежнему расчёту, но такой снимок stale для новых действий; 7 pricing tests PASS.
 - Exact pricing figures, explicit zero vs unknown, rate/policy/scope versioning, below-minimum/negative contribution rejection, foreign currency fail-closed, tax/fee/margin rounding, approved-price proposal binding, owner-only actuals/historical suggestion.
 - Owner desktop quote approval/proposal apply/control center; public mobile disclosure/consent/chat/summary handoff; no pageerror/horizontal overflow in tested views.
 - Migration roundtrips preserve old records; partial/unmanaged/checksum/nonempty/newer-dependency guards.

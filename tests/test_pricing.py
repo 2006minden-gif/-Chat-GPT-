@@ -30,6 +30,7 @@ class Pricing(Ai):
   old=self.get(self.owner,f'pricing/quotes/{q["id"]}').json()['record'];self.assertEqual(old['state'],'APPROVED');self.assertEqual(old['calculation']['selling_minor'],28875)
   for actor in [self.customer,self.stranger]:self.assertEqual(self.get(actor,'pricing/quotes').status_code,403);self.assertEqual(self.post(actor,f'pricing/quotes/{q["id"]}/approve',checksum=q['checksum'],confirm=True).status_code,403)
   self.assertEqual(self.post(self.owner,f'pricing/quotes/{q["id"]}/edit',checksum='0'*64,price='300').status_code,409)
+  self.f.sql('UPDATE nd_projects SET archived_at=UTC_TIMESTAMP(),version=version+1 WHERE id=?',params=[self.project_id]);history=self.get(self.owner,f'pricing/quotes/{q["id"]}');self.assertEqual(history.status_code,200,history.text);self.assertFalse(history.json()['record']['fresh']);self.assertEqual(history.json()['record']['calculation'],q['calculation'])
  def test_63_ai_estimates_and_actual_comparison_owner_controlled(self):
   self.approved_price();self.rate('ai_input_1000','1.00');self.rate('ai_output_1000','2.00');self.rate('hosting_month','10.00')
   t=self.run_task(self.create('cost_estimator'));self.assertEqual(t['state'],'COMPLETED');artifact=t['artifacts'][0];self.assertEqual(artifact['effect_entity'],'quotations');q=self.get(self.owner,'pricing/quotes/'+str(artifact['effect_id'])).json()['record'];self.assertEqual(q['state'],'DRAFT');self.assertEqual(self.approve(q).status_code,200)
