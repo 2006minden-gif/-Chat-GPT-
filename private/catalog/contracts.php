@@ -15,7 +15,7 @@ function cat_visible(array $q,array $answers):bool{if($q['when']===null)return t
 function cat_answers(array $template,mixed $answers,bool $complete):array{
  if(!is_array($answers)||array_is_list($answers)&&$answers!==[])crm_fail(422,'Ответы должны быть объектом.');$out=[];$known=[];
  foreach($template['steps'] as $s)foreach($s['questions'] as $q){$id=$q['id'];$known[$id]=true;$value=$answers[$id]??null;if(!cat_visible($q,$out)){if($value!==null&&$value!==''&&$value!==[])crm_fail(422,'Скрытые ответы нужно очистить: '.$q['label']);continue;}
- $empty=$value===null||$value===''||$value===[];if($empty){if($complete&&$q['required'])crm_fail(422,'Заполните: '.$q['label']);continue;}
+ $empty=$value===null||$value===''||$value===[]||is_string($value)&&trim($value)==='';if($empty){if($complete&&$q['required'])crm_fail(422,'Заполните: '.$q['label']);continue;}
  $ok=match($q['type']){'number'=>is_int($value)&&$value>=$q['min']&&$value<=$q['max'],'bool'=>is_bool($value),'choice'=>is_string($value)&&in_array($value,$q['options'],true),'multi'=>is_array($value)&&array_is_list($value)&&count($value)<=20&&count(array_unique($value,SORT_REGULAR))===count($value)&&!array_filter($value,fn($v)=>!is_string($v)||!in_array($v,$q['options'],true)),default=>is_string($value)&&mb_check_encoding($value,'UTF-8')&&!str_contains($value,"\0")&&mb_strlen($value)>=$q['min']&&mb_strlen($value)<=$q['max']};if(!$ok)crm_fail(422,'Проверьте ответ: '.$q['label']);$out[$id]=$value;}
  if(array_diff(array_keys($answers),array_keys($known)))crm_fail(422,'Анкета содержит неизвестные поля.');if(strlen(ai_json($out))>20000)crm_fail(422,'Ответы слишком велики.');return $out;
 }

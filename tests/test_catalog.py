@@ -41,6 +41,7 @@ class Catalog(Pricing):
   s=self.owner_detail('services',self.service_id);self.manage('services',self.service_id,body=self.service(),version=int(s['version']),template_version_id=int(self.template_version));x=self.customer.get(self.base+'/catalog-api.php?r=services/'+str(self.service_id));self.assertEqual(int(x.json()['record']['revision']),1)
   r=self.cp('services/'+str(self.service_id)+'/unpublish',s=self.customer,version=1,confirm=True);self.assertEqual(r.status_code,403,r.text)
  def test_02_conditional_validation_drafts_and_immutable_brief(self):
+  blank=self.request({'goal':'   ','channel':'Нет','review_hours':1});invalid=self.cp(f'requests/{blank["id"]}/submit',s=self.customer,version=int(blank['version']),**self.consent());self.assertEqual(invalid.status_code,422,invalid.text)
   r=self.request({'goal':'Нужен помощник для документов','channel':'Да','review_hours':1});x=self.cp(f'requests/{r["id"]}/submit',s=self.customer,version=int(r['version']),**self.consent());self.assertEqual(x.status_code,422,x.text);self.assertIn('Название системы',x.text)
   x=self.cp(f'requests/{r["id"]}/save',s=self.customer,version=int(r['version']),answers={'goal':'Нужен помощник','channel':'Нет','system':'Скрытый ответ','review_hours':1},file_ids=[],**self.consent());self.assertEqual(x.status_code,422)
   r=self.submitted();b=r['briefs'][0];self.assertIn('Нужна схема',b['structured_json']);self.assertEqual(r['state'],'PRICING');self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_lead_customers WHERE lead_id=?',params=[r['lead_id']])[0]['n'],1)
