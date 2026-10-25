@@ -135,6 +135,7 @@ function ca_dispatch(string $route,string $method):never {
     ca_gate();
     ca_rate('ip',120,$_SERVER['REMOTE_ADDR']??'unknown');
     if(str_starts_with($route,'billing/')){require_once __DIR__.'/billing/routes.php';bill_dispatch(true,substr($route,8),$method);}
+    if(str_starts_with($route,'ai/')){require_once __DIR__.'/ai/routes.php';ai_dispatch(true,substr($route,3),$method);}
     if(str_starts_with($route,'collab/')){require_once __DIR__.'/collab/routes.php';cc_dispatch(true,substr($route,7),$method);}
     if(str_starts_with($route,'portal/')){require_once __DIR__.'/crm/portal.php';crm_portal($route,$method);}
     if(str_starts_with($route,'owner/')) {ca_owner($route,$method);}
