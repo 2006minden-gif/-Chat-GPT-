@@ -1,6 +1,6 @@
 # Stage 6 — отчёт разработки
 
-Дата: 25.10.2026. Ветка: `feature/stage-6-client-collaboration`.
+Дата: 25.10.2026. Ветка: `feature/stage-6-client-collaboration`. Draft PR: [#22](https://github.com/2006minden-gif/-Chat-GPT-/pull/22), base — `feature/stage-5-crm-operations`.
 
 ## Зависимости и границы
 
@@ -11,11 +11,11 @@ Stage 6 разработан поверх Stage 5 `a6a7b8c` (draft PR #21), ко
 ## Реализованные модули
 
 1. **Сообщения.** Persistent project threads, customer/project search, last preview/time, unread by actor, chronological pages, composer и attachments, monotonic read markers, actor-bound idempotent send. Plain text rendering, network/HTML error сохраняет draft, polling только active/latest chat каждые 30 секунд. Реальных fictitious conversations/seed records в приложении нет.
-2. **Файлы.** Multipart upload PDF/JPG/PNG/WebP/DOCX/XLSX; MIME/signature/size/name/OOXML checks, private random storage, restrictive permissions, total/per-file quota и free-space guard. Metadata/file SHA verified before commit; DB failure удаляет только незавершённый собственный upload. Owner visibility/archive, customer-scoped attachment download с nosniff/no-store, неизменяемые физические bytes. Не AV scanner.
+2. **Файлы.** Multipart upload PDF/JPG/PNG/WebP/DOCX/XLSX; MIME/signature/size/name/OOXML checks, private random storage, restrictive permissions, total/per-file quota и free-space guard. Metadata/file SHA verified before commit; DB failure удаляет только незавершённый собственный upload после проверки отсутствия metadata; при неопределённом commit bytes сохраняются. Owner visibility/archive, customer-scoped attachment download с nosniff/no-store, неизменяемые физические bytes. Не AV scanner.
 3. **Документы.** Структурированное ТЗ/описание/план/результат/final/milestone, incomplete drafts, ready/submit, readonly exact revisions, archive прежней версии, owner new revision, history, escaped print-ready HTML. Серверный PDF не симулируется.
 4. **Согласования.** Exact revision+checksum, optimistic version, document mutex + fresh locking reads, immutable decision/account/time/feedback. Explicit confirm, meaningful changes feedback, stale revision 409, replay не создаёт второе решение. Owner withdraw только pending. Ни payment, ни electronic-signature semantics не добавлены.
 5. **Результаты работ.** Deliverable version со stored files и acceptance criteria, submit → feedback → revised version → approval. Прежние bodies/files/decisions сохраняются. Milestone/final requests требуют завершённый соответствующий этап/все этапы и тот же target version при решении; приложение не объявляет проверенными произвольные текстовые критерии автоматически и не меняет owner-only project status за клиента.
-6. **Общий кабинет.** Stage 5 owner project links + «Сообщения»; customer navigation orders/projects/messages/files/docs/reviews/results/profile использует прежнюю идентичность. Dashboard: реальные проекты/unread и выбранный project reviews/files/results, полезные empty states, desktop/mobile local design. No fake KPI/activity.
+6. **Общий кабинет.** Stage 5 owner project links + «Сообщения»; customer navigation orders/projects/messages/files/docs/reviews/results/profile использует прежнюю идентичность. Dashboard: реальные статусы/сроки/прогресс проектов/unread и выбранный project reviews/files/results; ссылки открывают точную существующую карточку проекта, полезные empty states, desktop/mobile local design. No fake KPI/activity.
 
 Activity/owner notifications используют существующие Stage 5 tables, правильные actor IDs, project/customer references и fixed metadata; document/message bodies, feedback contents, passwords, cookies и reset tokens в audit не копируются. Internal CRM notes/employee private information не включены в customer projection.
 

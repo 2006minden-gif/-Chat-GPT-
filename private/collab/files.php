@@ -51,6 +51,13 @@ function cc_validate_file(array $f):array{
  return ['display_name'=>$name,'mime'=>$allowed[$ext],'size_bytes'=>$size,'checksum'=>hash_file('sha256',$f['tmp_name'])];
 }
 function cc_capacity(int $used,int $size,int $quota,int|float|false $free):void{if($used+$size>$quota||$free===false||$free<$size+16777216)crm_fail(507,'Недостаточно места в приватном хранилище.');}
+function cc_cleanup_upload(string $path):string{
+ // A commit error may have an unknown outcome. Never discard bytes on assumption alone.
+ if(is_link($path)||!is_file($path)||!preg_match('/^[a-f0-9]{64}$/D',basename($path)))return 'retained';
+ try{if(dirname($path)!==cc_storage())return 'retained';$exists=crm_query('SELECT 1 FROM nd_cc_files WHERE storage_key=? LIMIT 1',[basename($path)])->fetchColumn();}
+ catch(Throwable $e){return 'retained_unknown';}
+ if($exists)return 'retained';return @unlink($path)?'removed':'retained';
+}
 function cc_upload(array $a):array{
  $project=filter_var($_POST['project_id']??'',FILTER_VALIDATE_INT);if(!$project)crm_fail(422,'Выберите проект.');cc_project($a,$project,true);$meta=cc_validate_file($_FILES['file']??[]);
  $key=$_POST['request_key']??'';$visibility=$a['type']==='customer'?'customer':($_POST['visibility']??'internal');if(!in_array($visibility,['internal','customer'],true))crm_fail(422,'Выберите доступ к файлу.');
@@ -60,11 +67,11 @@ function cc_upload(array $a):array{
    cc_project($a,$project,true,true);$used=0;foreach(new DirectoryIterator($root) as $entry){if($entry->isDot()||$entry->getFilename()==='.quota.lock')continue;if($entry->isLink()||!$entry->isFile())crm_fail(503,'Хранилище требует проверки владельцем.');$used+=$entry->getSize();}
    $quota=min(536870912,max(1,(int)(config()['collaboration_total_max_bytes']??104857600)));$free=disk_free_space($root);
    cc_capacity($used,$meta['size_bytes'],$quota,$free);
-   $storage=bin2hex(random_bytes(32));$stored=$root.'/'.$storage;if(file_exists($stored)||!move_uploaded_file($_FILES['file']['tmp_name'],$stored))crm_fail(503,'Не удалось сохранить файл. Повторите отправку.');
+   $storage=bin2hex(random_bytes(32));$candidate=$root.'/'.$storage;if(file_exists($candidate)||!move_uploaded_file($_FILES['file']['tmp_name'],$candidate))crm_fail(503,'Не удалось сохранить файл. Повторите отправку.');$stored=$candidate;
    if(!chmod($stored,0600)||filesize($stored)!==$meta['size_bytes']||hash_file('sha256',$stored)!==$meta['checksum'])crm_fail(503,'Не удалось подтвердить сохранение файла.');
    crm_query('INSERT INTO nd_cc_files(project_id,storage_key,display_name,mime,size_bytes,checksum,actor_type,actor_id,visibility) VALUES (?,?,?,?,?,?,?,?,?)',[$project,$storage,$meta['display_name'],$meta['mime'],$meta['size_bytes'],$meta['checksum'],$a['type'],$a['id'],$visibility]);$id=(int)db()->lastInsertId();cc_event($a,$project,'file_uploaded');return ['ok'=>true,'id'=>$id,'file'=>cc_public_file(cc_file($a,$id))];
   });
- }catch(Throwable $e){if($stored&&is_file($stored)&&!is_link($stored))unlink($stored);throw $e;}finally{flock($lock,LOCK_UN);fclose($lock);}
+ }catch(Throwable $e){if($stored)cc_cleanup_upload($stored);throw $e;}finally{flock($lock,LOCK_UN);fclose($lock);}
 }
 function cc_file_update(array $a,int $id,array $d):array{
  cc_owner($a);return cc_mutation($a,'file/'.$id,$d,function()use($a,$id,$d){$f=cc_file($a,$id,true);cc_project($a,(int)$f['project_id'],true,true);crm_version($d,$f);

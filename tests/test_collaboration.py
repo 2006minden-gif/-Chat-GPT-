@@ -28,7 +28,7 @@ class Collaboration(unittest.TestCase):
   self.customer_id=self.insert("INSERT INTO nd_customers(name,email) VALUES ('Синтетический клиент','a@example.invalid')",'nd_customers')
   self.project_id=self.insert("INSERT INTO nd_projects(customer_id,title,status) VALUES (?,'Синтетический проект','active')",'nd_projects',[self.customer_id])
   self.customer=self.account(self.customer_id)
-  other=self.insert("INSERT INTO nd_customers(name) VALUES ('Другой клиент')",'nd_customers');self.stranger=self.account(other)
+  other=self.insert("INSERT INTO nd_customers(name) VALUES ('Другой клиент')",'nd_customers');self.other_customer_id=other;self.stranger=self.account(other)
  def insert(self,sql,table,params=None):
   self.f.sql(sql,params=params);return int(self.f.sql('SELECT MAX(id) AS n FROM '+table)[0]['n'])
  def account(self,cid):
@@ -158,6 +158,14 @@ class Collaboration(unittest.TestCase):
    r=self.upload(self.owner);self.assertEqual(r.status_code,503,r.text)
    self.assertEqual(set(root.iterdir()) if root.exists() else set(),before)
   finally:self.f.sql('DROP TRIGGER cc_test_fail')
+  kept=self.upload(self.owner);self.assertEqual(kept.status_code,200,kept.text);storage=self.f.sql('SELECT storage_key FROM nd_cc_files WHERE id=?',params=[kept.json()['id']])[0]['storage_key'];kept_path=root/storage
+  helper='require $v["root"]."/private/app.php";require $v["root"]."/private/collab/core.php";require $v["root"]."/private/collab/files.php";echo cc_cleanup_upload($v["path"]);'
+  self.assertEqual(self.f.php_eval(helper,{'root':str(self.f.path),'path':str(kept_path)}),'retained');self.assertTrue(kept_path.exists())
+  unknown=root/secrets.token_hex(32);unknown.write_bytes(b'uncertain outcome fixture');old_config=dict(self.f.config)
+  try:
+   self.f.config['db_name']=self.f.dbname+'_unavailable';self.f.write_config();self.assertEqual(self.f.php_eval(helper,{'root':str(self.f.path),'path':str(unknown)}),'retained_unknown');self.assertTrue(unknown.exists())
+  finally:self.f.config=old_config;self.f.write_config()
+  self.assertEqual(self.f.php_eval(helper,{'root':str(self.f.path),'path':str(unknown)}),'removed');self.assertFalse(unknown.exists())
   saved=dict(self.f.config);used=sum(p.stat().st_size for p in root.iterdir() if p.name!='.quota.lock')
   try:
    self.f.config['collaboration_total_max_bytes']=used+len(self.pdf())+1;self.f.write_config()
@@ -174,13 +182,36 @@ class Collaboration(unittest.TestCase):
    pg.locator('input[type=file]').set_input_files({'name':'browser.pdf','mimeType':'application/pdf','buffer':self.pdf()});pg.get_by_role('button',name='Загрузить файл',exact=True).click();pg.get_by_text('Сохранён: browser.pdf',exact=True).wait_for();pg.route('**/api.php?r=crm/collab/projects/*/messages',lambda route:route.fulfill(status=200,content_type='text/html',body='<html>Unexpected response</html>') if route.request.method=='POST' else route.continue_());pg.get_by_role('button',name='Отправить',exact=True).click();pg.get_by_text('Сервер прислал неожиданный ответ. Операция не подтверждена.',exact=True).wait_for();self.assertIn('Сообщение из браузера',pg.locator('textarea[name=message]').input_value());pg.unroute('**/api.php?r=crm/collab/projects/*/messages');pg.get_by_role('button',name='Отправить',exact=True).click();pg.locator('.conversation').get_by_text('Сообщение из браузера <script>alert(1)</script>',exact=True).wait_for()
    self.assertEqual(pg.locator('.conversation script').count(),0)
    shots=Path(os.environ.get('NEURO_COLLAB_SCREENSHOTS','/tmp/neuro-stage6-ux'));shots.mkdir(parents=True,exist_ok=True);pg.screenshot(path=str(shots/'owner-messages.png'),full_page=True)
-   pg.locator('#cc-nav a[href="#documents"]').click();pg.get_by_role('button',name='Создать документ',exact=True).click();pg.wait_for_selector('#cc-modal[open]');pg.locator('[name=title]').fill('Браузерное ТЗ');pg.locator('[name=acceptance]').fill('Проверить работоспособность всех согласованных разделов');pg.get_by_role('button',name='Сохранить черновик',exact=True).click();pg.wait_for_selector('#cc-modal[open]',state='hidden')
+   pg.locator('#cc-nav a[href="#documents"]').click();pg.get_by_role('button',name='Создать документ',exact=True).click();pg.wait_for_selector('#cc-modal[open]');pg.locator('[name=title]').fill('Браузерное ТЗ');pg.locator('[name=acceptance]').fill('Проверить работоспособность всех согласованных разделов');pending_save=[];pg.route('**/api.php?r=crm/collab/projects/*/documents',lambda route:pending_save.append(route) if route.request.method=='POST' else route.continue_());pg.get_by_role('button',name='Сохранить черновик',exact=True).click();pg.wait_for_function("() => document.querySelector('#cc-close').disabled");pg.keyboard.press('Escape');self.assertTrue(pg.locator('#cc-modal').is_visible());pg.get_by_text('Дождитесь завершения сохранения. Черновик остаётся в форме.',exact=True).first.wait_for();self.assertTrue(pending_save);pending_save[0].continue_();pg.wait_for_selector('#cc-modal[open]',state='hidden');pg.unroute('**/api.php?r=crm/collab/projects/*/documents')
    pg.get_by_role('button',name='Открыть версию',exact=True).click();pg.get_by_role('button',name='Подготовить к отправке',exact=True).click();pg.get_by_role('button',name='Отправить на согласование',exact=True).click();pg.get_by_role('button',name='Отозвать запрос',exact=True).wait_for();pg.screenshot(path=str(shots/'owner-document.png'),full_page=True)
    customer_context=browser.new_context(viewport={'width':390,'height':844});customer_context.add_cookies([{'name':c.name,'value':c.value,'url':self.base} for c in self.customer.cookies]);client=customer_context.new_page();client.on('pageerror',lambda e:errors.append(str(e)));client.on('dialog',lambda d:d.accept())
    client.goto(self.base+f'/collaboration.php?project={self.project_id}#approvals');client.get_by_role('button',name='Открыть точную версию',exact=True).click();client.get_by_role('button',name='Согласовать',exact=True).wait_for();self.assertTrue(client.locator('#cc-modal').evaluate('e => e.scrollWidth<=e.clientWidth'));client.screenshot(path=str(shots/'customer-review-mobile.png'),full_page=True);client.get_by_role('button',name='Согласовать',exact=True).click();client.get_by_text('Решение клиента',exact=True).wait_for();client.get_by_role('button',name='Закрыть',exact=True).click()
+   client.locator('#open-project').click();client.get_by_role('heading',name='Синтетический проект',exact=True).wait_for();self.assertTrue(client.url.endswith('#projects/'+str(self.project_id)));self.assertEqual(client.locator('.card').count(),1)
    for section in ['overview','messages','files','documents','approvals','deliverables']:
     client.goto(self.base+f'/collaboration.php?project={self.project_id}#'+section);client.wait_for_function("() => document.querySelector('#cc-content').children.length>0");self.assertTrue(client.evaluate('document.documentElement.scrollWidth<=innerWidth'),section)
-   client.screenshot(path=str(shots/'customer-dashboard-mobile.png'),full_page=True);self.assertEqual(errors,[]);browser.close()
+   client.screenshot(path=str(shots/'customer-dashboard-mobile.png'),full_page=True)
+   other=self.insert("INSERT INTO nd_projects(customer_id,title,status) VALUES (?,'Второй проект владельца','active')",'nd_projects',[self.other_customer_id])
+   pg.get_by_role('button',name='Закрыть',exact=True).click();pg.goto(self.base+f'/collaboration.php?mode=owner&project={self.project_id}#documents');pg.reload();pg.get_by_role('button',name='Создать документ',exact=True).wait_for();pending_files=[]
+   pattern='**/api.php?r=crm/collab/projects/'+str(self.project_id)+'/files';pg.route(pattern,lambda route:pending_files.append(route));pg.get_by_role('button',name='Создать документ',exact=True).click()
+   for _ in range(20):
+    if pending_files:break
+    pg.wait_for_timeout(10)
+   self.assertTrue(pending_files);pg.locator('.thread').filter(has_text='Второй проект владельца').click();pg.wait_for_function("() => document.querySelector('#project-title').textContent.startsWith('Второй проект владельца')")
+   with pg.expect_response(lambda r:f'projects/{self.project_id}/files' in r.url) as response:pending_files[0].continue_()
+   response.value.body();pg.wait_for_timeout(50);self.assertFalse(pg.locator('#cc-modal').is_visible());pg.unroute(pattern)
+   pg.get_by_role('button',name='Создать документ',exact=True).click();pg.wait_for_selector('#cc-modal[open]');pg.locator('[name=title]').fill('Документ второго проекта');pg.get_by_role('button',name='Сохранить черновик',exact=True).click();pg.wait_for_selector('#cc-modal[open]',state='hidden')
+   self.assertEqual(int(self.f.sql('SELECT project_id FROM nd_cc_documents WHERE title=?',params=['Документ второго проекта'])[0]['project_id']),other)
+   pg.goto(self.base+f'/collaboration.php?mode=owner&project={self.project_id}#messages');pg.wait_for_selector('textarea[name=message]');pg.locator('textarea[name=message]').fill('Сообщение первого проекта')
+   pending_send=[];send_pattern='**/api.php?r=crm/collab/projects/'+str(self.project_id)+'/messages';pg.route(send_pattern,lambda route:pending_send.append(route) if route.request.method=='POST' else route.continue_());pg.get_by_role('button',name='Отправить',exact=True).click()
+   for _ in range(20):
+    if pending_send:break
+    pg.wait_for_timeout(10)
+   self.assertTrue(pending_send);pg.locator('.thread').filter(has_text='Второй проект владельца').click();pg.wait_for_function("() => document.querySelector('#project-title').textContent.startsWith('Второй проект владельца')");pg.wait_for_selector('textarea[name=message]');pg.locator('textarea[name=message]').fill('Черновик второго проекта')
+   pg.locator('input[type=file]').set_input_files({'name':'second-project.pdf','mimeType':'application/pdf','buffer':self.pdf()});pg.get_by_role('button',name='Загрузить файл',exact=True).click();pg.get_by_text('Сохранён: second-project.pdf',exact=True).wait_for()
+   pending_send[0].continue_();pg.locator('#threads').get_by_text('Сообщение первого проекта',exact=True).wait_for();pg.unroute(send_pattern)
+   self.assertEqual(pg.locator('textarea[name=message]').input_value(),'Черновик второго проекта');pg.get_by_text('1 вложений сохранено.',exact=True).wait_for();pg.get_by_role('button',name='Отправить',exact=True).click();pg.locator('.conversation').get_by_text('Черновик второго проекта',exact=True).wait_for()
+   self.assertEqual(int(self.f.sql('SELECT project_id FROM nd_cc_messages WHERE body=?',params=['Сообщение первого проекта'])[0]['project_id']),self.project_id);self.assertEqual(int(self.f.sql('SELECT project_id FROM nd_cc_messages WHERE body=?',params=['Черновик второго проекта'])[0]['project_id']),other)
+   pg.wait_for_load_state('networkidle');client.wait_for_load_state('networkidle');self.assertEqual(errors,[]);browser.close()
  def test_11_free_space_guard_and_binary_office_members(self):
   images=[('tiny.png','iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aOu0AAAAASUVORK5CYII='),('tiny.webp','UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA')]
   for name,encoded in images:
