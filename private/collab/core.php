@@ -20,10 +20,11 @@ function cc_text(array $d,string $field,int $max,bool $required=true):string{
  $labels=['body'=>'Текст','title'=>'Название','feedback'=>'Комментарий','acceptance'=>'Критерии приёмки'];$v=$d[$field]??'';
  if(!is_string($v)||!mb_check_encoding($v,'UTF-8')||str_contains($v,"\0")||mb_strlen($v)>$max||($required&&trim($v)===''))crm_fail(422,($labels[$field]??'Поле').': проверьте заполнение и длину.');return trim($v);
 }
-function cc_event(array $a,int $project,string $action):void{
+function cc_event(array $a,int $project,string $action,array $context=[]):void{
  $p=cc_project($a,$project);$admin=$a['type']==='owner'?1:null;$customer=$a['type']==='customer'?$a['id']:null;
  crm_query('INSERT INTO nd_activity_history(actor_admin_id,actor_customer_account_id,project_id,customer_id,action,summary) VALUES (?,?,?,?,?,?)',[$admin,$customer,$project,$p['customer_id'],'cc_'.$action,'Событие совместной работы']);
- crm_notice('cc:'.db()->lastInsertId(),'projects',$project,'Новое событие совместной работы');
+ $eventId=(int)db()->lastInsertId();crm_notice('cc:'.$eventId,'projects',$project,'Новое событие совместной работы');
+ if((config()['billing_enabled']??false)===true){require_once dirname(__DIR__).'/billing/hooks.php';bill_collaboration_event($eventId,$project,$action,(int)$p['customer_id'],$context);}
 }
 function cc_mutation(array $a,string $route,array $d,callable $fn):array{
  return crm_idempotent('cc:'.$a['type'].':'.$a['id'].':'.$route,$d,$fn);

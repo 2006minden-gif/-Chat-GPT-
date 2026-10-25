@@ -4,10 +4,11 @@ require_once __DIR__.'/core.php';require_once __DIR__.'/read.php';require_once _
 function crm_dispatch(string $route,string $method):never{
  try{
   if(str_starts_with($route,'collab/')){require_once dirname(__DIR__).'/collab/routes.php';cc_dispatch(false,substr($route,7),$method);}
+  if(str_starts_with($route,'billing/')){require_once dirname(__DIR__).'/billing/routes.php';bill_dispatch(false,substr($route,8),$method);}
   current_session($method!=='GET');crm_gate();
   if($method==='GET'){
    if($route==='dashboard')json_response(crm_dashboard($_GET));
-   if($route==='settings')json_response(['ok'=>true,'owner'=>'Владелец','operations_enabled'=>true,'collaboration_enabled'=>(config()['client_collaboration_enabled']??false)===true,'customer_access_enabled'=>(config()['customer_auth_enabled']??false)===true,'timezone'=>'UTC','registration_managed_separately'=>true,'models'=>crm_models(),'states'=>crm_states()]);
+   if($route==='settings')json_response(['ok'=>true,'owner'=>'Владелец','operations_enabled'=>true,'billing_enabled'=>(config()['billing_enabled']??false)===true,'collaboration_enabled'=>(config()['client_collaboration_enabled']??false)===true,'customer_access_enabled'=>(config()['customer_auth_enabled']??false)===true,'timezone'=>'UTC','registration_managed_separately'=>true,'models'=>crm_models(),'states'=>crm_states()]);
    if(preg_match('~^(customers|deals|orders|projects|stages|tasks|employees|leads|activity|notifications)(?:/([1-9][0-9]*))?$~D',$route,$m))json_response(isset($m[2])?crm_detail($m[1],(int)$m[2]):crm_list($m[1],$_GET));
   }else{
    $d=input();

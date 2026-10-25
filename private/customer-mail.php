@@ -16,6 +16,20 @@ function customer_mail(string $recipient, string $purpose, string $token): bool 
     $subject=['verify'=>'Подтвердите email — НейроДело','invite'=>'Приглашение в НейроДело','reset'=>'Восстановление пароля — НейроДело'][$purpose];
     $body="НейроДело\r\n\r\nОткройте ссылку для продолжения:\r\n".$link."\r\n\r\nЕсли вы не ожидали это письмо, просто проигнорируйте его.\r\n";
     $message='From: '.$from."\r\nTo: ".$recipient."\r\nSubject: =?UTF-8?B?".base64_encode($subject)."?=\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n".chunk_split(base64_encode($body),76,"\r\n");
+    return customer_smtp_send($recipient,$message);
+}
+/** Shared SMTP transport. DATA acceptance is not inbox delivery. */
+function customer_smtp_send(string $recipient,string $message):bool {
+    if (!filter_var($recipient,FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/',$recipient)) return false;
+    $c=config();$m=$c['customer_mail'] ?? [];
+    $test=($m['transport'] ?? '')==='test-smtp';
+    $host=$m['host'] ?? '';$port=(int)($m['port'] ?? 0);$from=$m['from'] ?? '';
+    $loopback=in_array(parse_url($c['app_url'],PHP_URL_HOST),['127.0.0.1','localhost','::1'],true);
+    if ($test && (!(($c['customer_auth_test_mode'] ?? false)===true && $loopback) || !in_array($host,['127.0.0.1','::1'],true))) return false;
+    if ((!$test && ($m['transport'] ?? '')!=='smtp') || !is_string($host) || !preg_match('/^[A-Za-z0-9.:-]+$/D',$host)
+        || $port<1 || $port>65535 || !is_string($from) || !filter_var($from,FILTER_VALIDATE_EMAIL)) return false;
+    $tls=$m['encryption'] ?? 'starttls';
+    if (!$test && !in_array($tls,['starttls','ssl'],true)) return false;
     for ($attempt=0;$attempt<2;$attempt++) {
         $stream=null;
         try {

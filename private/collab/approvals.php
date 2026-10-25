@@ -15,7 +15,7 @@ function cc_submit(array $a,int $id,array $d):array{
  if($doc['kind']==='deliverable'&&!$files)crm_fail(422,'Прикрепите результат работы и явно откройте доступ клиенту.');
  $target=cc_acceptance_target($a,$doc);$due=$d['due_on']??null;if($due!==null){if(!is_string($due))crm_fail(422,'Проверьте срок согласования.');$date=DateTimeImmutable::createFromFormat('!Y-m-d',$due);if(!$date||$date->format('Y-m-d')!==$due)crm_fail(422,'Проверьте срок согласования.');}
  crm_query("UPDATE nd_cc_revisions SET status='sent',sent_at=UTC_TIMESTAMP(),version=version+1 WHERE id=?",[$id]);
- crm_query('INSERT INTO nd_cc_approvals(revision_id,checksum,target_version,due_on) VALUES (?,?,?,?)',[$id,$r['checksum'],$target,$due]);$aid=(int)db()->lastInsertId();cc_event($a,(int)$doc['project_id'],'submitted');return ['ok'=>true,'id'=>$aid,'revision'=>cc_revision($a,$id)];});
+ crm_query('INSERT INTO nd_cc_approvals(revision_id,checksum,target_version,due_on) VALUES (?,?,?,?)',[$id,$r['checksum'],$target,$due]);$aid=(int)db()->lastInsertId();cc_event($a,(int)$doc['project_id'],'submitted',['document_kind'=>$doc['kind']]);return ['ok'=>true,'id'=>$aid,'revision'=>cc_revision($a,$id)];});
 }
 function cc_approval(array $a,int $id,bool $lock=false):array{
  $r=crm_query('SELECT * FROM nd_cc_approvals WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');$rev=cc_revision($a,(int)$r['revision_id'],$lock);$r['revision']=$rev;return $r;
@@ -34,7 +34,7 @@ function cc_decide(array $a,int $id,array $d):array{
   $decision=$d['decision']??'';if(!in_array($decision,['approved','changes_requested'],true)||($d['confirm']??false)!==true)crm_fail(422,'Подтвердите решение по этой версии.');
   $feedback=cc_text($d,'feedback',5000,false);if($decision==='changes_requested'&&(mb_strlen($feedback)<5||!preg_match('/[\p{L}\p{N}]/u',$feedback)))crm_fail(422,'Опишите необходимые изменения: минимум 5 символов.');
   crm_query('INSERT INTO nd_cc_decisions(approval_id,account_id,decision,feedback,checksum) VALUES (?,?,?,?,?)',[$id,$a['id'],$decision,$feedback,$checksum]);
-  crm_query('UPDATE nd_cc_approvals SET status=?,version=version+1 WHERE id=?',[$decision,$id]);crm_query('UPDATE nd_cc_revisions SET status=?,version=version+1 WHERE id=?',[$decision,$r['id']]);cc_event($a,(int)$doc['project_id'],'decision_recorded');return ['ok'=>true,'id'=>$id,'status'=>$decision,'checksum'=>$checksum];
+  crm_query('UPDATE nd_cc_approvals SET status=?,version=version+1 WHERE id=?',[$decision,$id]);crm_query('UPDATE nd_cc_revisions SET status=?,version=version+1 WHERE id=?',[$decision,$r['id']]);cc_event($a,(int)$doc['project_id'],'decision_recorded',['decision'=>$decision]);return ['ok'=>true,'id'=>$id,'status'=>$decision,'checksum'=>$checksum];
  });
 }
 function cc_withdraw(array $a,int $id,array $d):array{

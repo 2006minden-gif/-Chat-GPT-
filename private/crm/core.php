@@ -32,7 +32,9 @@ function crm_event(string $kind,int $id,string $action,array $row=[]):void {
  if(isset($context['project_id'])&&!isset($context['customer_id']))$context['customer_id']=crm_record('projects',(int)$context['project_id'])['customer_id'];
  $columns=['actor_admin_id',$field,'action','summary',...array_keys($context)];
  crm_query('INSERT INTO nd_activity_history('.implode(',',$columns).') VALUES ('.implode(',',array_fill(0,count($columns),'?')).')',[1,$id,$action,'Изменение записи CRM',...array_values($context)]);
- $event=(string)db()->lastInsertId();crm_notice('activity:'.$event,$kind,$id,'Обновлена запись: '.crm_labels()[$kind]);
+ $event=(string)db()->lastInsertId();
+ if($kind==='projects'&&$action==='updated'&&($row['status']??'')==='completed'&&(config()['billing_enabled']??false)===true){require_once dirname(__DIR__).'/billing/hooks.php';bill_hook_event('activity:'.$event,'project_completed','projects',$id,(int)$row['customer_id']);}
+ crm_notice('activity:'.$event,$kind,$id,'Обновлена запись: '.crm_labels()[$kind]);
 }
 function crm_labels():array{return ['customers'=>'Клиенты','deals'=>'Сделки','orders'=>'Заказы','projects'=>'Проекты','tasks'=>'Задачи','employees'=>'Сотрудники','stages'=>'Этапы','leads'=>'Заявки'];}
 function crm_notice(string $key,string $kind,int $id,string $message):void{crm_query('INSERT INTO nd_crm_notifications(event_key,entity,record_id,message) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE event_key=VALUES(event_key)',[$key,$kind,$id,$message]);}

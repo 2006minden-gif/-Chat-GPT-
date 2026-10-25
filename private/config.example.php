@@ -3,6 +3,17 @@
 return [
     // Stage 5 stays disabled until legal approval, migrations and review.
     'crm_operations_enabled' => false,
+    // Stage 7: no live payment adapter; activation requires separate legal/provider review.
+    'billing_enabled' => false,
+    'billing_email_enabled' => false,
+    'billing_owner_email' => '',
+    'billing_merchant' => [
+        'approved' => false, 'legal_name' => '', 'registration' => '', 'address' => '',
+        'tax_treatment' => '', 'payment_instructions' => '', 'retention_policy' => '', 'number_prefix' => 'ND',
+    ],
+    'billing_provider' => [
+        'enabled' => false, 'sandbox_approved' => false, 'name' => 'yookassa', 'mode' => 'sandbox', 'shop_id' => '', 'secret_key' => '',
+    ],
     // Stage 6 is separately gated; content remains outside public_html.
     'client_collaboration_enabled' => false,
     'collaboration_file_max_bytes' => 5242880,
