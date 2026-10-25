@@ -138,3 +138,57 @@ class Collaboration(unittest.TestCase):
   self.f.sql("INSERT INTO nd_project_stages(project_id,position,title,status) VALUES (?,1,'Готовый этап','completed')",params=[self.project_id])
   r=self.post(self.owner,f'revisions/{doc["id"]}/submit',version=int(r.json()['revision']['version']),confirm=True);self.assertEqual(r.status_code,200,r.text);sent=r.json()['revision']
   self.f.sql('UPDATE nd_projects SET version=version+1 WHERE id=?',params=[self.project_id]);self.assertEqual(self.decide(sent).status_code,409)
+ def test_09_storage_cleanup_concurrent_quota_and_bad_metadata(self):
+  from concurrent.futures import ThreadPoolExecutor
+  root=self.f.path/'private/collaboration-files';before=set(root.iterdir()) if root.exists() else set()
+  self.f.sql("CREATE TRIGGER cc_test_fail BEFORE INSERT ON nd_cc_files FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic storage failure'")
+  try:
+   r=self.upload(self.owner);self.assertEqual(r.status_code,503,r.text)
+   self.assertEqual(set(root.iterdir()) if root.exists() else set(),before)
+  finally:self.f.sql('DROP TRIGGER cc_test_fail')
+  saved=dict(self.f.config);used=sum(p.stat().st_size for p in root.iterdir() if p.name!='.quota.lock')
+  try:
+   self.f.config['collaboration_total_max_bytes']=used+len(self.pdf())+1;self.f.write_config()
+   with ThreadPoolExecutor(max_workers=2) as pool:results=list(pool.map(lambda _:self.upload(self.owner),range(2)))
+   self.assertEqual(sorted(r.status_code for r in results),[200,507])
+  finally:self.f.config=saved;self.f.write_config()
+  fid=next(r.json()['id'] for r in results if r.status_code==200);self.f.sql("UPDATE nd_cc_files SET storage_key='../unsafe' WHERE id=?",params=[fid]);r=self.owner.get(self.base+'/collab-download.php?mode=owner&id='+str(fid));self.assertEqual(r.status_code,503);self.assertNotIn(str(self.f.path),r.text)
+ def test_10_browser_chat_upload_documents_approvals_desktop_mobile(self):
+  from playwright.sync_api import sync_playwright
+  with sync_playwright() as p:
+   browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);errors=[]
+   owner_context=browser.new_context(viewport={'width':1440,'height':1000});owner_context.add_cookies([{'name':c.name,'value':c.value,'url':self.base} for c in self.owner.cookies]);pg=owner_context.new_page();pg.on('pageerror',lambda e:errors.append(str(e)));pg.on('dialog',lambda d:d.accept())
+   pg.goto(self.base+f'/collaboration.php?mode=owner&project={self.project_id}#messages');pg.wait_for_selector('textarea[name=message]');pg.locator('textarea[name=message]').fill('Сообщение из браузера <script>alert(1)</script>')
+   pg.locator('input[type=file]').set_input_files({'name':'browser.pdf','mimeType':'application/pdf','buffer':self.pdf()});pg.get_by_role('button',name='Загрузить файл',exact=True).click();pg.get_by_text('Сохранён: browser.pdf',exact=True).wait_for();pg.route('**/api.php?r=crm/collab/projects/*/messages',lambda route:route.fulfill(status=200,content_type='text/html',body='<html>Unexpected response</html>') if route.request.method=='POST' else route.continue_());pg.get_by_role('button',name='Отправить',exact=True).click();pg.get_by_text('Сервер прислал неожиданный ответ. Операция не подтверждена.',exact=True).wait_for();self.assertIn('Сообщение из браузера',pg.locator('textarea[name=message]').input_value());pg.unroute('**/api.php?r=crm/collab/projects/*/messages');pg.get_by_role('button',name='Отправить',exact=True).click();pg.locator('.conversation').get_by_text('Сообщение из браузера <script>alert(1)</script>',exact=True).wait_for()
+   self.assertEqual(pg.locator('.conversation script').count(),0)
+   shots=Path(os.environ.get('NEURO_COLLAB_SCREENSHOTS','/tmp/neuro-stage6-ux'));shots.mkdir(parents=True,exist_ok=True);pg.screenshot(path=str(shots/'owner-messages.png'),full_page=True)
+   pg.locator('#cc-nav a[href="#documents"]').click();pg.get_by_role('button',name='Создать документ',exact=True).click();pg.wait_for_selector('#cc-modal[open]');pg.locator('[name=title]').fill('Браузерное ТЗ');pg.locator('[name=acceptance]').fill('Проверить работоспособность всех согласованных разделов');pg.get_by_role('button',name='Сохранить черновик',exact=True).click();pg.wait_for_selector('#cc-modal[open]',state='hidden')
+   pg.get_by_role('button',name='Открыть версию',exact=True).click();pg.get_by_role('button',name='Подготовить к отправке',exact=True).click();pg.get_by_role('button',name='Отправить на согласование',exact=True).click();pg.get_by_role('button',name='Отозвать запрос',exact=True).wait_for();pg.screenshot(path=str(shots/'owner-document.png'),full_page=True)
+   customer_context=browser.new_context(viewport={'width':390,'height':844});customer_context.add_cookies([{'name':c.name,'value':c.value,'url':self.base} for c in self.customer.cookies]);client=customer_context.new_page();client.on('pageerror',lambda e:errors.append(str(e)));client.on('dialog',lambda d:d.accept())
+   client.goto(self.base+f'/collaboration.php?project={self.project_id}#approvals');client.get_by_role('button',name='Открыть точную версию',exact=True).click();client.get_by_role('button',name='Согласовать',exact=True).wait_for();client.screenshot(path=str(shots/'customer-review-mobile.png'),full_page=True);client.get_by_role('button',name='Согласовать',exact=True).click();client.get_by_text('Решение клиента',exact=True).wait_for();client.get_by_role('button',name='Закрыть',exact=True).click()
+   for section in ['overview','messages','files','documents','approvals','deliverables']:
+    client.goto(self.base+f'/collaboration.php?project={self.project_id}#'+section);client.wait_for_function("() => document.querySelector('#cc-content').children.length>0");self.assertTrue(client.evaluate('document.documentElement.scrollWidth<=innerWidth'),section)
+   client.screenshot(path=str(shots/'customer-dashboard-mobile.png'),full_page=True);self.assertEqual(errors,[]);browser.close()
+ def test_11_free_space_guard_and_binary_office_members(self):
+  for free in [False,0,16777216]:
+   value=self.f.php_eval('require $v["root"]."/private/app.php";require $v["root"]."/private/collab/core.php";require $v["root"]."/private/collab/files.php";try{cc_capacity(0,100,1000,$v["free"]);echo "unexpected";}catch(CrmFailure $e){echo $e->status;}',{'root':str(self.f.path),'free':free});self.assertEqual(value,'507')
+  import io,zipfile
+  buf=io.BytesIO()
+  with zipfile.ZipFile(buf,'w') as z:
+   z.writestr('[Content_Types].xml','<Types><Override ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/></Types>');z.writestr('_rels/.rels','<Relationships/>');z.writestr('xl/workbook.xml','<workbook/>')
+  enabled=self.f.php_eval('echo class_exists("ZipArchive")?"yes":"no";',{})=='yes'
+  r=self.upload(self.owner,'sheet.xlsx',buf.getvalue());self.assertEqual(r.status_code,200 if enabled else 503,r.text)
+  with zipfile.ZipFile(buf,'a') as z:z.writestr('xl/unrelated.sh','echo unwanted')
+  r=self.upload(self.owner,'arbitrary.xlsx',buf.getvalue());self.assertEqual(r.status_code,422 if enabled else 503,r.text)
+ def test_12_readonly_storage_inventory_never_deletes_or_exposes_names(self):
+  r=self.upload(self.owner,name='private-inventory.pdf');self.assertEqual(r.status_code,200,r.text);root=self.f.path/'private/collaboration-files';orphan=root/secrets.token_hex(32);orphan.write_bytes(b'isolated orphan fixture')
+  result=subprocess.run([self.f.php,str(self.f.path/'scripts/check-collab-storage.php')],capture_output=True,text=True);self.assertEqual(result.returncode,1,result.stderr);data=json.loads(result.stdout);self.assertGreaterEqual(data['unreferenced'],1);self.assertTrue(orphan.exists());self.assertNotIn('private-inventory',result.stdout);self.assertNotIn(str(root),result.stdout)
+ def test_13_feature_gates_disabled_accounts_and_message_pagination(self):
+  saved=dict(self.f.config)
+  try:
+   self.f.config['client_collaboration_enabled']=False;self.f.write_config();self.assertEqual(self.get(self.owner,'threads').status_code,503);self.assertEqual(self.get(self.customer,'threads').status_code,503)
+  finally:self.f.config=saved;self.f.write_config()
+  for i in range(35):self.f.sql("INSERT INTO nd_cc_messages(project_id,actor_type,actor_id,body) VALUES (?,'owner',1,?)",params=[self.project_id,'Синтетическое сообщение '+str(i)])
+  page1=self.get(self.customer,f'projects/{self.project_id}/messages').json()['items'];page2=self.get(self.customer,f'projects/{self.project_id}/messages',page=2).json()['items'];self.assertEqual(len(page1),30);self.assertEqual(len(page2),5);self.assertFalse(set(m['id'] for m in page1)&set(m['id'] for m in page2))
+  self.f.sql("UPDATE nd_customer_accounts SET status='disabled' WHERE customer_id=?",params=[self.customer_id]);self.assertEqual(self.get(self.customer,f'projects/{self.project_id}/messages').status_code,401)
+  self.f.sql("UPDATE nd_customers SET status='archived' WHERE id=?",params=[self.customer_id]);self.assertEqual(self.post(self.owner,f'projects/{self.project_id}/messages',body='Запрет').status_code,409)
