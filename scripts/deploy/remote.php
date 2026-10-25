@@ -17,11 +17,127 @@ function save_json(string $path,array $value):void {
     chmod($tmp,0600);insist(rename($tmp,$path),'metadata_rename_failed');
 }
 function paths():array {
-    $public=['.htaccess','api-client.js','api.php','crm.css','crm.html','crm.js','index.html','index.php','privacy.php','script.js','studio.php','styles.css'];
-    return array_merge(array_map(fn($p)=>'public_html/'.$p,$public),['private/.htaccess','private/app.php']);
+    return [
+        'public_html/.htaccess',
+        'public_html/ai-public-api.php',
+        'public_html/ai-widget.js',
+        'public_html/ai.css',
+        'public_html/ai.js',
+        'public_html/ai.php',
+        'public_html/api-client.js',
+        'public_html/api.php',
+        'public_html/billing.css',
+        'public_html/billing.js',
+        'public_html/billing.php',
+        'public_html/catalog-api.php',
+        'public_html/catalog-owner.js',
+        'public_html/catalog-owner.php',
+        'public_html/catalog.css',
+        'public_html/catalog.js',
+        'public_html/catalog.php',
+        'public_html/collab-download.php',
+        'public_html/collab-print.js',
+        'public_html/collab-print.php',
+        'public_html/collaboration.css',
+        'public_html/collaboration.js',
+        'public_html/collaboration.php',
+        'public_html/crm.css',
+        'public_html/crm.html',
+        'public_html/crm.js',
+        'public_html/customer-api.php',
+        'public_html/customer-owner.js',
+        'public_html/customer.css',
+        'public_html/customer.js',
+        'public_html/customer.php',
+        'public_html/handoff.js',
+        'public_html/handoff.php',
+        'public_html/index.html',
+        'public_html/index.php',
+        'public_html/invoice-document.php',
+        'public_html/operations.css',
+        'public_html/operations.js',
+        'public_html/ordering.js',
+        'public_html/ordering.php',
+        'public_html/payment-webhook.php',
+        'public_html/portal.js',
+        'public_html/portal.php',
+        'public_html/pricing.js',
+        'public_html/privacy.php',
+        'public_html/production.css',
+        'public_html/production.js',
+        'public_html/production.php',
+        'public_html/script.js',
+        'public_html/studio.php',
+        'public_html/styles.css',
+        'public_html/workspace.php',
+        'private/.htaccess',
+        'private/ai/approvals.php',
+        'private/ai/context.php',
+        'private/ai/core.php',
+        'private/ai/engine.php',
+        'private/ai/provider.php',
+        'private/ai/public.php',
+        'private/ai/read.php',
+        'private/ai/registry.php',
+        'private/ai/routes.php',
+        'private/ai/rules.php',
+        'private/ai/schema.php',
+        'private/ai/tasks.php',
+        'private/app.php',
+        'private/billing/core.php',
+        'private/billing/hooks.php',
+        'private/billing/invoices.php',
+        'private/billing/notifications.php',
+        'private/billing/payments.php',
+        'private/billing/provider.php',
+        'private/billing/read.php',
+        'private/billing/routes.php',
+        'private/catalog/bindings.php',
+        'private/catalog/contracts.php',
+        'private/catalog/core.php',
+        'private/catalog/manage.php',
+        'private/catalog/offers.php',
+        'private/catalog/read.php',
+        'private/catalog/requests.php',
+        'private/catalog/routes.php',
+        'private/collab/approvals.php',
+        'private/collab/core.php',
+        'private/collab/documents.php',
+        'private/collab/files.php',
+        'private/collab/messages.php',
+        'private/collab/routes.php',
+        'private/crm/core.php',
+        'private/crm/portal.php',
+        'private/crm/read.php',
+        'private/crm/routes.php',
+        'private/crm/write.php',
+        'private/customer-auth.php',
+        'private/customer-mail.php',
+        'private/manual/actions.php',
+        'private/manual/core.php',
+        'private/manual/routes.php',
+        'private/manual/seal.php',
+        'private/pricing/automation.php',
+        'private/pricing/core.php',
+        'private/pricing/engine.php',
+        'private/pricing/routes.php',
+        'private/product-navigation.php',
+        'private/production/artifacts.php',
+        'private/production/contracts.php',
+        'private/production/core.php',
+        'private/production/costs.php',
+        'private/production/engine.php',
+        'private/production/packages.php',
+        'private/production/plans.php',
+        'private/production/qa.php',
+        'private/production/read.php',
+        'private/production/registry.php',
+        'private/production/routes.php',
+        'private/production/seal.php',
+    ];
 }
 function hash_file_safe(string $path):?string {
-    insist(!is_link($path),'symlink_refused');
+    $parent=$path;do {insist(!is_link($parent),'symlink_refused');$next=dirname($parent);if($next===$parent)break;$parent=$next;} while(true);
     if(!file_exists($path))return null;
     insist(is_file($path)&&is_readable($path),'non_regular_file');return hash_file('sha256',$path);
 }
@@ -31,7 +147,7 @@ function protected_files(string $root):array {
 function assert_protected(string $root,array $before):void {insist(protected_files($root)===$before,'protected_file_changed');}
 function preflight(string $root):array {
     insist(PHP_VERSION_ID>=80400,'php_84_required');
-    insist(extension_loaded('pdo_mysql')&&extension_loaded('mbstring')&&function_exists('proc_open'),'php_capability_missing');
+    insist(extension_loaded('pdo_mysql')&&extension_loaded('mbstring')&&extension_loaded('fileinfo')&&extension_loaded('tokenizer')&&extension_loaded('zip')&&function_exists('proc_open'),'php_capability_missing');
     foreach(['public_html','private'] as $name)insist(is_dir($root.'/'.$name)&&!is_link($root.'/'.$name)&&is_writable($root.'/'.$name),'unsafe_application_directory');
     foreach(paths() as $path)hash_file_safe($root.'/'.$path);
     $protected=protected_files($root);insist($protected['private/config.php']!==null,'config_missing');
@@ -39,6 +155,7 @@ function preflight(string $root):array {
     foreach(['db_host','db_name','db_user','db_password','app_url'] as $key)insist(isset($c[$key])&&is_string($c[$key]),'invalid_configuration');
     insist(rtrim($c['app_url'],'/')==='https://neurodelo.pro','unexpected_application_url');
     $pdo=new PDO('mysql:host='.$c['db_host'].';port='.($c['db_port']??3306).';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    insist(str_starts_with((string)$pdo->query('SELECT VERSION()')->fetchColumn(),'5.7.'),'mysql_57_required');
     $pdo->exec('SET SESSION TRANSACTION READ ONLY');
     $pdo->query('SELECT id,password_hash FROM nd_admin LIMIT 0');
     $pdo->query('SELECT id,version,request_key,request_hash,consent,consent_at,policy_version,policy_hash FROM nd_leads LIMIT 0');
@@ -57,8 +174,10 @@ function verify_bundle(string $candidate,string $id):array {
     insist(($m['schema_version']??0)===1&&preg_match('/^[a-f0-9]{40}$/D',$m['revision']??'')===1,'invalid_manifest');
     $actual=array_keys($m['files']??[]);$expected=paths();sort($actual);sort($expected);insist($actual===$expected,'release_allowlist_mismatch');
     insist(($m['keep_backups']??0)>=2&&($m['keep_backups']??0)<=20,'invalid_retention');
+    foreach(array_keys($m['tools']) as $path)insist(!str_starts_with($path,'private/')&&!str_starts_with($path,'public_html/'),'unsafe_tool_path');
     foreach(array_merge($m['files'],$m['tools']) as $path=>$hash) {
-        insist(preg_match('#^(public_html/[A-Za-z0-9_.-]+|private/(app.php|\.htaccess)|remote.php|scripts/migrate.php|database/schema\.sql|database/migrations/[0-9]{3}_[a-z_]+\.sql|database/migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
+        insist(!in_array('..',explode('/',$path),true)&&!in_array('.',explode('/',$path),true)&&!str_contains($path,'//'),'unsafe_release_path');
+        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^remote\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
     $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
@@ -67,7 +186,8 @@ function verify_bundle(string $candidate,string $id):array {
     return $m;
 }
 function atomic_copy(string $source,string $destination,string $id,int $mode=0644):void {
-    insist(!is_link($destination),'symlink_refused');
+    hash_file_safe($destination);
+    if(!is_dir(dirname($destination)))insist(mkdir(dirname($destination),str_contains($destination,'/public_html/')?0755:0700,true),'destination_directory_failed');
     $tmp=dirname($destination).'/.nd-'.$id.'-'.basename($destination).'.tmp';
     insist(!file_exists($tmp)&&!is_link($tmp),'temporary_file_collision');
     try {insist(copy($source,$tmp),'file_copy_failed');chmod($tmp,$mode);insist(hash_file('sha256',$source)===hash_file('sha256',$tmp),'copy_checksum_mismatch');insist(rename($tmp,$destination),'file_rename_failed');}
@@ -155,7 +275,7 @@ function rollback(string $root,string $stateRoot,array &$state,string $id):array
     insist(preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$id)===1,'invalid_release_id');
     $protectedNow=protected_files($root);
     $backup=$stateRoot.'/backups/'.$id;$meta=read_json($backup.'/backup.json');
-    insist(array_keys($meta['files'])===paths(),'backup_allowlist_mismatch');
+    insist(!empty($meta['files'])&&!array_diff(array_keys($meta['files']),paths()),'backup_allowlist_mismatch');
     // Validate the entire rollback before touching any destination.
     foreach($meta['files'] as $path=>$entry) {
         $current=hash_file_safe($root.'/'.$path);
