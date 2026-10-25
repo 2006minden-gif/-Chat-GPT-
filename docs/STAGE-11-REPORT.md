@@ -67,3 +67,7 @@ Stage1–6 реализованы в исходниках и доступны в
 - [Owner checklist](STAGE-11-OWNER-CHECKLIST-RU.md)
 
 После review требуется отдельное решение по scope Stage9, privacy/retention, external services и approved package/migration/release. Разработка не даёт автоматического разрешения main merge/deployment.
+
+## GitHub review
+
+Ветка загружена в origin. Создание draft PR через доступный GitHub API вернуло `Forbidden`; git read/push работают, но права/защита/автоматизация для обхода ограничения не менялись. Владелец может открыть [сравнение Stage10 → Stage11](https://github.com/2006minden-gif/-Chat-GPT-/compare/feature/stage-10-ai-production...integrate/stage-11-system?expand=1) и выбрать **Create draft pull request**, сохранив base `feature/stage-10-ai-production`. Это единственное необходимое ручное действие для открытия review. Никакой merge или release этим не разрешается. Hosted CI относится к push ветки, не к PR/main или production acceptance.
