@@ -44,3 +44,9 @@ Stage 3–8 цепочка ещё требует отдельной интегр
 2. Реальный проверенный Stage 9 adapter для точной принятой котировки/brief/spec, sandbox и подтверждённый execution/provider/worker либо продолжение честного draft-only режима.
 3. Отдельное одобрение package allowlist, SQL 011 и выпуска после backup/проверок; в этом задании не выполнялось.
 4. Утверждение политики хранения, применимых ставок, privacy/legal документов. Цены, план и конечная доставка требуют отдельных аутентифицированных решений владельца.
+
+## GitHub и review
+
+Исходники и тесты опубликованы отдельной веткой `feature/stage-10-ai-production`; main не менялся. Создание draft PR через GitHub API вернуло `Forbidden`. Это ограничение доступного API, а не отсутствие git push: ветка успешно загружена. Не изменялись права, branch protection или CI/CD для обхода ограничения.
+
+Владельцу требуется одно действие: открыть [сравнение Stage 8 → Stage 10](https://github.com/2006minden-gif/-Chat-GPT-/compare/feature/stage-8-ai-automation...feature/stage-10-ai-production?expand=1) и выбрать **Create draft pull request**. Base должна оставаться `feature/stage-8-ai-automation`, пока цепочка предыдущих этапов не интегрирована. Merge и production release не выполнялись. Hosted CI относится к push ветки; это не проверка deployment Stage 10 и не подтверждение live-интеграций.
