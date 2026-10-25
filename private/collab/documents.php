@@ -29,11 +29,14 @@ function cc_save_revision(array $a,array $doc,array $d,?array $old=null):array{
  foreach($files as $f)crm_query('INSERT INTO nd_cc_revision_files VALUES (?,?)',[$id,$f['id']]);cc_event($a,(int)$doc['project_id'],$old?'draft_saved':'revision_created');return ['ok'=>true,'id'=>$id,'revision'=>cc_revision($a,$id)];
 }
 function cc_create_document(array $a,int $project,array $d):array{
- cc_owner($a);return cc_mutation($a,'document-create/'.$project,$d,function()use($a,$project,$d){cc_project($a,$project,true,true);$kind=$d['kind']??'';
+ cc_owner($a);return cc_mutation($a,'document-create/'.$project,$d,fn()=>cc_create_document_effect($a,$project,$d));
+}
+/** Validated effect shared with the transactional AI approval gateway. */
+function cc_create_document_effect(array $a,int $project,array $d):array{cc_owner($a);cc_project($a,$project,true,true);$kind=$d['kind']??'';
  if(!in_array($kind,['specification','description','plan','deliverable','final','milestone'],true))crm_fail(422,'Выберите тип документа.');$title=cc_text($d,'title',190);$stage=$d['stage_id']??null;
  if($stage!==null){cc_id($stage);if(!crm_query('SELECT id FROM nd_project_stages WHERE id=? AND project_id=?',[$stage,$project])->fetchColumn())crm_fail(422,'Этап не принадлежит проекту.');}
  if($kind==='milestone'&&$stage===null)crm_fail(422,'Для согласования этапа выберите этап.');
- crm_query('INSERT INTO nd_cc_documents(project_id,stage_id,kind,title) VALUES (?,?,?,?)',[$project,$stage,$kind,$title]);$id=(int)db()->lastInsertId();$doc=cc_document($a,$id);$fields=$d['fields']??[];if(!is_array($fields))crm_fail(422,'Проверьте разделы.');$fields['title']=$fields['title']??$title;$d['fields']=$fields;return cc_save_revision($a,$doc,$d);});
+ crm_query('INSERT INTO nd_cc_documents(project_id,stage_id,kind,title) VALUES (?,?,?,?)',[$project,$stage,$kind,$title]);$id=(int)db()->lastInsertId();$doc=cc_document($a,$id);$fields=$d['fields']??[];if(!is_array($fields))crm_fail(422,'Проверьте разделы.');$fields['title']=$fields['title']??$title;$d['fields']=$fields;return cc_save_revision($a,$doc,$d);
 }
 function cc_new_revision(array $a,int $id,array $d):array{
  cc_owner($a);return cc_mutation($a,'revision-create/'.$id,$d,function()use($a,$id,$d){$doc=cc_document($a,$id,true);cc_project($a,(int)$doc['project_id'],true,true);crm_version($d,$doc);if($doc['archived_at']!==null)crm_fail(409,'Сначала восстановите документ.');

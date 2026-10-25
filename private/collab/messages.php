@@ -17,8 +17,11 @@ function cc_messages(array $a,int $project):array{
  return ['ok'=>true,'items'=>array_reverse($rows),'page'=>cc_page(),'page_size'=>30];
 }
 function cc_send(array $a,int $project,array $d):array{
- return cc_mutation($a,'messages/'.$project,$d,function()use($a,$project,$d){cc_project($a,$project,true,true);$text=cc_text($d,'body',5000);$ids=$d['file_ids']??[];if(!is_array($ids))crm_fail(422,'Проверьте вложения.');$files=cc_files_for($a,$project,$ids,true);
- crm_query('INSERT INTO nd_cc_messages(project_id,actor_type,actor_id,body) VALUES (?,?,?,?)',[$project,$a['type'],$a['id'],$text]);$id=(int)db()->lastInsertId();foreach($files as $f)crm_query('INSERT INTO nd_cc_message_files VALUES (?,?)',[$id,$f['id']]);cc_event($a,$project,'message_sent');return ['ok'=>true,'id'=>$id];});
+ return cc_mutation($a,'messages/'.$project,$d,fn()=>cc_send_effect($a,$project,$d));
+}
+/** Validated effect shared with the transactional AI approval gateway. */
+function cc_send_effect(array $a,int $project,array $d):array{cc_project($a,$project,true,true);$text=cc_text($d,'body',5000);$ids=$d['file_ids']??[];if(!is_array($ids))crm_fail(422,'Проверьте вложения.');$files=cc_files_for($a,$project,$ids,true);
+ crm_query('INSERT INTO nd_cc_messages(project_id,actor_type,actor_id,body) VALUES (?,?,?,?)',[$project,$a['type'],$a['id'],$text]);$id=(int)db()->lastInsertId();foreach($files as $f)crm_query('INSERT INTO nd_cc_message_files VALUES (?,?)',[$id,$f['id']]);cc_event($a,$project,'message_sent');return ['ok'=>true,'id'=>$id];
 }
 function cc_read(array $a,int $project,array $d):array{
  return crm_atomic(function()use($a,$project,$d){cc_project($a,$project);$last=cc_id($d['last_message_id']??null);if(!crm_query('SELECT id FROM nd_cc_messages WHERE project_id=? AND id=?',[$project,$last])->fetchColumn())crm_fail(404,'Запись не найдена.');
