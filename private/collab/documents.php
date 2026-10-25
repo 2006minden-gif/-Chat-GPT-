@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__).'/catalog/bindings.php';
 function cc_document(array $a,int $id,bool $lock=false):array{
  $d=crm_query('SELECT * FROM nd_cc_documents WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$d)crm_fail(404,'Запись не найдена.');cc_project($a,(int)$d['project_id']);
  if($a['type']==='customer'&&!crm_query("SELECT id FROM nd_cc_revisions WHERE document_id=? AND status IN ('sent','approved','changes_requested','finalized') LIMIT 1",[$id])->fetchColumn())crm_fail(404,'Запись не найдена.');return $d;
@@ -7,7 +8,7 @@ function cc_document(array $a,int $id,bool $lock=false):array{
 function cc_revision(array $a,int $id,bool $lock=false):array{
  $r=crm_query('SELECT * FROM nd_cc_revisions WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');$doc=cc_document($a,(int)$r['document_id']);
  if($a['type']==='customer'&&in_array($r['status'],['draft','ready'],true))crm_fail(404,'Запись не найдена.');
- $r['fields']=json_decode($r['body'],true,512,JSON_THROW_ON_ERROR);unset($r['body']);$r['document']=$doc;
+ $r['fields']=json_decode($r['body'],true,512,JSON_THROW_ON_ERROR);unset($r['body']);$r['document']=$doc;$r['catalog_request_id']=cat_revision_request($id);
  $files=crm_query('SELECT f.* FROM nd_cc_files f JOIN nd_cc_revision_files rf ON rf.file_id=f.id WHERE rf.revision_id=?'.($a['type']==='customer'?" AND f.visibility='customer' AND f.archived_at IS NULL":'').' ORDER BY f.id',[$id])->fetchAll();$r['files']=array_map('cc_public_file',$files);
  $r['approval']=crm_query('SELECT id,status,version,checksum,due_on,created_at FROM nd_cc_approvals WHERE revision_id=?',[$id])->fetch()?:null;
  if($r['approval'])$r['decision']=crm_query('SELECT decision,feedback,checksum,created_at FROM nd_cc_decisions WHERE approval_id=?',[$r['approval']['id']])->fetch()?:null;
@@ -59,7 +60,8 @@ function cc_ready_effect(array $a,int $id,array $d):array{cc_owner($a);$r=cc_rev
 }
 function cc_document_lists(array $a,int $project):array{
  cc_project($a,$project);$where=$a['type']==='customer'?" AND r.status IN ('sent','approved','changes_requested','finalized')":'';
- $rows=crm_query('SELECT d.id,d.kind,d.title,d.project_id,d.archived_at,d.head_revision,d.version,r.id AS revision_id,r.revision_number,r.status,r.sent_at,r.archived_at AS revision_archived_at FROM nd_cc_documents d JOIN nd_cc_revisions r ON r.document_id=d.id WHERE d.project_id=?'.$where.' ORDER BY d.id DESC,r.revision_number DESC LIMIT 25 OFFSET '.((cc_page()-1)*25),[$project])->fetchAll();
+ $binding=cat_binding_installed()?'COALESCE((SELECT b.request_id FROM nd_catalog_briefs b WHERE b.spec_revision_id=r.id LIMIT 1),(SELECT o.request_id FROM nd_catalog_offers o WHERE o.proposal_revision_id=r.id LIMIT 1))':'NULL';
+ $rows=crm_query('SELECT '.$binding.' AS catalog_request_id,d.id,d.kind,d.title,d.project_id,d.archived_at,d.head_revision,d.version,r.id AS revision_id,r.revision_number,r.status,r.sent_at,r.archived_at AS revision_archived_at FROM nd_cc_documents d JOIN nd_cc_revisions r ON r.document_id=d.id WHERE d.project_id=?'.$where.' ORDER BY d.id DESC,r.revision_number DESC LIMIT 25 OFFSET '.((cc_page()-1)*25),[$project])->fetchAll();
  return ['ok'=>true,'items'=>$rows,'page'=>cc_page(),'page_size'=>25];
 }
 function cc_archive_document(array $a,int $id,array $d):array{

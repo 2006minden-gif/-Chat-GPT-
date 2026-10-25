@@ -19,7 +19,7 @@ function pricing_rate(string $category):?array{
  $r=crm_query("SELECT * FROM nd_cost_rates WHERE category=? AND valid_from<=UTC_DATE() AND valid_until>=UTC_DATE() ORDER BY revision_number DESC LIMIT 1".(db()->inTransaction()?' FOR UPDATE':''),[$category])->fetch();return $r?:null;
 }
 function pricing_estimate(int $project,array $packages,?int $artifact,string $provenance):array{
- pricing_gate();$packages=pricing_packages($packages);if($provenance==='ai')foreach($packages as &$package)$package['uncertain']=true;unset($package);$scope=pricing_scope($project,true);$n=(int)crm_query('SELECT COALESCE(MAX(revision_number),0) FROM nd_project_estimates WHERE project_id=?',[$project])->fetchColumn()+1;
+ pricing_gate();$packages=pricing_packages($packages);if($provenance==='ai'){foreach($packages as &$package)$package['uncertain']=true;unset($package);require_once dirname(__DIR__).'/catalog/bindings.php';$packages=pricing_packages([...$packages,...cat_owner_labor_packages($project)]);}$scope=pricing_scope($project,true);$n=(int)crm_query('SELECT COALESCE(MAX(revision_number),0) FROM nd_project_estimates WHERE project_id=?',[$project])->fetchColumn()+1;
  crm_query('INSERT INTO nd_project_estimates(project_id,revision_number,artifact_id,packages_json,scope_json,scope_hash,provenance) VALUES (?,?,?,?,?,?,?)',[$project,$n,$artifact,ai_json($packages),ai_json($scope),hash('sha256',ai_json($scope)),$provenance]);return crm_query('SELECT * FROM nd_project_estimates WHERE id=?',[(int)db()->lastInsertId()])->fetch();
 }
 function pricing_ceil(int $n,int $d):int{if($n<0||$d<1||$n>PHP_INT_MAX-$d)crm_fail(422,'Расчёт выходит за допустимые границы.');return intdiv($n+$d-1,$d);}
