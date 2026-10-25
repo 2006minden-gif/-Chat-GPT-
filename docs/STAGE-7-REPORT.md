@@ -51,4 +51,6 @@ Deployment: **не выполнялся**. GitHub Actions, release implementatio
 
 ## GitHub review
 
-Ветка готова для draft PR с base `feature/stage-6-client-collaboration`, не main. Создание PR и hosted CI проверяются отдельно после push; local PASS не выдаётся за remote CI.
+Ветка опубликована. Draft PR не создан автоматически: обе доступные попытки GitHub API (GraphQL read и REST POST pulls) вернули `Forbidden`. Секреты и права не менялись; Git push работает. Один необходимый owner action — открыть [сравнение Stage 6 → Stage 7](https://github.com/2006minden-gif/-Chat-GPT-/compare/feature/stage-6-client-collaboration...feature/stage-7-billing-notifications?expand=1) и выбрать **Create draft pull request**. Base должна быть `feature/stage-6-client-collaboration`, compare — `feature/stage-7-billing-notifications`. Не merge/deploy.
+
+Hosted push CI проверяется для финального SHA отдельно; local PASS не выдаётся за remote CI. Для feature base существующий workflow не запускает pull_request CI (filter main); workflow этой задачей не менялся.
