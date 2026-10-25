@@ -5,6 +5,7 @@ require_once __DIR__.'/core.php';require_once __DIR__.'/files.php';require_once 
 function cc_dispatch(bool $customer,string $route,string $method):never{
  try{
   $a=cc_actor($customer,$method!=='GET');
+  if(str_starts_with($route,'manual/')){require_once dirname(__DIR__).'/manual/routes.php';mh_dispatch($a,substr($route,7),$method);}
   if($method==='POST'&&$route==='upload'){json_response(cc_upload($a));}
   if($method==='GET'){
    if(preg_match('~^projects/([1-9][0-9]*)/(documents|approvals)$~D',$route,$m))json_response($m[2]==='documents'?cc_document_lists($a,(int)$m[1]):cc_approvals_list($a,(int)$m[1]));
