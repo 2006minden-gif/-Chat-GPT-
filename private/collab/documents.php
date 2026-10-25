@@ -22,7 +22,7 @@ function cc_snapshot_checksum(array $doc,array $fields,array $files):string{
  return hash('sha256',json_encode(['project_id'=>(int)$doc['project_id'],'kind'=>$doc['kind'],'stage_id'=>$doc['stage_id']===null?null:(int)$doc['stage_id'],'fields'=>$fields,'files'=>array_map(fn($f)=>['id'=>(int)$f['id'],'checksum'=>$f['checksum']],$files)],JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR));
 }
 function cc_save_revision(array $a,array $doc,array $d,?array $old=null):array{
- $fields=cc_fields($d);$ids=$d['file_ids']??[];if(!is_array($ids))crm_fail(422,'Проверьте вложения.');$files=cc_files_for($a,(int)$doc['project_id'],$ids);usort($files,fn($x,$y)=>$x['id']<=>$y['id']);
+ $fields=cc_fields($d);$project=cc_project($a,(int)$doc['project_id']);$fields['project_title']=$project['title'];$fields['customer_name']=crm_record('customers',(int)$project['customer_id'])['name'];$ids=$d['file_ids']??[];if(!is_array($ids))crm_fail(422,'Проверьте вложения.');$files=cc_files_for($a,(int)$doc['project_id'],$ids);usort($files,fn($x,$y)=>$x['id']<=>$y['id']);
  $hash=cc_snapshot_checksum($doc,$fields,$files);$body=json_encode($fields,JSON_UNESCAPED_UNICODE|JSON_THROW_ON_ERROR);
  if($old){if($old['status']!=='draft')crm_fail(409,'Отправленная версия неизменяема. Создайте новую редакцию.');crm_version($d,$old);crm_query('UPDATE nd_cc_revisions SET body=?,checksum=?,version=version+1 WHERE id=?',[$body,$hash,$old['id']]);$id=(int)$old['id'];crm_query('DELETE FROM nd_cc_revision_files WHERE revision_id=?',[$id]);}
  else{crm_query('INSERT INTO nd_cc_revisions(document_id,revision_number,body,checksum) VALUES (?,?,?,?)',[$doc['id'],$doc['head_revision'],$body,$hash]);$id=(int)db()->lastInsertId();}

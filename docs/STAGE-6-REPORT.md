@@ -43,7 +43,7 @@ Activity/owner notifications используют существующие Stage
 - Visibility change → permitted exact byte download; чужие/hidden/unknown file IDs имеют одинаковый 404 body. Missing bytes/invalid storage key дают safe 503 без path.
 - Interrupted multipart HTTP body не создаёт metadata. Quota concurrent requests дают один persisted upload и 507 для превышения. Synthetic DB trigger failure не оставляет dangling row/blob. Low physical free-space branch проверена synthetic capacity values, реальный диск не заполнялся.
 - Readonly orphan inventory сохраняет unreferenced fixture и не выводит filenames/paths/keys.
-- ТЗ v1 → changes requested → v2 → approval → finalize/print; sent/approved body update rejected, old bytes/body/checksum сохранены; outdated first decision rejected, same idempotent decision ровно одна запись.
+- ТЗ v1 → changes requested → v2 → approval → finalize/print; sent/approved body update rejected, old bytes/body/checksum сохранены; header names в print остаются прежними после переименования клиента/проекта в CRM; outdated first decision rejected, same idempotent decision ровно одна запись.
 - Deliverable v1/files → feedback → v2/files → approval; cross-customer messages/files/documents/reviews/print isolation; customer не создаёт owner documents; disabled account и separate feature gate закрывают доступ.
 - Required milestone/final state и stale target version; old customer/admin/lead/auth/CRM regression suite.
 - Migration up/up/down/up preserves old rows; nonempty rollback, checksum mismatch, unmanaged collision, older-stage rollback refusal и partial journal empty recovery.
