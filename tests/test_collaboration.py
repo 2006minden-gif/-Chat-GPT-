@@ -120,6 +120,7 @@ class Collaboration(unittest.TestCase):
   self.assertEqual(self.f.sql('SELECT body,checksum FROM nd_cc_revisions WHERE id=?',params=[v1['id']])[0],original)
   self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_cc_decisions WHERE approval_id=?',params=[v2['approval']['id']])[0]['n'],1)
   current=self.get(self.owner,'revisions/'+str(v2['id'])).json()['revision'];r=self.post(self.owner,f'revisions/{v2["id"]}/finalize',version=int(current['version']));self.assertEqual(r.status_code,200,r.text)
+  old=self.get(self.owner,'revisions/'+str(v1['id'])).json()['revision'];archived=self.post(self.owner,f'revisions/{v1["id"]}/archive',version=int(old['version']));self.assertEqual(archived.status_code,200,archived.text);self.assertIsNotNone(self.get(self.customer,'revisions/'+str(v1['id'])).json()['revision']['archived_at']);self.assertEqual(self.f.sql('SELECT body,checksum FROM nd_cc_revisions WHERE id=?',params=[v1['id']])[0],original)
   url=self.base+'/collab-print.php?mode=customer&id='+str(v2['id']);page=self.customer.get(url);self.assertEqual(page.status_code,200,page.text);self.assertIn('text/html',page.headers['Content-Type']);self.assertIn(v2['checksum'],page.text);self.assertEqual(self.stranger.get(url).status_code,404)
   history=self.f.sql("SELECT actor_admin_id,actor_customer_account_id FROM nd_activity_history WHERE project_id=? AND action='cc_decision_recorded'",params=[self.project_id]);self.assertTrue(history);self.assertIsNone(history[0]['actor_admin_id']);self.assertIsNotNone(history[0]['actor_customer_account_id'])
  def test_06_outdated_pending_review_and_concurrency(self):
@@ -203,5 +204,7 @@ class Collaboration(unittest.TestCase):
   finally:self.f.config=saved;self.f.write_config()
   for i in range(35):self.f.sql("INSERT INTO nd_cc_messages(project_id,actor_type,actor_id,body) VALUES (?,'owner',1,?)",params=[self.project_id,'Синтетическое сообщение '+str(i)])
   page1=self.get(self.customer,f'projects/{self.project_id}/messages').json()['items'];page2=self.get(self.customer,f'projects/{self.project_id}/messages',page=2).json()['items'];self.assertEqual(len(page1),30);self.assertEqual(len(page2),5);self.assertFalse(set(m['id'] for m in page1)&set(m['id'] for m in page2))
-  self.f.sql("UPDATE nd_customer_accounts SET status='disabled' WHERE customer_id=?",params=[self.customer_id]);self.assertEqual(self.get(self.customer,f'projects/{self.project_id}/messages').status_code,401)
+  gone=self.insert("INSERT INTO nd_projects(customer_id,title) VALUES (?,'Удалённый тестовый проект')",'nd_projects',[self.customer_id]);self.f.sql('DELETE FROM nd_projects WHERE id=?',params=[gone]);self.assertEqual(self.upload(self.owner,project_id=str(gone)).status_code,404)
+  shared=self.upload(self.owner,visibility='customer');self.assertEqual(shared.status_code,200,shared.text)
+  self.f.sql("UPDATE nd_customer_accounts SET status='disabled' WHERE customer_id=?",params=[self.customer_id]);self.assertEqual(self.get(self.customer,f'projects/{self.project_id}/messages').status_code,401);self.assertEqual(self.customer.get(self.base+'/collab-download.php?mode=customer&id='+str(shared.json()['id'])).status_code,401)
   self.f.sql("UPDATE nd_customers SET status='archived' WHERE id=?",params=[self.customer_id]);self.assertEqual(self.post(self.owner,f'projects/{self.project_id}/messages',body='Запрет').status_code,409)
