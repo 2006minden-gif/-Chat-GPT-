@@ -1,0 +1,38 @@
+{
+  "result": "deployed_and_verified",
+  "revision": "30efb5f4285433c73be36325009f3e716f465883",
+  "run_id": 40198377556,
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40198377556",
+  "release_id": "20261025T133814Z-r40198377556-a1-30efb5f42854",
+  "public_verification": {
+    "status": 200,
+    "marker_present": true,
+    "visible_text_present": true,
+    "sha256": "e1a206f5217a7bd2dd1c1796b16ad86571b4829921996c56e15a52e3c03d8222",
+    "checked_at": "2026-10-25T13:40:41.158752+00:00"
+  },
+  "files_sha256": {
+    "public_html/.htaccess": "3e48dc025ede63d770cb808c1adbff41c62572f2143692b17091c7c39318dc63",
+    "public_html/api-client.js": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20",
+    "public_html/api.php": "087929c654366f659fe06e9a74a03a9f6933fb9ed37367a6deda7fc38e93af80",
+    "public_html/crm.css": "38efbd6b31aecbb2eb35bf6d4520e63595fe21614cedf743a2a9faec6d45ac19",
+    "public_html/crm.html": "b0beb97d391fcb1b7c1caed70f9c0809f8ae9e9f5967e50488cf177c0061ff31",
+    "public_html/crm.js": "acd59a3f180a71d0395970d36ec7f78fa70c132c8d45b0864f8cec73fa998d70",
+    "public_html/index.html": "e1a206f5217a7bd2dd1c1796b16ad86571b4829921996c56e15a52e3c03d8222",
+    "public_html/index.php": "e9ad59ce28e4abf3d3b6f4072f1f88cb6b8ec75a653d3fea33d22b9170c514f8",
+    "public_html/privacy.php": "dbcdac926a84c804f6beb37e26104a92499af93035b6a280b6b776381b4cdbaa",
+    "public_html/script.js": "998857de317736617a74cd521a3fa981995226a1bbd56e842a0de3f9ce52ef3a",
+    "public_html/studio.php": "18491b2b3dab70a24592998422d3ed93f5601fbc8f3133428fb6dc8a72eeedfc",
+    "public_html/styles.css": "8e4d5ec35a9db020f0c974f2747f10a5cc7d5654b93dc27e5615aa25ec345675",
+    "private/.htaccess": "fa28d421a28ed9b6f4b997d5119c2b8adbacff6e2dd119a179b71230f9664934",
+    "private/app.php": "4d9e143544dd0f562868748d5ec34e64913583106e5c0a0810951cb930b909dc"
+  },
+  "before_checks_passed": 17,
+  "after_checks_passed": 17,
+  "backup_verified": true,
+  "recovery_verified": true,
+  "migrations": [],
+  "rollback_performed": false,
+  "privacy_approved": false,
+  "admin_exists": false
+}
