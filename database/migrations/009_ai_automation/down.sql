@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS nd_ai_provider_state;
+DROP TABLE IF EXISTS nd_ai_budgets;
+DROP TABLE IF EXISTS nd_ai_usage;
+DROP TABLE IF EXISTS nd_ai_rule_runs;
+DROP TABLE IF EXISTS nd_ai_rules;
+DROP TABLE IF EXISTS nd_ai_approvals;
+DROP TABLE IF EXISTS nd_ai_artifacts;
+DROP TABLE IF EXISTS nd_ai_context_refs;
+DROP TABLE IF EXISTS nd_ai_attempts;
+DROP TABLE IF EXISTS nd_ai_events;
+DROP TABLE IF EXISTS nd_ai_tasks;
+DROP TABLE IF EXISTS nd_ai_visitors;
+DROP TABLE IF EXISTS nd_ai_agents;

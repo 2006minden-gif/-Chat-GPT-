@@ -1,0 +1,38 @@
+<?php
+declare(strict_types=1);
+function ai_catalog():array{
+ if((config()['ai_catalog_approved']??false)!==true)crm_fail(503,'Каталог для ИИ ещё не одобрен владельцем.');$catalog=config()['ai_service_catalog']??[];if(!is_array($catalog)||!array_is_list($catalog)||count($catalog)>8||!count($catalog))crm_fail(503,'Каталог услуг не настроен.');$out=[];
+ foreach($catalog as $s){if(!is_array($s)||!in_array($s['id']??'',['website','landing','ecommerce','portal','crm','ai_agent','automation','webapp'],true))crm_fail(503,'Проверьте каталог услуг.');$out[]=['id'=>$s['id'],'name'=>cc_text($s,'name',100),'description'=>cc_text($s,'description',1000)];}return $out;
+}
+function ai_context(array $t):array{
+ $a=ai_task_actor($t);$input=json_decode($t['input_json'],true,512,JSON_THROW_ON_ERROR);$context=['question'=>ai_redact($input['question']),'facts'=>[],'untrusted'=>[],'limitations'=>[],'catalog'=>[]];$versions=ai_versions($t);$facts=&$context['facts'];
+ if(in_array($t['agent_id'],['consultant','proposal','lead_analyst'],true))$context['catalog']=ai_catalog();
+ if($t['lead_id']){$l=ai_scope($a,'lead',(int)$t['lead_id']);$facts[]=['source'=>'lead','id'=>(int)$l['id'],'service'=>$l['service'],'status'=>$l['status']];$context['untrusted']['lead_request']=ai_redact(mb_substr($l['idea'],0,4000));$context['limitations'][]='Контакты заявки исключены; возможные дубликаты не объединяются.';foreach(crm_query('SELECT id,service,status FROM nd_leads WHERE contact=? AND id<>? ORDER BY id LIMIT 5',[$l['contact'],$l['id']])->fetchAll() as $other)$facts[]=['source'=>'possible_duplicate','id'=>(int)$other['id'],'service'=>$other['service'],'status'=>$other['status']];}
+ if($t['project_id']){
+  $p=ai_scope($a,'project',(int)$t['project_id']);$facts[]=['source'=>'project','id'=>(int)$p['id'],'title'=>ai_redact($p['title']),'status'=>$p['status'],'due_on'=>$p['due_on'],'progress'=>crm_progress((int)$p['id'])];
+  if($a['type']==='owner')$context['untrusted']['project_description']=ai_redact(mb_substr($p['description']??'',0,3000));
+  foreach(crm_query('SELECT id,title,status,due_on,version FROM nd_project_stages WHERE project_id=? ORDER BY position LIMIT 30',[$p['id']])->fetchAll() as $r)$facts[]=['source'=>'stage','id'=>(int)$r['id'],'title'=>ai_redact($r['title']),'status'=>$r['status'],'due_on'=>$r['due_on'],'overdue'=>$r['due_on']!==null&&$r['due_on']<gmdate('Y-m-d')&&!in_array($r['status'],['completed','cancelled'],true)];
+  if($a['type']==='owner')foreach(crm_query('SELECT t.id,t.title,t.status,t.due_at,t.assignee_employee_id FROM nd_tasks t JOIN nd_task_projects x ON x.task_id=t.id WHERE x.project_id=? AND t.archived_at IS NULL ORDER BY t.id LIMIT 30',[$p['id']])->fetchAll() as $r)$facts[]=['source'=>'task','id'=>(int)$r['id'],'title'=>ai_redact($r['title']),'status'=>$r['status'],'due_at'=>$r['due_at'],'unassigned'=>$r['assignee_employee_id']===null,'overdue'=>$r['due_at']!==null&&$r['due_at']<gmdate('Y-m-d H:i:s')&&!in_array($r['status'],['done','cancelled'],true)];
+  $pending=(int)crm_query("SELECT COUNT(*) FROM nd_cc_approvals x JOIN nd_cc_revisions r ON r.id=x.revision_id JOIN nd_cc_documents d ON d.id=r.document_id WHERE d.project_id=? AND x.status='pending'",[$p['id']])->fetchColumn();$facts[]=['source'=>'approvals','pending'=>$pending];
+  if(in_array($t['agent_id'],['consultant','proposal','specification','cost_estimator'],true))foreach(array_reverse(crm_query('SELECT actor_type,body FROM nd_cc_messages WHERE project_id=? ORDER BY id DESC LIMIT 5',[$p['id']])->fetchAll()) as $m)$context['untrusted']['messages'][]=['sender'=>$m['actor_type'],'text'=>ai_redact(mb_substr($m['body'],0,700))];
+  if($t['agent_id']==='cost_estimator'){$spec=crm_query("SELECT r.id FROM nd_cc_documents d JOIN nd_cc_revisions r ON r.document_id=d.id AND r.revision_number=d.head_revision WHERE d.project_id=? AND d.kind='specification' AND d.archived_at IS NULL ORDER BY d.id DESC LIMIT 1",[$p['id']])->fetchColumn();if($spec){$doc=cc_revision(['type'=>'owner','id'=>1],(int)$spec);$context['untrusted']['requirements']=array_map(fn($v)=>ai_redact(mb_substr($v,0,1000)),array_intersect_key($doc['fields'],array_flip(['goal','requirements','functionality','acceptance'])));}}
+  $context['limitations'][]='До 30 этапов/задач и 5 последних общих сообщений; это не полная история.';
+ }
+ if($t['revision_id']){
+  $r=ai_scope($a,'revision',(int)$t['revision_id']);$facts[]=['source'=>'revision','id'=>(int)$r['id'],'number'=>$r['revision_number'],'status'=>$r['status'],'checksum'=>$r['checksum']];$context['untrusted']['document']=array_map(fn($v)=>ai_redact(mb_substr($v,0,700)),array_intersect_key($r['fields'],array_flip(['title','requirements','acceptance','constraints','functionality'])));
+  $previous=crm_query('SELECT id FROM nd_cc_revisions WHERE document_id=? AND revision_number<? ORDER BY revision_number DESC LIMIT 1',[$r['document_id'],$r['revision_number']])->fetchColumn();if($previous){$old=cc_revision(['type'=>'owner','id'=>1],(int)$previous);$context['untrusted']['previous_document']=array_map(fn($v)=>ai_redact(mb_substr($v,0,700)),array_intersect_key($old['fields'],array_flip(['title','requirements','acceptance','constraints','functionality'])));$facts[]=['source'=>'previous_revision','number'=>$old['revision_number'],'checksum'=>$old['checksum']];}
+  $context['limitations'][]='Только структурированный текст доступных редакций; бинарные вложения и произвольные URL не читаются.';
+ }
+ if($t['agent_id']==='business_analyst'){
+  ai_owner($a);foreach(['leads'=>'nd_leads','customers'=>'nd_customers','deals'=>'nd_deals','orders'=>'nd_orders','projects'=>'nd_projects'] as $label=>$table)$facts[]=['source'=>'count','entity'=>$label,'count'=>(int)crm_query('SELECT COUNT(*) FROM '.$table)->fetchColumn()];
+  foreach(crm_query('SELECT status,COUNT(*) AS count FROM nd_deals GROUP BY status')->fetchAll() as $r)$facts[]=['source'=>'pipeline','status'=>$r['status'],'count'=>(int)$r['count']];
+  if((config()['billing_enabled']??false)===true){bill_gate();$r=bill_report(['type'=>'owner','id'=>1]);$facts[]=['source'=>'finance','currency'=>'RUB','totals'=>$r['totals'],'meaning'=>$r['meaning']];}else $context['limitations'][]='Финансовый модуль выключен; данных о выручке нет.';
+ }
+ if($t['agent_id']==='proposal'){$q=pricing_require_approved((int)$t['project_id']);$context['approved_price']=['quotation_id'=>(int)$q['id'],'checksum'=>$q['checksum'],'selling_minor'=>(int)$q['calculation']['selling_minor'],'currency'=>'RUB'];$facts[]=['source'=>'approved_quotation',...$context['approved_price']];}
+ $context['versions']=$versions;if(strlen(ai_json($context))>ai_agent($t['agent_id'])['max_context_bytes'])crm_fail(422,'Контекст слишком большой. Уточните запрос.');return $context;
+}
+function ai_target_versions(array $t,bool $lock=false):array{
+ $v=ai_versions($t,$lock);
+ if($t['project_id']){$id=(int)$t['project_id'];$suffix=$lock?' FOR UPDATE':'';$v['tasks']=crm_query('SELECT t.id,t.version FROM nd_tasks t JOIN nd_task_projects x ON x.task_id=t.id WHERE x.project_id=? ORDER BY t.id LIMIT 100'.$suffix,[$id])->fetchAll();$v['last_message']=(int)crm_query('SELECT id FROM nd_cc_messages WHERE project_id=? ORDER BY id DESC LIMIT 1'.$suffix,[$id])->fetchColumn();}
+ return $v;
+}
