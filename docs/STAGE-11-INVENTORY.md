@@ -24,10 +24,10 @@ Stage 9 MISSING; это блокирует полный каталог → brief
 
 ## Функциональные границы
 
-- `public/index.html`, `app.js`, `api-client.js`: агентский лендинг, раздел услуг, контактная форма, Telegram. Каталог/интерактивные brief/checkout отсутствуют. Форма fail-closed до одобрения privacy. Контакт не превращается автоматически в verified customer account.
+- `public/index.html`, `script.js`, `api-client.js`: агентский лендинг, раздел услуг, контактная форма, Telegram. Каталог/интерактивные brief/checkout отсутствуют. Форма fail-closed до одобрения privacy. Контакт не превращается автоматически в verified customer account.
 - `public/studio.php`, `private/app.php`: владелец, sessions, CSRF, rate limits, версии лидов, идемпотентность. CRM owner-only, роли сотрудников не включаются Stage 11.
-- `public/account.php`, `customer-api.php`, `private/customer-auth.php`: саморегистрация/приглашения, подтверждение email/reset/session/consent. Для production нужны законные документы и одобренный email transport. Тестовые email spool/transport не SMTP.
-- `public/workspace.php`, `private/crm/{routes,read,write,models}.php`: клиенты, сделки, конверсия, заказы, проекты, этапы/задачи, история/уведомления; операции scoped, optimistic versions. Foundation employee tables существуют исторически; Stage 11 не вводит employee auth/дашборды.
+- `public/customer.php`, `customer-api.php`, `private/customer-auth.php`: саморегистрация/приглашения, подтверждение email/reset/session/consent. Для production нужны законные документы и одобренный email transport. Тестовые email spool/transport не SMTP.
+- `public/workspace.php`, `private/crm/{routes,read,write,core}.php`: клиенты, сделки, конверсия, заказы, проекты, этапы/задачи, история/уведомления; операции scoped, optimistic versions. Foundation employee tables существуют исторически; Stage 11 не вводит employee auth/дашборды.
 - `public/collaboration.php`, `collab-download.php`, `private/collab/`: project scoped messages/files/documents/versions/customer approvals. Private storage вне public. Production storage/permissions/quotas NOT_VERIFIED.
 - `public/billing.php`, `private/billing/`: invoices/payments/refunds/notifications с test adapter. Live merchant/payment/SMTP не утверждены, не включались. Нет приёма реквизитов карты приложением.
 - `public/ai.php`, `private/ai/`: роли/контракты/budgets/tasks/approvals/mock HTTP provider. Ни Codex API, ни настоящий tool executor не подключён. `private/pricing/`: decimal-safe deterministic цены, реестр ставок, approvals/immutable quotations. Неизвестная стоимость требует review.
