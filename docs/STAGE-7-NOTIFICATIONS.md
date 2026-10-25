@@ -1,0 +1,21 @@
+# Stage 7 — outbox, worker и письма
+
+События финансов пишутся в outbox в той же транзакции, что счёт/платёж/возврат, без синхронного SMTP. Недоступный SMTP не отменяет подтверждение денег. Existing crm_notice продолжает наполнять owner inbox. Per-account outbox — для recipient/channel/template/version/delivery metadata, а не новая business history.
+
+Stage 6 event hooks передают точный document kind / decision в notification mapping внутри прежней транзакции; не реконструируют решения из «последней» записи. New message, awaiting approval, requested changes, approved document, deliverable ready — сразу persistent in-app events. Project completed — hook existing CRM update. Disabled billing не меняет прежний Stage 3–6 runtime.
+
+Worker выявляет new requests, overdue invoice balances, task due in 24h / overdue. Dedupe keys содержат entity ID, lifecycle/specific due date; такие reminders отправляются один раз на состояние/срок, не ежедневно. Финансовые состояния не меняются из-за напоминаний. При первом включении worker возможна обработка существующего backlog заявок/долгов/задач; это нужно явно учитывать при активации. События collaboration, созданные при billing disabled, не переотправляются задним числом.
+
+`php scripts/billing-worker.php` — CLI only, bounded batch (50 email, 25 payment + 25 refund checks), database advisory lock, no migration/charge creation other than retrying an existing creating attempt with its persisted key. Reconciliation uses next_check so a stuck first batch does not starve all remaining attempts. GET settings/worker output never claims an operational scheduler.
+
+**Планировщик в этой задаче не установлен.** После отдельного operational approval администратор может настроить периодический CLI вызов, например каждые 5 минут, с выбранным PHP 8.4 binary и реальным абсолютным project path. Для public_html/private sibling structure scripts/database должны быть вне public_html. До такой настройки timed reminders, background reconciliation и email не считаются автоматически работающими. In-app финансовые/project события записываются при пользовательских мутациях независимо от запуска SMTP worker.
+
+Email defaults off. Если billing_email_enabled=false, records имеют disabled, их включение не вызывает автоматическую рассылку старых disabled records. При enabled и недоступном SMTP — pending + next_attempt. Необязательный email по сообщениям требует optional_email=true, default false; essential invoice/payment/approval events отдельны. Маркетинговые подписки/согласия не создаются. Повторная проверка account status/current consent/preferences выполняется перед email.
+
+Используется прежний `customer_smtp_send` transport (TLS/SMTP auth, bounded network I/O), выделенный из Stage 4 без изменения auth-purpose messages. Русские multipart/alternative HTML + plain templates не содержат amount/customer name/секреты/токены; ссылка ведёт в аутентифицированный кабинет. Message-ID стабилен для outbox ID. Subject/body пользовательского ввода в шаблоны не подставляются. SMTP DATA acceptance — не доказательство попадания в ящик.
+
+Queue claims use row FOR UPDATE and tokenized 120-second lease; max 5 claims, exponential 60–960-second backoff, terminal failed. Crashed final lease turns failed, не остаётся processing навсегда. Disabled/consent/preference outcomes отражаются явно. Owner видит state/attempts/safe last_error, customers — только свои in-app records.
+
+SMTP не обеспечивает exactly-once delivery: соединение может оборваться после acceptance, worker может погибнуть до записи delivered. Возможна повторная доставка с тем же Message-ID. Гарантия deduplication относится к event/recipient/channel records и финансовым эффектам, не к конечному внешнему mailbox. Нет кнопки массового повторного запуска failed emails; это сознательная граница безопасной эксплуатации.
+
+Локальные SMTP fixtures проверяют multipart, recipients, accepted messages, retry/backoff/terminal failure и lease recovery. Реальная SMTP доставляемость, SPF/DKIM/DMARC, inbox и cron на SpaceWeb не проверялись. Требуются одобренный sender, приватные SMTP credentials, owner recipient, email purposes и privacy configuration. Не заявляется соответствие PCI DSS/GDPR/54-ФЗ или иной правовой норме.
