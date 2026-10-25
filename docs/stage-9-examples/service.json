@@ -1,0 +1,40 @@
+{
+  "name": "Учебная заготовка услуги — заменить",
+  "description": "Заполните своими проверенными данными. Не публикуется автоматически.",
+  "category": "website",
+  "scope": [
+    "Заменить реальным составом работ"
+  ],
+  "deliverables": [
+    "Заменить проверяемым результатом"
+  ],
+  "pricing_type": "estimate",
+  "packages": [
+    {
+      "id": "base",
+      "name": "Учебный пакет — заменить",
+      "description": "Заменить собственным описанием пакета",
+      "price": null,
+      "owner_review_hours": null,
+      "correction_hours": null,
+      "work_packages": [
+        {
+          "name": "Оценка разработки по брифу",
+          "development_hours": null,
+          "testing_hours": null,
+          "ai_input_tokens": null,
+          "ai_output_tokens": null,
+          "hosting_months": null,
+          "tool_units": null,
+          "external_units": null,
+          "other_units": null,
+          "risk": "high",
+          "uncertain": true,
+          "basis": "Учебная заготовка: количества неизвестны; нужна оценка по реальному брифу."
+        }
+      ],
+      "quantity_rules": []
+    }
+  ],
+  "consultation_url": "https://t.me/minden2006"
+}

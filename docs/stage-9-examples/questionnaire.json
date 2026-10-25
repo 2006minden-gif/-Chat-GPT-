@@ -1,0 +1,54 @@
+{
+  "title": "Учебная структура — заполнить и проверить",
+  "steps": [
+    {
+      "title": "Цель",
+      "questions": [
+        {
+          "id": "goal",
+          "label": "Какую задачу нужно решить?",
+          "type": "textarea",
+          "semantic": "goal",
+          "required": true,
+          "options": [],
+          "min": 1,
+          "max": 1000,
+          "when": null
+        },
+        {
+          "id": "integrations",
+          "label": "Нужны ли интеграции?",
+          "type": "choice",
+          "semantic": "integrations",
+          "required": true,
+          "options": [
+            "Да",
+            "Нет"
+          ],
+          "min": 1,
+          "max": 1000,
+          "when": null
+        }
+      ]
+    },
+    {
+      "title": "Детали",
+      "questions": [
+        {
+          "id": "systems",
+          "label": "Какие системы нужно связать?",
+          "type": "textarea",
+          "semantic": "integrations",
+          "required": true,
+          "options": [],
+          "min": 1,
+          "max": 1000,
+          "when": {
+            "field": "integrations",
+            "equals": "Да"
+          }
+        }
+      ]
+    }
+  ]
+}
