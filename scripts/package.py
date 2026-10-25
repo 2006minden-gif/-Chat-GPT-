@@ -9,6 +9,10 @@ with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as z:
         if p.is_file():z.write(p,'public_html/'+p.name)
     for name in ['app.php','customer-auth.php','customer-mail.php','config.example.php','.htaccess']:
         z.write(root/'private'/name,'private/'+name)
+    for p in sorted((root/'private/collab').glob('*.php')):
+        z.write(p,p.relative_to(root))
+    z.write(root/'scripts/migrate-collab.php','scripts/migrate-collab.php')
+    z.write(root/'scripts/check-collab-storage.php','scripts/check-collab-storage.php')
     for p in sorted((root/'private/crm').glob('*.php')):
         z.write(p,p.relative_to(root))
     z.write(root/'scripts/migrate-crm.php','scripts/migrate-crm.php')

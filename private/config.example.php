@@ -3,6 +3,10 @@
 return [
     // Stage 5 stays disabled until legal approval, migrations and review.
     'crm_operations_enabled' => false,
+    // Stage 6 is separately gated; content remains outside public_html.
+    'client_collaboration_enabled' => false,
+    'collaboration_file_max_bytes' => 5242880,
+    'collaboration_total_max_bytes' => 104857600,
     'db_host' => 'localhost',
     'db_port' => 3306,
     'db_name' => 'YOUR_DATABASE',

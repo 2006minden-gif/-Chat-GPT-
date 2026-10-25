@@ -6,3 +6,5 @@ __pycache__/
 *.sqlite3-*
 private/config.php
 /dist/
+
+/private/collaboration-files/
