@@ -63,7 +63,7 @@ class Ai(Collaboration):
  def run_task(self,tid):
   r=self.post(self.owner,f'tasks/{tid}/run');self.assertEqual(r.status_code,200,r.text);return self.get(self.owner,f'tasks/{tid}').json()['record']
  def test_40_registry_gateway_and_specification_real_draft(self):
-  r=self.get(self.owner,'agents');self.assertEqual(r.status_code,200,r.text);self.assertEqual(len(r.json()['items']),11)
+  r=self.get(self.owner,'agents');self.assertEqual(r.status_code,200,r.text);self.assertEqual(len(r.json()['items']),19)
   tid=self.create();t=self.run_task(tid);self.assertEqual(t['state'],'COMPLETED');artifact=t['artifacts'][0];self.assertEqual(artifact['effect_entity'],'revisions');r=self.owner.get(self.base+'/api.php?r=crm/collab/revisions/'+str(artifact['effect_id']));self.assertEqual(r.status_code,200,r.text);self.assertEqual(r.json()['revision']['status'],'draft');self.assertIsNone(r.json()['revision']['approval']);self.assertIn('Черновик ИИ',r.json()['revision']['fields']['comments'])
   self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_ai_attempts WHERE task_id=?',params=[tid])[0]['n'],1)
  def test_41_customer_scope_permissions_and_prompt_injection(self):

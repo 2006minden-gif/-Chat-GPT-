@@ -1,0 +1,5 @@
+<?php
+declare(strict_types=1);
+ini_set('display_errors','0');require dirname(__DIR__).'/private/app.php';security_headers();header('Cache-Control: no-store');header('X-Robots-Tag: noindex,nofollow');
+try{if((config()['production_enabled']??false)!==true){http_response_code(404);exit;}}catch(Throwable $e){server_error($e);}
+?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>НейроДело — ИИ-производство</title><link rel="stylesheet" href="operations.css"><link rel="stylesheet" href="production.css"></head><body><main class="portal"><header><h1>ИИ-производство</h1><a href="/workspace.php">CRM</a><a href="/ai.php?mode=owner#agents">ИИ-исполнители</a></header><p class="production-warning">Сгенерированный код — неисполненный черновик. Sandbox и live-интеграции не подтверждены. Цены, планы и передача результатов требуют отдельного одобрения.</p><p id="prod-error" role="status" aria-live="polite"></p><nav id="prod-nav" class="tabs" aria-label="Производство"></nav><section id="prod-content"></section></main><script src="production.js"></script></body></html>
