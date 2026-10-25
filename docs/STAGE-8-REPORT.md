@@ -40,7 +40,7 @@
 
 ## Проверки — только реально выполненное
 
-Полные прогоны: **250 Python tests PASS**, включая 25 новых Stage 8/pricing/migration/browser scenarios и прежние 225 tests. **12 existing Node tests PASS**. PHP 8.4 lint — **70 файлов PASS**, JavaScript syntax, workflow actionlint/release validation PASS. Финальный source verification выполняется перед push; hosted CI проверяется отдельно по SHA, local PASS не считается remote status.
+Полные прогоны: **250 Python tests PASS**, включая 25 новых Stage 8/pricing/migration/browser scenarios и прежние 225 tests. **12 existing Node tests PASS**. PHP 8.4 lint — **70 файлов PASS**, JavaScript syntax, compileall, diff check и workflow actionlint/release validation PASS. Redacted Gitleaks scan — 0 находок. Финальный source verification выполняется перед push; hosted CI проверяется отдельно по SHA, local PASS не считается remote status.
 
 Среда: isolated PHP 8.4.27, MySQL 5.7.42, Apache 2.4.69 (existing security suite), Chromium/Playwright, loopback provider fixtures. Только random `neuro_test_*` databases; ни одного подключения к SpaceWeb/production DB. Runtime checks не основаны только на чтении исходников.
 
@@ -77,3 +77,11 @@
 - Stage 9/10 обязаны соблюдать pricing contract; их разработка/публикация не разрешены этим отчётом.
 
 Deployment: **не выполнялся**. Реальные AI calls, цены, invoice/refund/payment approvals и production financial changes не активировались.
+
+## GitHub review
+
+Ветка опубликована. REST POST создания draft PR вернул `Forbidden`; Git push работает. GitHub settings/credentials/automation не менялись для обхода ограничения.
+
+Единственное необходимое действие владельца для PR: открыть [сравнение Stage 7 → Stage 8](https://github.com/2006minden-gif/-Chat-GPT-/compare/feature/stage-7-billing-notifications...feature/stage-8-ai-automation?expand=1) и выбрать **Create draft pull request**. Base — `feature/stage-7-billing-notifications`, compare — `feature/stage-8-ai-automation`; не merge/deploy.
+
+Hosted push CI проверяется отдельно по финальному SHA. Existing workflow запускает pull_request CI только для main; PR с feature base не должен выдаваться за такой запуск. Workflow не менялся.
