@@ -10,9 +10,12 @@ DENIED_PATHS=['/~.htaccess','/index~.html','/.htaccess','/private/config.php','/
 ASSET_PATHS=['/styles.css','/crm.css','/script.js','/crm.js','/api-client.js']
 PATHS=['/','/studio.php','/api.php?r=privacy','/privacy.php','/api.php?r=session','/api.php?r=leads']+DENIED_PATHS+ASSET_PATHS
 
-def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen):
+def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=()):
+    assets = list(dict.fromkeys(ASSET_PATHS + list(extra_assets)))
+    if any(not re.fullmatch(r'/[A-Za-z0-9_-][A-Za-z0-9_./-]*\.(css|js)', p) or '..' in p.split('/') for p in assets):
+        raise ValueError('unsafe_health_asset_path')
     rows = {}
-    for path in PATHS:
+    for path in list(dict.fromkeys(PATHS + assets)):
         head = path in DENIED_PATHS
         url = base.rstrip('/') + path + ('&' if '?' in path else '?') + '_nd_check=' + str(time.time_ns())
         try:
@@ -44,7 +47,7 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen):
                     (not policy['enabled'] and response.status==503 and 'Приём заявок через форму отключён' in text))
             elif path in ['/api.php?r=session','/api.php?r=leads']:
                 row['ok']=response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)
-            elif path in ASSET_PATHS:
+            elif path in assets:
                 expected=['text/css'] if path.endswith('.css') else ['application/javascript','text/javascript']
                 row['ok']=response.status==200 and row['content_type'] in expected;row['sha256']=hashlib.sha256(body).hexdigest()
             else: row['ok']=response.status in [403,404]

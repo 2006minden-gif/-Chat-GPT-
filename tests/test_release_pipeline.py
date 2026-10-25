@@ -69,7 +69,7 @@ class ReleaseFilesTests(unittest.TestCase):
  def test_allowlisted_artifact_never_contains_credentials_or_installer(self):
   with tempfile.TemporaryDirectory() as tmp:
    bundle=Path(tmp)/'release';m=release.build(bundle,'a'*40)
-   self.assertEqual(len(m['files']),14);client.validate_bundle(bundle,'a'*40)
+   self.assertEqual(len(m['files']),len(release.policy_check()['public_files'])+len(release.policy_check()['private_files']));client.validate_bundle(bundle,'a'*40)
    self.assertIn('database/schema.sql',m['tools']);self.assertTrue(all(not p.startswith('public_html/') for p in m['tools'] if p.endswith('.sql')))
    self.assertNotIn('private/config.php',str(m));self.assertNotIn('setup.php',str(m))
    (bundle/'private/app.php').write_text('tampered')
@@ -99,7 +99,8 @@ class RemoteFilesystemTests(unittest.TestCase):
   self.manifest=release.build(self.candidate,'a'*40)
   # Most tests exercise file delivery, not a pending business migration.
   self.manifest['migrations']=[];(self.candidate/'manifest.json').write_text(json.dumps(self.manifest))
-  for path in self.manifest['files']:(self.root/path).write_text('OLD '+path)
+  for path in self.manifest['files']:
+   (self.root/path).parent.mkdir(parents=True,exist_ok=True);(self.root/path).write_text('OLD '+path)
   (self.root/'private/config.php').write_text((self.f.path/'private/config.php').read_text().replace(self.f.base,'https://neurodelo.pro'))
   shutil.copyfile(self.f.path/'private/privacy-policy.txt',self.root/'private/privacy-policy.txt')
   (self.root/'public_html/customer-upload.dat').write_text('PRESERVE CUSTOMER FILE')
@@ -158,7 +159,7 @@ class RemoteFilesystemTests(unittest.TestCase):
   (self.candidate/'leftover-config-link').symlink_to(self.root/'private/config.php')
   for number in range(1,5):
    self.id='release'+str(number);self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id
-   release.build(self.candidate,format(number,'040x'));(self.candidate/'baseline.json').write_text(json.dumps(good()))
+   m=release.build(self.candidate,format(number,'040x'));m['migrations']=[];(self.candidate/'manifest.json').write_text(json.dumps(m));(self.candidate/'baseline.json').write_text(json.dumps(good()))
    self.agent('apply');self.finish()
   state=json.loads((self.root/'.neurodelo-deploy/state.json').read_text());backups=self.root/'.neurodelo-deploy/backups'
   pinned={state.get(k) for k in ['known_good_backup','database_recovery_backup','active','last_release'] if state.get(k)}
