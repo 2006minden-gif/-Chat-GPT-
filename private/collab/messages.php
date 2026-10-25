@@ -21,6 +21,6 @@ function cc_send(array $a,int $project,array $d):array{
  crm_query('INSERT INTO nd_cc_messages(project_id,actor_type,actor_id,body) VALUES (?,?,?,?)',[$project,$a['type'],$a['id'],$text]);$id=(int)db()->lastInsertId();foreach($files as $f)crm_query('INSERT INTO nd_cc_message_files VALUES (?,?)',[$id,$f['id']]);cc_event($a,$project,'message_sent');return ['ok'=>true,'id'=>$id];});
 }
 function cc_read(array $a,int $project,array $d):array{
- return crm_atomic(function()use($a,$project,$d){cc_project($a,$project);$last=cc_id($d['last_message_id']??null);if(!crm_query('SELECT id FROM nd_cc_messages WHERE project_id=? AND id=?',[$project,$last])->fetchColumn())crm_fail(404,'Сообщение не найдено.');
+ return crm_atomic(function()use($a,$project,$d){cc_project($a,$project);$last=cc_id($d['last_message_id']??null);if(!crm_query('SELECT id FROM nd_cc_messages WHERE project_id=? AND id=?',[$project,$last])->fetchColumn())crm_fail(404,'Запись не найдена.');
  crm_query('INSERT INTO nd_cc_reads(project_id,actor_type,actor_id,last_message_id) VALUES (?,?,?,?) ON DUPLICATE KEY UPDATE last_message_id=GREATEST(last_message_id,VALUES(last_message_id))',[$project,$a['type'],$a['id'],$last]);return ['ok'=>true];});
 }

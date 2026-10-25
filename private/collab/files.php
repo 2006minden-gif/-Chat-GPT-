@@ -4,11 +4,12 @@ function cc_storage(bool $create=false):string{
  $root=dirname(__DIR__).'/collaboration-files';
  if(is_link($root))crm_fail(503,'Приватное хранилище недоступно.');
  if(!is_dir($root)&&(!$create||!mkdir($root,0700)))crm_fail(503,'Приватное хранилище недоступно.');
- $real=realpath($root);$private=realpath(dirname(__DIR__));if($real!==$private.'/collaboration-files')crm_fail(503,'Приватное хранилище недоступно.');return $real;
+ $real=realpath($root);$private=realpath(dirname(__DIR__));if($real!==$private.'/collaboration-files')crm_fail(503,'Приватное хранилище недоступно.');
+ if(PHP_SAPI!=='cli'){$web=realpath($_SERVER['DOCUMENT_ROOT']??'');if(!$web||$real===$web||str_starts_with($real,$web.'/'))crm_fail(503,'Хранилище должно находиться вне публичного каталога.');}return $real;
 }
 function cc_file(array $a,int $id,bool $lock=false):array{
- $r=crm_query('SELECT * FROM nd_cc_files WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Файл не найден.');cc_project($a,(int)$r['project_id']);
- if($a['type']==='customer'&&($r['visibility']!=='customer'||$r['archived_at']!==null))crm_fail(404,'Файл не найден.');return $r;
+ $r=crm_query('SELECT * FROM nd_cc_files WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');cc_project($a,(int)$r['project_id']);
+ if($a['type']==='customer'&&($r['visibility']!=='customer'||$r['archived_at']!==null))crm_fail(404,'Запись не найдена.');return $r;
 }
 function cc_file_path(array $r):string{
  if(!preg_match('/^[a-f0-9]{64}$/D',$r['storage_key']))crm_fail(503,'Файл временно недоступен.');$path=cc_storage().'/'.$r['storage_key'];
@@ -38,7 +39,9 @@ function cc_validate_file(array $f):array{
    if($zip->numFiles>256)crm_fail(422,'Слишком сложный документ.');$total=0;$names=[];
    for($i=0;$i<$zip->numFiles;$i++){
     $s=$zip->statIndex($i);$n=$s['name'];if(isset($names[$n])||str_starts_with($n,'/')||str_contains($n,'..')||str_contains($n,'\\')||preg_match('~(^|/)(embeddings|activeX|vbaProject)|\.(bin|exe|dll|php|html|js|svg)$~i',$n)||($s['encryption_method']??0)!==0)crm_fail(422,'Документ содержит запрещённые компоненты.');$names[$n]=true;
+    $entryExt=strtolower(pathinfo($n,PATHINFO_EXTENSION));if(!str_ends_with($n,'/')&&!in_array($entryExt,['xml','rels','png','jpg','jpeg','webp'],true))crm_fail(422,'Неподдерживаемое вложение внутри офисного документа.');
     $total+=$s['size'];if($s['size']>5242880||$total>20971520||($s['comp_size']>0&&$s['size']/$s['comp_size']>200))crm_fail(422,'Документ слишком велик после распаковки.');
+    if(in_array($entryExt,['png','jpg','jpeg','webp'],true)){$imageBytes=$zip->getFromIndex($i,5242881);if($imageBytes===false||(new finfo(FILEINFO_MIME_TYPE))->buffer($imageBytes)!==$allowed[$entryExt])crm_fail(422,'Недопустимое изображение внутри документа.');}
     if(str_ends_with($n,'.xml')||str_ends_with($n,'.rels')){$xml=$zip->getFromIndex($i,5242881);if($xml===false||preg_match('/<!DOCTYPE|<!ENTITY|macroEnabled|TargetMode\s*=\s*[\x22\x27]External/i',$xml))crm_fail(422,'Активное или внешнее содержимое документа запрещено.');}
    }
    $main=$ext==='docx'?'word/document.xml':'xl/workbook.xml';$types=$zip->getFromName('[Content_Types].xml');
@@ -47,6 +50,7 @@ function cc_validate_file(array $f):array{
  }
  return ['display_name'=>$name,'mime'=>$allowed[$ext],'size_bytes'=>$size,'checksum'=>hash_file('sha256',$f['tmp_name'])];
 }
+function cc_capacity(int $used,int $size,int $quota,int|float|false $free):void{if($used+$size>$quota||$free===false||$free<$size+16777216)crm_fail(507,'Недостаточно места в приватном хранилище.');}
 function cc_upload(array $a):array{
  $project=filter_var($_POST['project_id']??'',FILTER_VALIDATE_INT);if(!$project)crm_fail(422,'Выберите проект.');cc_project($a,$project,true);$meta=cc_validate_file($_FILES['file']??[]);
  $key=$_POST['request_key']??'';$visibility=$a['type']==='customer'?'customer':($_POST['visibility']??'internal');if(!in_array($visibility,['internal','customer'],true))crm_fail(422,'Выберите доступ к файлу.');
@@ -55,7 +59,7 @@ function cc_upload(array $a):array{
   return cc_mutation($a,'upload',['request_key'=>$key,'project_id'=>$project,'meta'=>$meta,'visibility'=>$visibility],function()use($a,$project,$meta,$root,$visibility,&$stored){
    cc_project($a,$project,true,true);$used=0;foreach(new DirectoryIterator($root) as $entry){if($entry->isDot()||$entry->getFilename()==='.quota.lock')continue;if($entry->isLink()||!$entry->isFile())crm_fail(503,'Хранилище требует проверки владельцем.');$used+=$entry->getSize();}
    $quota=min(536870912,max(1,(int)(config()['collaboration_total_max_bytes']??104857600)));$free=disk_free_space($root);
-   if($used+$meta['size_bytes']>$quota||$free===false||$free<$meta['size_bytes']+16777216)crm_fail(507,'Недостаточно места в приватном хранилище.');
+   cc_capacity($used,$meta['size_bytes'],$quota,$free);
    $storage=bin2hex(random_bytes(32));$stored=$root.'/'.$storage;if(file_exists($stored)||!move_uploaded_file($_FILES['file']['tmp_name'],$stored))crm_fail(503,'Не удалось сохранить файл. Повторите отправку.');
    if(!chmod($stored,0600)||filesize($stored)!==$meta['size_bytes']||hash_file('sha256',$stored)!==$meta['checksum'])crm_fail(503,'Не удалось подтвердить сохранение файла.');
    crm_query('INSERT INTO nd_cc_files(project_id,storage_key,display_name,mime,size_bytes,checksum,actor_type,actor_id,visibility) VALUES (?,?,?,?,?,?,?,?,?)',[$project,$storage,$meta['display_name'],$meta['mime'],$meta['size_bytes'],$meta['checksum'],$a['type'],$a['id'],$visibility]);$id=(int)db()->lastInsertId();cc_event($a,$project,'file_uploaded');return ['ok'=>true,'id'=>$id,'file'=>cc_public_file(cc_file($a,$id))];

@@ -3,7 +3,7 @@ declare(strict_types=1);
 ini_set('display_errors','0');require dirname(__DIR__).'/private/app.php';require dirname(__DIR__).'/private/collab/core.php';require dirname(__DIR__).'/private/collab/files.php';require dirname(__DIR__).'/private/collab/documents.php';
 security_headers();header('Cache-Control: private, no-store');header('X-Robots-Tag: noindex,nofollow');
 try{
- $a=cc_actor(($_GET['mode']??'customer')!=='owner');$id=filter_var($_GET['id']??'',FILTER_VALIDATE_INT);if(!$id||$id<1)crm_fail(404,'Версия не найдена.');$r=cc_revision($a,$id);$p=cc_project($a,(int)$r['document']['project_id']);$customer=crm_record('customers',(int)$p['customer_id']);
+ $a=cc_actor(($_GET['mode']??'customer')!=='owner');$id=filter_var($_GET['id']??'',FILTER_VALIDATE_INT);if(!$id||$id<1)crm_fail(404,'Запись не найдена.');$r=cc_revision($a,$id);$p=cc_project($a,(int)$r['document']['project_id']);$customer=crm_record('customers',(int)$p['customer_id']);
  $e=fn($s)=>htmlspecialchars((string)$s,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
  $labels=['title'=>'Название','service'=>'Услуга','description'=>'Описание проекта','goal'=>'Бизнес-цель','requirements'=>'Требования','functionality'=>'Функциональность','design'=>'Дизайн','constraints'=>'Технические ограничения','deliverables'=>'Результаты','milestones'=>'Этапы','deadline'=>'Целевые сроки','acceptance'=>'Критерии приёмки','comments'=>'Комментарии'];
  $states=['draft'=>'Черновик','ready'=>'Готов к отправке','sent'=>'На согласовании','approved'=>'Согласован','changes_requested'=>'Требуется доработка','finalized'=>'Завершён'];

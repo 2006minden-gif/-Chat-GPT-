@@ -61,7 +61,7 @@ class Collaboration(unittest.TestCase):
   self.assertEqual(self.customer.get(url).status_code,404);self.assertEqual(self.stranger.get(url).status_code,404);self.assertEqual(requests.get(url).status_code,401)
   r=self.post(self.owner,'files/'+str(fid),version=1,visibility='customer',archived=False);self.assertEqual(r.status_code,200,r.text)
   r=self.customer.get(url);self.assertEqual(r.status_code,200,r.text);self.assertEqual(r.content,self.pdf());self.assertEqual(r.headers['X-Content-Type-Options'],'nosniff');self.assertIn('attachment',r.headers['Content-Disposition'])
-  self.assertEqual(self.stranger.get(url).status_code,404)
+  self.assertEqual(self.stranger.get(url).status_code,404);self.assertEqual(self.stranger.get(url).json(),self.stranger.get(self.base+'/collab-download.php?mode=customer&id=99999999').json())
   self.assertEqual(self.post(self.customer,f'projects/{self.project_id}/messages',body='Прикреплён файл',file_ids=[fid]).status_code,200)
   row=self.f.sql('SELECT storage_key FROM nd_cc_files WHERE id=?',params=[fid])[0];path=self.f.path/'private/collaboration-files'/row['storage_key'];self.assertEqual(path.stat().st_mode&0o777,0o600);path.unlink()
   r=self.customer.get(url);self.assertEqual(r.status_code,503);self.assertNotIn(str(self.f.path),r.text)
@@ -77,6 +77,15 @@ class Collaboration(unittest.TestCase):
   self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_cc_files')[0]['n'],before)
   r=self.owner.post(self.url(self.owner,'upload'),data={'project_id':self.project_id,'request_key':secrets.token_hex(32)});self.assertEqual(r.status_code,422)
   self.assertEqual(self.upload(self.stranger).status_code,404)
+  import socket
+  count=self.f.sql('SELECT COUNT(*) n FROM nd_cc_files')[0]['n'];boundary='neuroInterruptedUpload';body=('--'+boundary+'\r\nContent-Disposition: form-data; name="file"; filename="partial.pdf"\r\nContent-Type: application/pdf\r\n\r\n%PDF-partial').encode()
+  headers=('POST /api.php?r=crm/collab/upload HTTP/1.1\r\nHost: 127.0.0.1:'+str(self.f.port)+'\r\nContent-Type: multipart/form-data; boundary='+boundary+'\r\nContent-Length: '+str(len(body)+4096)+'\r\nCookie: nd_session='+self.owner.cookies.get('nd_session')+'\r\nX-CSRF-Token: '+self.owner.headers['X-CSRF-Token']+'\r\nConnection: close\r\n\r\n').encode()
+  with socket.create_connection(('127.0.0.1',self.f.port),timeout=3) as sock:
+   sock.sendall(headers+body);sock.shutdown(socket.SHUT_WR)
+   try:sock.recv(4096)
+   except socket.timeout:pass
+  self.assertEqual(self.get(self.owner,'threads').status_code,200);self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_cc_files')[0]['n'],count)
+
  def test_04_office_archive_validation(self):
   import io,zipfile
   buf=io.BytesIO()
@@ -129,7 +138,7 @@ class Collaboration(unittest.TestCase):
   self.assertEqual(len(self.get(self.owner,f'projects/{self.project_id}/documents').json()['items']),2)
   for route in [f'projects/{self.project_id}/files',f'projects/{self.project_id}/documents',f'projects/{self.project_id}/approvals',f'revisions/{v2["id"]}']:
    self.assertEqual(self.get(self.stranger,route).status_code,404,route)
-  self.assertEqual(self.decide(v2,s=self.stranger).status_code,404)
+  self.assertEqual(self.decide(v2,s=self.stranger).status_code,404);self.assertEqual(self.get(self.stranger,f'revisions/{v2["id"]}').json(),self.get(self.stranger,'revisions/99999999').json())
   self.assertEqual(self.post(self.customer,f'projects/{self.project_id}/documents',title='Попытка',kind='plan').status_code,403)
   self.assertEqual(self.get(self.customer,f'revisions/{v1["id"]}').json()['revision']['files'][0]['id'],f1.json()['id'])
  def test_08_final_acceptance_requires_completed_milestones(self):
@@ -170,6 +179,9 @@ class Collaboration(unittest.TestCase):
     client.goto(self.base+f'/collaboration.php?project={self.project_id}#'+section);client.wait_for_function("() => document.querySelector('#cc-content').children.length>0");self.assertTrue(client.evaluate('document.documentElement.scrollWidth<=innerWidth'),section)
    client.screenshot(path=str(shots/'customer-dashboard-mobile.png'),full_page=True);self.assertEqual(errors,[]);browser.close()
  def test_11_free_space_guard_and_binary_office_members(self):
+  images=[('tiny.png','iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aOu0AAAAASUVORK5CYII='),('tiny.webp','UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA')]
+  for name,encoded in images:
+   r=self.upload(self.owner,name,base64.b64decode(encoded));self.assertEqual(r.status_code,200,r.text)
   for free in [False,0,16777216]:
    value=self.f.php_eval('require $v["root"]."/private/app.php";require $v["root"]."/private/collab/core.php";require $v["root"]."/private/collab/files.php";try{cc_capacity(0,100,1000,$v["free"]);echo "unexpected";}catch(CrmFailure $e){echo $e->status;}',{'root':str(self.f.path),'free':free});self.assertEqual(value,'507')
   import io,zipfile

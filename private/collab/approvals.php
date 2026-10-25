@@ -18,7 +18,7 @@ function cc_submit(array $a,int $id,array $d):array{
  crm_query('INSERT INTO nd_cc_approvals(revision_id,checksum,target_version,due_on) VALUES (?,?,?,?)',[$id,$r['checksum'],$target,$due]);$aid=(int)db()->lastInsertId();cc_event($a,(int)$doc['project_id'],'submitted');return ['ok'=>true,'id'=>$aid,'revision'=>cc_revision($a,$id)];});
 }
 function cc_approval(array $a,int $id,bool $lock=false):array{
- $r=crm_query('SELECT * FROM nd_cc_approvals WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Согласование не найдено.');$rev=cc_revision($a,(int)$r['revision_id'],$lock);$r['revision']=$rev;return $r;
+ $r=crm_query('SELECT * FROM nd_cc_approvals WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');$rev=cc_revision($a,(int)$r['revision_id'],$lock);$r['revision']=$rev;return $r;
 }
 function cc_decide(array $a,int $id,array $d):array{
  if($a['type']!=='customer')crm_fail(403,'Решение принимает клиент.');

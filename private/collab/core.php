@@ -9,10 +9,10 @@ function cc_actor(bool $customer,bool $write=false):array{
  return $actor;
 }
 function cc_project(array $a,int $id,bool $write=false,bool $lock=false):array{
- $params=[$id];$sql='SELECT p.* FROM nd_projects p JOIN nd_customers c ON c.id=p.customer_id WHERE p.id=?';
+ $params=[$id];$sql='SELECT p.*,c.status AS customer_status FROM nd_projects p JOIN nd_customers c ON c.id=p.customer_id WHERE p.id=?';
  if($a['type']==='customer'){$sql.=" AND p.customer_id=? AND c.status='active'";$params[]=$a['customer_id'];}
  if($lock)$sql.=' FOR UPDATE';$p=crm_query($sql,$params)->fetch();if(!$p)crm_fail(404,'Запись не найдена.');
- if($write&&($p['archived_at']!==null||$p['status']==='cancelled'))crm_fail(409,'Проект закрыт для изменений. История сохранена для чтения.');return $p;
+ if($write&&($p['archived_at']!==null||$p['status']==='cancelled'||$p['customer_status']!=='active'))crm_fail(409,'Проект закрыт для изменений. История сохранена для чтения.');return $p;
 }
 function cc_owner(array $a):void{if($a['type']!=='owner')crm_fail(403,'Это действие доступно только владельцу.');}
 function cc_id(mixed $v):int{if(!is_int($v)||$v<1||$v>2147483647)crm_fail(422,'Выберите существующую запись.');return $v;}

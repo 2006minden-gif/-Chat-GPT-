@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 function cc_document(array $a,int $id,bool $lock=false):array{
- $d=crm_query('SELECT * FROM nd_cc_documents WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$d)crm_fail(404,'Документ не найден.');cc_project($a,(int)$d['project_id']);
- if($a['type']==='customer'&&!crm_query("SELECT id FROM nd_cc_revisions WHERE document_id=? AND status IN ('sent','approved','changes_requested','finalized') LIMIT 1",[$id])->fetchColumn())crm_fail(404,'Документ не найден.');return $d;
+ $d=crm_query('SELECT * FROM nd_cc_documents WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$d)crm_fail(404,'Запись не найдена.');cc_project($a,(int)$d['project_id']);
+ if($a['type']==='customer'&&!crm_query("SELECT id FROM nd_cc_revisions WHERE document_id=? AND status IN ('sent','approved','changes_requested','finalized') LIMIT 1",[$id])->fetchColumn())crm_fail(404,'Запись не найдена.');return $d;
 }
 function cc_revision(array $a,int $id,bool $lock=false):array{
- $r=crm_query('SELECT * FROM nd_cc_revisions WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Версия не найдена.');$doc=cc_document($a,(int)$r['document_id']);
- if($a['type']==='customer'&&in_array($r['status'],['draft','ready'],true))crm_fail(404,'Версия не найдена.');
+ $r=crm_query('SELECT * FROM nd_cc_revisions WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');$doc=cc_document($a,(int)$r['document_id']);
+ if($a['type']==='customer'&&in_array($r['status'],['draft','ready'],true))crm_fail(404,'Запись не найдена.');
  $r['fields']=json_decode($r['body'],true,512,JSON_THROW_ON_ERROR);unset($r['body']);$r['document']=$doc;
  $files=crm_query('SELECT f.* FROM nd_cc_files f JOIN nd_cc_revision_files rf ON rf.file_id=f.id WHERE rf.revision_id=?'.($a['type']==='customer'?" AND f.visibility='customer' AND f.archived_at IS NULL":'').' ORDER BY f.id',[$id])->fetchAll();$r['files']=array_map('cc_public_file',$files);
  $r['approval']=crm_query('SELECT id,status,version,checksum,due_on,created_at FROM nd_cc_approvals WHERE revision_id=?',[$id])->fetch()?:null;
