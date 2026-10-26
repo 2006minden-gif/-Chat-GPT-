@@ -151,3 +151,10 @@ node --test tests/api-client.test.cjs
 /workspace/-Chat-GPT-, branch feature/sberbank-manual-payments, uncommitted.
 Её не включать в текущий release и не терять/удалять. Stage3/4 draft branches,
 другие старые PR и production data сохранять.
+
+## Продолжение repair: PR #27/#28 слиты; PR #30 подготовлен
+
+PR#27 c77710a (run40279749813) и PR#28 6f1291e (run40280808627) реально deployed_and_verified; no migrations, file backup/recovery verified. Последняя production revision 6f1291edf31bee8f31c0940970fc6631825b2c0f.
+Аудит40280063632: административный grant не получает REST allow_auto_merge (field absent), но strict Validate/enforce_admins=true/reviews=0 и Actions PR permission=true подтверждены. Typed GraphQL fallback исправлен; configure40281088553 успешно включил AUTOMERGE_ENABLED, protection unchanged.
+Native GHA создал draft#29 при false merge flag (40281018269), replay40281288598 переиспользовал тот же PR. Proof закрыт, remote branch удалена, не слита. Preview первого proof отменён новым head; не выдавать за PASS. Последующие push/PR checks прошли.
+PR#30 автоматически создан GHA: controller-owned PR scope (сохраняет legacy/manual#6), отдельный native merge write token, successful branch preview continuation, native exact-main dispatch. 36 профильных PR automation tests, bootstrap/workflow tests/actionlint PASS; full branch CI40281499149 и preview40281695641 SUCCESS. Но initial bot PR workflow40281697839 action_required оставил PR unstable; automatic approval review отклонил merge. Не обходить gate. Project records обновляются текущими результатами; после нового head проверить обычные push/PR CI и GitHub state. Если требуется workflow approval, текущие connector tools не имеют approve-run operation. Старые draft CRM и PR#6 сохранять.

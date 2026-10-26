@@ -21,3 +21,9 @@ Production evidence: 18 файлов, verified file backup/recovery и finalize,
 Live smoke: verified HTTPS 200 для services.php, AI query, styles.css, guide.css и guide.js. Chromium 375×812 выполнял полученные production bytes: выбор AI, создание локального брифа, Telegram draft, сброс результата после правки, отсутствие overflow/JS errors. Прямой browser TLS не проверен; внешний Google Font исключён. Проверка не отправляла сообщения и персональные данные.
 
 Следующая точка: интегрировать последний merge/event-chain repair через permitted bootstrap path, затем проверить controller-owned PR → native preview → GHA merge → exact main dispatch → SpaceWeb → evidence.
+
+## Последняя проверка repair PR #30
+
+GHA создал PR#30 из docs/verified-delivery-result после trusted branch CI40281499149. Explicit native preview40281695641 завершился SUCCESS, включая Validate, full suite и release build. Исходный bot-triggered pull_request run40281697839 имеет action_required; PR остался unstable. Автоматическая проверка безопасности отклонила merge в этом состоянии. Он не был выполнен; не обходить эту блокировку.
+
+Этот documentation update фиксирует результаты перед повторной проверкой обычного push/PR CI нового head. Только fresh exact-head required checks и проверенный GitHub merge state позволяют продолжать. Если action_required останется, необходимо одобрение запуска через разрешённую GitHub workflow approval operation; в текущем наборе connector tools такой операции нет. Feature остаётся DEPLOYED_AND_VERIFIED на указанной выше production revision; полный repair не считать завершённым до законного merge, deploy и evidence.

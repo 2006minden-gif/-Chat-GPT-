@@ -20,3 +20,7 @@ Main/deployed `c77710a8ac4ed467218211f0500ae34195dcfdd1`; run40279749813 Validat
 ## Native PR и typed policy, PR #28
 
 Main/deployed `6f1291edf31bee8f31c0940970fc6631825b2c0f`; run40280808627 success. Exporter40281088490: exact revision deployed_and_verified, verified backup/recovery, migrations=[]. Configure integration40281088553 success, protection unchanged. Native creation proof40281018269 → draft#29 при false merging; replay40281288598 → тот же PR, без дубликата. Старый preview отменён новым head; это не PASS. Latest proof push/PR checks40281079415/40281084505 success.
+
+## Подготовленный последний repair, PR #30
+
+Source `348a7cb70a89690306fb621433549d4ad11afa3e`: branch CI40281499149 и explicit native preview40281695641 SUCCESS. GHA auto-created PR#30. Native preview выполняет обязательный Validate без production. Bot-triggered PR run40281697839: action_required; исходный head не интегрирован/не опубликован. Следующее обновление records получает собственный head и требует fresh CI; старый PASS не переносится на него автоматически.

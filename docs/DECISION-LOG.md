@@ -21,3 +21,7 @@ Run40280063632 подтвердил ноль обязательных approvals,
 PR#29 создан реальным GHA native token при выключенном merging, повторный validated head переиспользовал его. Proof закрыт/remote branch удалена; production из него не запускалась. В административном scope токена нет необходимости для записи PR/merge: используем отдельный native/App token с явными job permissions. Native-token preview completion должен продолжать approved job, затем exact main CI dispatch компенсирует suppressed push event.
 
 Старые/manual PR (включая #6) не являются текущей delivery-задачей. Auto-merge ограничен controller-owned PR с trusted-run provenance; это выбор scope, а не замена required checks/review. Draft CRM остаётся исключена.
+
+## Обработка action_required без обхода
+
+PR#30 native preview прошёл, но original PR workflow action_required оставил merge state unstable. Две попытки merge отклонены automatic approval review; merge не выполнен. Сохраняем gate. Документируем evidence и выполняем обычный CI после необходимых обновлений project records; не публикуем код в обход checks, не подделываем workflow/review approvals. При сохранении gate требуется одна внешняя workflow approval, не ручной merge или deployment.
