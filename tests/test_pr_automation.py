@@ -157,3 +157,13 @@ class ProtectedNativeMerge(unittest.TestCase):
   self.assertEqual(self.run_merge(count=1,decision='APPROVED',author_review=True),[])
  def test_failed_ci_or_stale_review_head_cannot_merge(self):
   self.assertEqual(self.run_merge(checks_ok=False),[]);self.assertEqual(self.run_merge(head_matches=False),[])
+
+class SafeFailureEvidence(unittest.TestCase):
+ def test_actions_annotation_preserves_bounded_diagnosis_and_escapes_commands(self):
+  with patch.dict(os.environ,{'GITHUB_ACTIONS':'true'}),patch('sys.stdout',new_callable=io.StringIO) as output:
+   control.report_failure(control.GitHubFailure('Cannot verify policy\n::warning::data'))
+  self.assertIn('::error title=NeuroDelo automation::Cannot verify policy%0A::warning::data',output.getvalue());self.assertEqual(len(output.getvalue().splitlines()),1)
+ def test_timeout_does_not_print_subprocess_arguments(self):
+  error=control.subprocess.TimeoutExpired(['command','SYNTHETIC_SECRET_NOT_FOR_LOGS'],45)
+  with patch.dict(os.environ,{'GITHUB_ACTIONS':'true'}),patch('sys.stdout',new_callable=io.StringIO) as output:control.report_failure(error)
+  self.assertNotIn('SYNTHETIC_SECRET_NOT_FOR_LOGS',output.getvalue())

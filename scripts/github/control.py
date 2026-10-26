@@ -322,7 +322,8 @@ def integration_policy(base):
         return {},count,[c['context'] for c in required]
     checks=protection.get('required_status_checks') or {}
     if not (protection.get('enforce_admins',{}).get('enabled') and checks.get('strict') and any(c.get('context')==REQUIRED_CHECK and c.get('app_id')==15368 for c in checks.get('checks',[]))):
-        raise GitHubFailure('Main must enforce strict GitHub Actions Validate for everyone; integration blocked')
+        observed={'enforce_admins':bool(protection.get('enforce_admins',{}).get('enabled')),'strict_checks':bool(checks.get('strict')),'actions_validate':any(c.get('context')==REQUIRED_CHECK and c.get('app_id')==15368 for c in checks.get('checks',[]))}
+        raise GitHubFailure('Integration policy gate failed: '+json.dumps(observed,sort_keys=True)+'; existing protection preserved')
     review=protection.get('required_pull_request_reviews') or {};count=review.get('required_approving_review_count',0)
     if not isinstance(count,int) or count<0 or (count>0 and not review.get('dismiss_stale_reviews')):
         raise GitHubFailure('Cannot verify current review rule; integration blocked')
@@ -375,6 +376,14 @@ def auto_merge():
         print('Auto-merge prepared for approved, passing PR',number)
     ensure_main_ci()
 
+def report_failure(error):
+    # Only bounded messages from the controller; never dump commands, env or traces.
+    message=str(error) if isinstance(error,GitHubFailure) else 'GitHub operation timed out; retry after inspecting workflow status'
+    if os.environ.get('GITHUB_ACTIONS')=='true':
+        escaped=message.replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+        print('::error title=NeuroDelo automation::'+escaped)
+    else:print(message)
+
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['bootstrap','auto-merge','create-pr','configure-integration']);parser.add_argument('--apply',action='store_true');parser.add_argument('--run-id');args=parser.parse_args()
     try:
@@ -385,4 +394,4 @@ if __name__=='__main__':
         elif args.operation=='create-pr':ensure_pr_for_validated_branch(args.run_id)
         else:auto_merge()
     except (GitHubFailure,subprocess.TimeoutExpired) as error:
-        print(str(error));raise SystemExit(1)
+        report_failure(error);raise SystemExit(1)
