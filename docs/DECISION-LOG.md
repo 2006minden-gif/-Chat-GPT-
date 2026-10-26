@@ -26,6 +26,10 @@ PR#29 создан реальным GHA native token при выключенно
 
 PR#30 native preview прошёл, но original PR workflow action_required оставил merge state unstable. Две попытки merge отклонены automatic approval review; merge не выполнен. Сохраняем gate. Документируем evidence и выполняем обычный CI после необходимых обновлений project records; не публикуем код в обход checks, не подделываем workflow/review approvals. При сохранении gate требуется одна внешняя workflow approval, не ручной merge или deployment.
 
+## Снятие исторического gate и итоговая приёмка
+
+После необходимого documentation update GitHub выполнил ordinary push/PR CI нового head (40282178098/40282183543), обе проверки SUCCESS, merge state clean. PR#30 слит разрешённым exact-head способом в 087b22b; original action_required не был подделан или объявлен успешным. Проверяем финальный documentation-only PR существующей автоматизацией; его actual run/evidence определяет факт полного цикла.
+
 ## Постоянная аутентификация, 26.10.2026
 
 Подтверждено официальными GitHub Docs и changelog11.06.2026: GITHUB_TOKEN-generated PR events opened/synchronize/reopened создают approval-required workflows. PR#31 same-repo/CONTRIBUTOR, run40282925637 jobs=0 подтверждает этот recurring gate. Предыдущее предположение о достаточности native preview отвергнуто.

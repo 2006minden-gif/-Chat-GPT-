@@ -68,4 +68,4 @@ References for scope and token behavior:
 5. Correlate SpaceWeb producer run and deployed main revision; verify file hashes, healthy public site, file backup/recovery, config/data preservation, migrations=[].
 6. Record source/merge/deployed SHAs and all run links in project state/release history. Only then declare the repair accepted.
 
-PR #31 and run40282925637 remain preserved as evidence; no workflow approval or dummy update is applied to them by this repair.
+PR #31 and run40282925637 remain evidence. During this diagnosis, the existing bot merged #31 at07:14:27Z into166fbfad87415762a6db29537b553ccb6ec27c9d. Its original PR run now reports failure with zero jobs. Neither that merge nor its separate successful preview proves normal PR CI passed. No approval or dummy update was applied by this repair. The new merge guard requires an actual successful normal PR workflow/Validate job for the exact head/base and trusted CI definition; a green preview cannot substitute.
