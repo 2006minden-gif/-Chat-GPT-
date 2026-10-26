@@ -157,7 +157,7 @@ if __name__=='__main__':
         if not run.isdigit() or not attempt.isdigit():raise ValueError('invalid_github_run_identity')
         release_id=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'-r'+run+'-a'+attempt+'-'+args.revision[:12]
         remote=Remote(args.bundle,args.revision,release_id)
-        expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if p.startswith('public_html/') and p.endswith(('.js','.css'))}
+        expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if (p.startswith('public_html/') and p.endswith(('.js','.css'))) or p in ['public_html/favicon.svg','public_html/favicon.ico','public_html/sitemap.xml','public_html/robots.txt']}
         try:report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets))
         finally:remote.close()
         report['revision']=args.revision;report['release_id']=release_id

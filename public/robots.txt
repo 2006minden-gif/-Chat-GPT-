@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /api.php
+Disallow: /studio.php
+Disallow: /crm.html
+Disallow: /private/
+
+Sitemap: https://neurodelo.pro/sitemap.xml

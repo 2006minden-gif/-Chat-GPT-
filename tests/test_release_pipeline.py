@@ -262,6 +262,19 @@ class HealthTests(unittest.TestCase):
    response=Response(text.encode());response.status=status;response.url=request.full_url
    response.headers={'Content-Type':kind,'X-Request-ID':'fixture-request'};return response
   return open_response
+ def test_public_disabled_notice_requires_explicit_marker(self):
+  self.assertTrue(health.snapshot(opener=self.opener(False,('/privacy.php',200,'text/html','<article data-privacy-mode="notice">Приём заявок через форму отключён</article>')))['ok'])
+  self.assertFalse(health.snapshot(opener=self.opener(False,('/privacy.php',200,'text/html','Приём заявок через форму отключён')))['ok'])
+ def test_crawl_assets_require_exact_types_and_bytes(self):
+  from io import BytesIO
+  base=self.opener()
+  def opener(req,timeout):
+   path=__import__('urllib.parse',fromlist=['urlsplit']).urlsplit(req.full_url).path
+   if path in health.METADATA_TYPES:
+    response=BytesIO(b'synthetic metadata');response.status=200;response.url=req.full_url;response.headers={'Content-Type':health.METADATA_TYPES[path][0]};return response
+   return base(req,timeout)
+  report=health.snapshot(opener=opener,extra_assets=health.METADATA_TYPES)
+  self.assertTrue(report['ok']);self.assertEqual(report['checks']['/favicon.ico']['sha256'],hashlib.sha256(b'synthetic metadata').hexdigest())
  def test_disabled_policy_is_healthy_but_not_enabled(self):
   result=health.snapshot(opener=self.opener());self.assertTrue(result['ok']);self.assertFalse(result['checks']['/api.php?r=privacy']['enabled'])
  def test_approved_policy_must_show_same_version(self):

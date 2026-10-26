@@ -9,7 +9,7 @@ const briefForm = document.querySelector('#brief-form');
 async function loadPrivacy() {
   try {
     privacy = await NeuroAPI.request('privacy',{},d=>typeof d.enabled==='boolean'&&typeof d.version==='string'&&d.url==='/privacy.php');
-    if(!privacy.enabled)throw new Error('Приём заявок временно отключён: документы об обработке данных ещё не опубликованы.');
+    if(!privacy.enabled)throw new Error('Приём заявок через форму временно отключён. Подготовьте бриф или напишите в Telegram.');
     document.querySelector('#consent').disabled=false;
     briefForm.querySelector('button[type="submit"]').disabled=false;
     document.querySelector('#privacy-status').textContent='';

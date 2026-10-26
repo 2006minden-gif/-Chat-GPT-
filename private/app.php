@@ -98,9 +98,29 @@ function valid_contact(string $contact): bool {
     if(str_starts_with($contact,'+') && !str_starts_with($digits,'7'))return false;
     return (bool)preg_match('/^[78][3489][0-9]{9}$/D',$digits);
 }
+/** Owner-authorized, versioned public legal documents; contains no secrets. */
+function release_legal_documents(): array {
+    $file=__DIR__.'/legal/privacy-2026-10-26-v1.json';
+    $raw=@file_get_contents($file);
+    $data=$raw===false ? null : json_decode($raw,true);
+    if (!is_array($data) || ($data['version']??'')!=='privacy-2026-10-26-v1'
+        || ($data['activation_requested']??false)!==true) return [];
+    foreach(['policy','consent','owner','address','contact'] as $key) {
+        if (!is_string($data[$key]??null) || trim($data[$key])==='') return [];
+    }
+    return $data;
+}
 function privacy_document(): array {
     $c=config();$version=$c['privacy_policy_version'] ?? '';
     $disabled=['settings'=>['enabled'=>false,'version'=>'','url'=>'/privacy.php','hash'=>''],'text'=>''];
+    // An explicit emergency stop always wins. Existing configured policies retain authority.
+    if (($c['privacy_policy_disabled']??false)===true) return $disabled;
+    if ($version==='') {
+        $legal=release_legal_documents();
+        if (!$legal) return $disabled;
+        return ['settings'=>['enabled'=>true,'version'=>$legal['version'],'url'=>'/privacy.php',
+            'hash'=>hash('sha256',$legal['policy']."\nCONSENT\n".$legal['consent'])],'text'=>$legal['policy']];
+    }
     if (($c['privacy_policy_approved'] ?? false)!==true || !is_string($version)
         || !preg_match('/^[A-Za-z0-9._-]{1,64}$/D',$version)) return $disabled;
     $file=__DIR__.'/privacy-policy.txt';

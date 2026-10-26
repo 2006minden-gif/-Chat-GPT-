@@ -32,6 +32,15 @@ class ServiceGuide(unittest.TestCase):
  def browser(self):
   p=sync_playwright().start();self.addCleanup(p.stop)
   b=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);self.addCleanup(b.close);return b
+ def test_public_map_and_icons(self):
+  import xml.etree.ElementTree as ET
+  xml=requests.get(self.base+'/sitemap.xml');self.assertEqual(xml.status_code,200)
+  locations={n.text for n in ET.fromstring(xml.content).findall('{*}url/{*}loc')}
+  self.assertEqual(locations,{'https://neurodelo.pro'+p for p in ['/','/services.php','/privacy.php','/consent.php','/sitemap.php']})
+  robots=requests.get(self.base+'/robots.txt');self.assertIn('Sitemap: https://neurodelo.pro/sitemap.xml',robots.text)
+  page=requests.get(self.base+'/sitemap.php');self.assertEqual(page.status_code,200);self.assertIn('Карта сайта',page.text)
+  icon=requests.get(self.base+'/favicon.ico');self.assertEqual(icon.content[:4],b'\x00\x00\x01\x00')
+  svg=requests.get(self.base+'/favicon.svg');self.assertEqual(ET.fromstring(svg.content).tag,'{http://www.w3.org/2000/svg}svg')
  def test_page_works_without_configuration_or_database(self):
   r=requests.get(self.base+'/services.php');self.assertEqual(r.status_code,200);self.assertIn('ИИ-агент и автоматизация',r.text);self.assertIn('frame-ancestors',r.headers['Content-Security-Policy'])
   for p in ['/services/guide.js','/services/guide.css']:self.assertEqual(requests.get(self.base+p).status_code,200)
