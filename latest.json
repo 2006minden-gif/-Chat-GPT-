@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "source_sha": "166fbfad87415762a6db29537b553ccb6ec27c9d",
-  "nonce": "workflow-40285937400",
-  "run_id": "40285961519",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40285961519",
-  "time": "2026-10-26T07:28:13.356798+00:00",
+  "nonce": "workflow-40285941882",
+  "run_id": "40285979154",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40285979154",
+  "time": "2026-10-26T07:28:32.467449+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40285937400,
+    "id": 40285941882,
     "name": "Enable approved auto-merge",
     "head_sha": "166fbfad87415762a6db29537b553ccb6ec27c9d",
     "head_branch": "main",
     "event": "workflow_run",
     "status": "completed",
     "conclusion": "success",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40285937400",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40285941882",
     "path": ".github/workflows/auto-merge.yml"
   },
   "inspection": {
@@ -239,33 +239,13 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "166fbfad87415762a6db29537b553ccb6ec27c9d",
-          "status": "pending",
+          "status": "in_progress",
           "conclusion": null,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40285979154",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
               "id": 121449619794,
-              "name": "record",
-              "status": "pending",
-              "conclusion": null,
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40285961519,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "166fbfad87415762a6db29537b553ccb6ec27c9d",
-          "status": "in_progress",
-          "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40285961519",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 121449563232,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -289,6 +269,52 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40285961519,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "166fbfad87415762a6db29537b553ccb6ec27c9d",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40285961519",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 121449563232,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
