@@ -173,8 +173,18 @@ def eligible(pr,reviews,checks,statuses,permissions,required_count,required_chec
         if status['context']!=REQUIRED_CHECK:passed.add(status['context'])
     return set(required_checks)<=passed
 
+def require_unattended_pr_auth(token_name='GH_TOKEN'):
+    """Native GITHUB_TOKEN PR events require recurring human workflow approval."""
+    if (os.environ.get('PR_AUTH_KIND') not in ['app','pat']
+        or os.environ.get('GITHUB_TOKEN_FALLBACK')=='true'
+        or not os.environ.get(token_name,'').strip()):
+        raise GitHubFailure('Unattended PR authentication unavailable. Configure AUTOMERGE_APP_ID'
+            ' with AUTOMERGE_APP_PRIVATE_KEY, or a repository-scoped PR_AUTOMATION_TOKEN; '
+            'native GITHUB_TOKEN creates recurring approval-required PR workflows. No approval or protection was changed.')
+
 def ensure_pr_for_validated_branch(run_id=None):
     """Create PR only; deliberately independent of merge policy and production secrets."""
+    require_unattended_pr_auth()
     base='repos/'+REPO
     event_run=None
     if run_id is None:
@@ -233,11 +243,7 @@ def ensure_pr_for_validated_branch(run_id=None):
             raise GitHubFailure('PR creation denied (HTTP 403). Verify pull_requests:write for the selected token/App installation and repository Actions permission to create PRs; '+diagnosis+'; no protection or credentials were changed.') from error
         raise
     print('Created PR',created['number'],'for validated SHA',sha,'run',run_id)
-    if os.environ.get('GITHUB_TOKEN_FALLBACK')=='true':
-        # Native token PR events do not start CI. Dispatch existing validation-only
-        # branch path; deploy.yml refuses production outside main.
-        api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':branch,'inputs':{'operation':'preview','expected_revision':sha}})
-        print('Requested required validation for native-token PR',created['number'])
+    print('PR checks must run from the normal pull_request event using configured '+os.environ['PR_AUTH_KIND']+' authentication')
     return created
 
 def required_delivery_policy(base):
@@ -333,6 +339,11 @@ def integration_policy(base):
 
 def configure_integration():
     """One-time enablement after validated main. Never edits branch protection."""
+    if os.environ.get('GITHUB_ACTIONS')=='true':
+        print('Unattended PR credential metadata: '+json.dumps({
+            'app_id_configured':os.environ.get('PR_APP_ID_CONFIGURED')=='true',
+            'app_key_configured':os.environ.get('PR_APP_KEY_CONFIGURED')=='true',
+            'pat_configured':os.environ.get('PR_PAT_CONFIGURED')=='true'},sort_keys=True))
     base='repos/'+REPO;repo=api('GET',base)
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):
         raise GitHubFailure('Existing authorized administrative grant required to configure integration')
@@ -378,7 +389,28 @@ def governance_diagnostics(base,repo=None):
                 'required_approvals':count if type(count) is int and count>=0 else None}
     return result
 
+def trusted_pr_validation(base,pr):
+    """A head preview does not release the distinct, approval-held PR workflow."""
+    head=pr['head']['sha'];target=pr['base']['sha']
+    definitions=[api('GET',base+'/contents/.github/workflows/deploy.yml?ref='+ref) for ref in [target,head]]
+    if not definitions[0].get('sha') or definitions[0].get('sha')!=definitions[1].get('sha'):return False
+    workflow=api('GET',base+'/actions/workflows/deploy.yml')
+    if type(workflow.get('id')) is not int or workflow['id']<=0:return False
+    runs=api('GET',base+'/actions/runs?event=pull_request&head_sha='+head+'&per_page=100')['workflow_runs']
+    for run in runs:
+        if (run.get('event')!='pull_request' or run.get('status')!='completed' or run.get('conclusion')!='success'
+            or run.get('head_sha')!=head or run.get('path')!='.github/workflows/deploy.yml'
+            or run.get('workflow_id')!=workflow.get('id')
+            or run.get('head_repository',{}).get('full_name')!=REPO
+            or run.get('repository',{}).get('full_name')!=REPO):continue
+        if not any(p.get('number')==pr['number'] and p.get('head',{}).get('sha')==head and p.get('base',{}).get('sha')==target for p in run.get('pull_requests',[])):continue
+        if type(run.get('id')) is not int or run['id']<=0:continue
+        jobs=pages(base+'/actions/runs/'+str(run['id'])+'/jobs','jobs')
+        if any(j.get('name')==REQUIRED_CHECK and j.get('status')=='completed' and j.get('conclusion')=='success' for j in jobs):return True
+    return False
+
 def auto_merge():
+    require_unattended_pr_auth('GITHUB_MERGE_TOKEN')
     base='repos/'+REPO;repo=api('GET',base)
     if not native_auto_merge_enabled(repo):raise GitHubFailure('Repository auto-merge is disabled')
     protection,count,required=integration_policy(base)
@@ -387,7 +419,9 @@ def auto_merge():
         # Preserve older/manual PRs: this controller owns only its validated-run PRs.
         if not re.match(r'^Created automatically after trusted Validate run [0-9]+ passed for [a-f0-9]{40}\.',pr.get('body') or ''):continue
         number=pr['number'];pr=api('GET',base+'/pulls/'+str(number))
-        if pr.get('mergeable') is False:continue
+        # A successful head preview must not override a held PR workflow.
+        if pr.get('mergeable') is not True or pr.get('mergeable_state')!='clean':continue
+        if not trusted_pr_validation(base,pr):continue
         head=pr['head']['sha'];reviews=pages(base+'/pulls/'+str(number)+'/reviews')
         review=api('POST','graphql',{'query':'query($n:Int!){repository(owner:"2006minden-gif",name:"-Chat-GPT-"){pullRequest(number:$n){reviewDecision headRefOid}}}','variables':{'n':number}})
         decision=review.get('data',{}).get('repository',{}).get('pullRequest',{})

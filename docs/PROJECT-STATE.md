@@ -1,5 +1,7 @@
 # NeuroDelo — состояние проекта
 
+Текущая приёмка automation repair: НЕ ЗАВЕРШЕНА. Точная recurring GITHUB_TOKEN approval rule и постоянный App/PAT путь: [PR-AUTOMATION-APPROVAL-DIAGNOSIS.md](PR-AUTOMATION-APPROVAL-DIAGNOSIS.md). Разовое одобрение #31 не исправляет последующие PR. Нельзя использовать dummy commit или успешный head preview для обхода held PR workflow.
+
 Обновлено 26.10.2026. Статусы относятся к указанным SHA и runs.
 
 Сервис-гайд опубликован: https://neurodelo.pro/services.php.

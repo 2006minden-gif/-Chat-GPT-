@@ -162,3 +162,7 @@ PR#30 автоматически создан GHA: controller-owned PR scope (с
 ## Актуализация после законного merge PR #30
 
 Новый head cfc29a80 прошёл ordinary push40282178098 и PR40282183543, GitHub clean. Automatic approval review разрешил штатный exact-head merge; main087b22bcef4eb7b2037ebdee505b93746f168d6a, CI40282458133. Прежний action_required не подделывался. Native/App merge write token, preview completion continuation и controller-owned PR scope теперь интегрированы. Документационная ветка docs/delivery-acceptance выполняет итоговую проверку реального GHA цикла; перечитать actual refs/runs/evidence. Если новый bot PR снова action_required/unstable, не обходить — выяснить требуемое workflow approval.
+
+## Новый критерий продолжения — native approval gate доказан
+
+Официальный GitHub change11.06.2026 и текущие Docs требуют approval для GITHUB_TOKEN-generated PR events opened/synchronize/reopened; это recurring, не first-time fork и не one-time setup. Run40282925637 jobs=[]/action_required, PR#31 same-repo/CONTRIBUTOR. Не dummy-update #31, не подделывать/автоматизировать human approvals и не считать preview заменой held run. Подготовлен supported fail-closed App/PAT authentication repair, отдельный bootstrap PR должен пройти existing mandatory checks. Точная owner capability decision и последствия в docs/PR-AUTOMATION-APPROVAL-DIAGNOSIS.md. До subsequent legitimate unattended PR → normal checks → protected integration → real main CI/SpaceWeb/evidence задача НЕ ПРИНЯТА.
