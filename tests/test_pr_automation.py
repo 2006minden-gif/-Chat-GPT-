@@ -104,6 +104,19 @@ class WorkflowSeparation(unittest.TestCase):
   for flag in ['false','true','']:
    run=control.subprocess.run(['bash','-e'],input='python() { echo "CALLED:$*"; }\n'+step['run'],text=True,capture_output=True,env=dict(os.environ,AUTOMERGE_ENABLED=flag,VALIDATED_RUN='77'))
    self.assertEqual(run.returncode,0,run.stderr);self.assertIn('CALLED:scripts/github/control.py create-pr --run-id 77',run.stdout)
+ def test_native_preview_completion_can_trigger_merge_but_main_forks_and_failed_runs_cannot(self):
+  w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
+  expression=w['jobs']['approved']['if']
+  def allowed(**changes):
+   context={'vars.AUTOMERGE_ENABLED':'true','github.ref':'refs/heads/main','github.event_name':'workflow_run',
+    'github.event.workflow_run.conclusion':'success','github.event.workflow_run.event':'workflow_dispatch',
+    'github.event.workflow_run.head_branch':'feature/native','github.event.workflow_run.head_repository.full_name':control.REPO,'github.repository':control.REPO}
+   context.update(changes);code=expression
+   for key in sorted(context,key=len,reverse=True):code=code.replace(key,repr(context[key]))
+   return eval(' '.join(code.replace('&&',' and ').replace('||',' or ').split()),{'__builtins__':{}},{})
+  self.assertTrue(allowed())
+  for changes in [{'vars.AUTOMERGE_ENABLED':'false'},{'github.event.workflow_run.head_branch':'main'},{'github.event.workflow_run.head_repository.full_name':'fork/other'},{'github.event.workflow_run.conclusion':'failure'}]:
+   self.assertFalse(allowed(**changes))
 
 class ActualIntegrationPolicy(unittest.TestCase):
  def policy(self,count=0):
@@ -139,9 +152,10 @@ class ActualIntegrationPolicy(unittest.TestCase):
   self.assertEqual(len(mutations),1);self.assertTrue(mutations[0][1].endswith('/actions/variables/AUTOMERGE_ENABLED'));self.assertEqual(mutations[0][2]['value'],'true')
 
 class ProtectedNativeMerge(unittest.TestCase):
- def run_merge(self,count=0,decision=None,head_matches=True,checks_ok=True,author_review=False):
+ def run_merge(self,count=0,decision=None,head_matches=True,checks_ok=True,author_review=False,managed=True):
   sha='a'*40
   pr={'number':55,'draft':False,'head':{'repo':{'full_name':control.REPO},'sha':sha},'base':{'ref':'main','sha':'b'*40},'user':{'login':'owner'},'mergeable':True,'merge_commit_sha':None}
+  pr['body']='Created automatically after trusted Validate run 77 passed for '+sha+'.' if managed else 'Legacy/manual PR; preserve for separate review.'
   reviews=[{'state':'APPROVED','user':{'login':'owner'},'commit_id':sha,'author_association':'OWNER'}] if author_review else []
   def api(m,p,d=None,**kw):
    if p=='repos/'+control.REPO:return {'allow_auto_merge':True,'allow_squash_merge':True}
@@ -159,9 +173,20 @@ class ProtectedNativeMerge(unittest.TestCase):
  def test_zero_required_reviews_can_use_native_protected_auto_merge(self):
   calls=self.run_merge();self.assertEqual(len(calls),1);args=calls[0].args[0]
   self.assertIn('--auto',args);self.assertIn('--match-head-commit',args);self.assertIn('a'*40,args);self.assertNotIn('--admin',args)
+ def test_merge_writes_use_job_token_without_replacing_policy_read_grant(self):
+  with patch.dict(os.environ,{'GH_TOKEN':'SYNTHETIC_POLICY_GRANT','GITHUB_MERGE_TOKEN':'  SYNTHETIC_JOB_TOKEN\n'}):
+   calls=self.run_merge()
+   self.assertEqual(calls[0].kwargs['env']['GH_TOKEN'],'SYNTHETIC_JOB_TOKEN')
+   self.assertEqual(os.environ['GH_TOKEN'],'SYNTHETIC_POLICY_GRANT')
+  w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
+  step=next(s for s in w['jobs']['approved']['steps'] if s.get('name')=='Enable only independently reviewed passing PRs')
+  self.assertNotIn('BOOTSTRAP_ADMIN_TOKEN',step['env']['GITHUB_MERGE_TOKEN'])
+  self.assertNotIn('BOOTSTRAP_ADMIN_TOKEN',step['env']['GITHUB_TOKEN_FALLBACK'])
  def test_required_or_additional_reviews_cannot_be_bypassed(self):
   self.assertEqual(self.run_merge(count=1),[]);self.assertEqual(self.run_merge(decision='REVIEW_REQUIRED'),[])
   self.assertEqual(self.run_merge(count=1,decision='APPROVED',author_review=True),[])
+ def test_legacy_manual_pr_is_preserved_even_when_checks_are_green(self):
+  self.assertEqual(self.run_merge(managed=False),[])
  def test_failed_ci_or_stale_review_head_cannot_merge(self):
   self.assertEqual(self.run_merge(checks_ok=False),[]);self.assertEqual(self.run_merge(head_matches=False),[])
 
