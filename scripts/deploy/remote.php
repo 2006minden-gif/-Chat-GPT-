@@ -17,11 +17,29 @@ function save_json(string $path,array $value):void {
     chmod($tmp,0600);insist(rename($tmp,$path),'metadata_rename_failed');
 }
 function paths():array {
-    $public=['.htaccess','api-client.js','api.php','crm.css','crm.html','crm.js','index.html','index.php','privacy.php','script.js','studio.php','styles.css'];
-    return array_merge(array_map(fn($p)=>'public_html/'.$p,$public),['private/.htaccess','private/app.php']);
+    return [
+        'public_html/.htaccess',
+        'public_html/api-client.js',
+        'public_html/api.php',
+        'public_html/crm.css',
+        'public_html/crm.html',
+        'public_html/crm.js',
+        'public_html/index.html',
+        'public_html/index.php',
+        'public_html/privacy.php',
+        'public_html/script.js',
+        'public_html/services.php',
+        'public_html/services/guide.css',
+        'public_html/services/guide.js',
+        'public_html/studio.php',
+        'public_html/styles.css',
+        'private/.htaccess',
+        'private/app.php',
+        'private/services/catalog.php',
+    ];
 }
 function hash_file_safe(string $path):?string {
-    insist(!is_link($path),'symlink_refused');
+    $parent=$path;do {insist(!is_link($parent),'symlink_refused');$next=dirname($parent);if($next===$parent)break;$parent=$next;} while(true);
     if(!file_exists($path))return null;
     insist(is_file($path)&&is_readable($path),'non_regular_file');return hash_file('sha256',$path);
 }
@@ -29,6 +47,21 @@ function protected_files(string $root):array {
     return ['private/config.php'=>hash_file_safe($root.'/private/config.php'),'private/privacy-policy.txt'=>hash_file_safe($root.'/private/privacy-policy.txt')];
 }
 function assert_protected(string $root,array $before):void {insist(protected_files($root)===$before,'protected_file_changed');}
+/** Schema metadata only: no customer rows, credentials, dumps or SQL text in evidence. */
+function database_inventory(PDO $pdo):array {
+    $tables=$pdo->query("SELECT table_name FROM information_schema.tables WHERE table_schema=DATABASE() ORDER BY table_name")->fetchAll(PDO::FETCH_COLUMN);
+    $tables=array_values(array_filter($tables,fn($t)=>is_string($t)&&preg_match('/^nd_[a-z_]+$/D',$t)===1));
+    $journal=[];
+    if(in_array('nd_schema_migrations',$tables,true)) {
+        $rows=$pdo->query('SELECT version,state,up_checksum,down_checksum FROM nd_schema_migrations ORDER BY version LIMIT 100')->fetchAll(PDO::FETCH_ASSOC);
+        foreach($rows as $row) {
+            insist(preg_match('/^[0-9]{3}_[a-z_]+$/D',$row['version'])===1,'invalid_migration_journal');
+            $journal[]=['version'=>$row['version'],'state'=>$row['state'],'up_checksum'=>$row['up_checksum'],'down_checksum'=>$row['down_checksum']];
+        }
+    }
+    $columns=$pdo->query("SELECT table_name,column_name,column_type,is_nullable,column_key FROM information_schema.columns WHERE table_schema=DATABASE() AND LEFT(table_name,3)='nd_' ORDER BY table_name,ordinal_position")->fetchAll(PDO::FETCH_ASSOC);
+    return ['mysql_version'=>(string)$pdo->query('SELECT VERSION()')->fetchColumn(),'tables'=>$tables,'journal'=>$journal,'schema_sha256'=>hash('sha256',json_encode($columns))];
+}
 function preflight(string $root):array {
     insist(PHP_VERSION_ID>=80400,'php_84_required');
     insist(extension_loaded('pdo_mysql')&&extension_loaded('mbstring')&&function_exists('proc_open'),'php_capability_missing');
@@ -39,12 +72,13 @@ function preflight(string $root):array {
     foreach(['db_host','db_name','db_user','db_password','app_url'] as $key)insist(isset($c[$key])&&is_string($c[$key]),'invalid_configuration');
     insist(rtrim($c['app_url'],'/')==='https://neurodelo.pro','unexpected_application_url');
     $pdo=new PDO('mysql:host='.$c['db_host'].';port='.($c['db_port']??3306).';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
+    insist(str_starts_with((string)$pdo->query('SELECT VERSION()')->fetchColumn(),'5.7.'),'mysql_57_required');
     $pdo->exec('SET SESSION TRANSACTION READ ONLY');
     $pdo->query('SELECT id,password_hash FROM nd_admin LIMIT 0');
     $pdo->query('SELECT id,version,request_key,request_hash,consent,consent_at,policy_version,policy_hash FROM nd_leads LIMIT 0');
     $pdo->query('SELECT token,csrf,expires FROM nd_sessions LIMIT 0');$pdo->query('SELECT bucket,attempts,expires FROM nd_limits LIMIT 0');
     return ['ok'=>true,'php'=>PHP_VERSION,'database_connected'=>true,'admin_exists'=>(bool)$pdo->query('SELECT id FROM nd_admin WHERE id=1')->fetchColumn(),
-            'privacy_approved'=>($c['privacy_policy_approved']??false)===true];
+            'privacy_approved'=>($c['privacy_policy_approved']??false)===true,'database_inventory'=>database_inventory($pdo)];
 }
 function remove_tree(string $path):void {
     // Only managed backup/staging trees call this; unlink a leftover link, never follow it.
@@ -57,8 +91,10 @@ function verify_bundle(string $candidate,string $id):array {
     insist(($m['schema_version']??0)===1&&preg_match('/^[a-f0-9]{40}$/D',$m['revision']??'')===1,'invalid_manifest');
     $actual=array_keys($m['files']??[]);$expected=paths();sort($actual);sort($expected);insist($actual===$expected,'release_allowlist_mismatch');
     insist(($m['keep_backups']??0)>=2&&($m['keep_backups']??0)<=20,'invalid_retention');
+    foreach(array_keys($m['tools']) as $path)insist(!str_starts_with($path,'private/')&&!str_starts_with($path,'public_html/'),'unsafe_tool_path');
     foreach(array_merge($m['files'],$m['tools']) as $path=>$hash) {
-        insist(preg_match('#^(public_html/[A-Za-z0-9_.-]+|private/(app.php|\.htaccess)|remote.php|scripts/migrate.php|database/schema\.sql|database/migrations/[0-9]{3}_[a-z_]+\.sql|database/migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
+        insist(!in_array('..',explode('/',$path),true)&&!in_array('.',explode('/',$path),true)&&!str_contains($path,'//'),'unsafe_release_path');
+        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^remote\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
     $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
@@ -67,7 +103,8 @@ function verify_bundle(string $candidate,string $id):array {
     return $m;
 }
 function atomic_copy(string $source,string $destination,string $id,int $mode=0644):void {
-    insist(!is_link($destination),'symlink_refused');
+    hash_file_safe($destination);
+    if(!is_dir(dirname($destination)))insist(mkdir(dirname($destination),str_contains($destination,'/public_html/')?0755:0700,true),'destination_directory_failed');
     $tmp=dirname($destination).'/.nd-'.$id.'-'.basename($destination).'.tmp';
     insist(!file_exists($tmp)&&!is_link($tmp),'temporary_file_collision');
     try {insist(copy($source,$tmp),'file_copy_failed');chmod($tmp,$mode);insist(hash_file('sha256',$source)===hash_file('sha256',$tmp),'copy_checksum_mismatch');insist(rename($tmp,$destination),'file_rename_failed');}
@@ -155,7 +192,7 @@ function rollback(string $root,string $stateRoot,array &$state,string $id):array
     insist(preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$id)===1,'invalid_release_id');
     $protectedNow=protected_files($root);
     $backup=$stateRoot.'/backups/'.$id;$meta=read_json($backup.'/backup.json');
-    insist(array_keys($meta['files'])===paths(),'backup_allowlist_mismatch');
+    insist(!empty($meta['files'])&&!array_diff(array_keys($meta['files']),paths()),'backup_allowlist_mismatch');
     // Validate the entire rollback before touching any destination.
     foreach($meta['files'] as $path=>$entry) {
         $current=hash_file_safe($root.'/'.$path);

@@ -10,13 +10,33 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 
+FORBIDDEN_NAMES = {'config.php', 'config.example.php', 'privacy-policy.txt', 'setup.php', '.user.ini'}
+
+def safe_application_path(name):
+    parts = name.split('/')
+    return (bool(parts) and all(re.fullmatch(r'[A-Za-z0-9_-][A-Za-z0-9_.-]*|\.htaccess', p)
+            and p not in {'.', '..'} for p in parts)
+            and parts[-1] not in FORBIDDEN_NAMES
+            and (parts[-1] == '.htaccess' or parts[-1].endswith(('.php', '.html', '.css', '.js'))))
+
+def check_source_path(source, root):
+    if any(p.is_symlink() for p in [source, *source.parents] if p == root or root in p.parents):
+        raise ValueError('non_regular_release_source')
+
 def policy_check(root=ROOT):
     policy = json.loads((root / 'scripts/deploy/policy.json').read_text())
     if policy.get('schema_version') != 1 or policy.get('keep_backups', 0) < 2:
         raise ValueError('invalid_release_policy')
     entries = policy.get('migrations', [])
     seen = set()
+    previous = None
     for entry in entries:
+        if 'operator' in entry:
+            if entry.get('depends_on') != previous or not re.fullmatch(r'scripts/migrate(?:-[a-z]+)?\.php', entry['operator']):
+                raise ValueError('invalid_migration_dependency_chain')
+            if not (root / entry['operator']).is_file():
+                raise ValueError('migration_operator_missing')
+        previous = entry['version']
         version = entry['version']
         if not re.fullmatch(r'[0-9]{3}_[a-z_]+', version) or version in seen:
             raise ValueError('invalid_migration_version')
@@ -38,6 +58,19 @@ def policy_check(root=ROOT):
     discovered = list((root / 'database/migrations').glob('*/up.sql'))
     if discovered and not all((root / p).is_file() for p in ['scripts/migrate.php', 'tests/test_crm_migrations.py', 'tests/test_prelaunch_foundation.py']):
         raise ValueError('migration_compatibility_tests_missing')
+    if any('operator' in e for e in entries) and {p.parent.name for p in discovered} != seen:
+        raise ValueError('migration_dependency_chain_incomplete')
+    for folder in ['public', 'private']:
+        names = policy.get(folder + '_files', [])
+        if len(names) != len(set(names)) or any(not safe_application_path(n) for n in names):
+            raise ValueError('forbidden_release_path')
+        discovered = set()
+        for source in (root / folder).rglob('*'):
+            check_source_path(source, root)
+            if source.is_file() and source.name not in FORBIDDEN_NAMES:
+                discovered.add(source.relative_to(root / folder).as_posix())
+        if discovered != set(names):
+            raise ValueError('application_release_closure_mismatch')
     return policy
 
 def build(output, revision, root=ROOT):
@@ -47,12 +80,13 @@ def build(output, revision, root=ROOT):
     output.mkdir(parents=True)
     files, tools = {}, {}
     def copy(source, destination, mapping):
+        check_source_path(source, root)
         if source.is_symlink() or not source.is_file(): raise ValueError('non_regular_release_source')
         target = output / destination; target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target); mapping[destination] = digest(target)
     for source_dir, prefix, names in [('public', 'public_html', policy['public_files']), ('private', 'private', policy['private_files'])]:
         for name in names:
-            if not re.fullmatch(r'[A-Za-z0-9_.-]+', name) or name in ['config.php','config.example.php','privacy-policy.txt','setup.php','.user.ini']:
+            if not safe_application_path(name):
                 raise ValueError('forbidden_release_path')
             copy(root / source_dir / name, prefix + '/' + name, files)
     copy(root / 'scripts/deploy/remote.php', 'remote.php', tools)
@@ -62,7 +96,8 @@ def build(output, revision, root=ROOT):
         if not re.fullmatch(r'database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)',path):
             raise ValueError('unapproved_sql_file_path')
         copy(source,path,tools)
-    if (root / 'scripts/migrate.php').is_file():copy(root / 'scripts/migrate.php','scripts/migrate.php',tools)
+    for source in sorted((root / 'scripts').glob('migrate*.php')):
+        copy(source, 'scripts/' + source.name, tools)
     manifest = {'schema_version':1,'revision':revision,'files':files,'tools':tools,
                 'keep_backups':policy['keep_backups'],'migrations':policy['migrations'],
                 'verification_contract':'ci-mysql57-backup-restore-v1'}

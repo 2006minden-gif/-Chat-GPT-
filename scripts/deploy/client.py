@@ -94,7 +94,7 @@ class Remote:
         command=shlex.join(['env','NEURO_PHP_BIN='+self.php,self.php,self.candidate+'/remote.php',operation,ACCOUNT,release_id or self.id])
         return self.command(command,json_output=True)
 
-def coordinate(remote, mode='deploy', snapshot=health.snapshot, attempts=3, delay=2, expected_assets=None):
+def coordinate(remote, mode='deploy', snapshot=health.snapshot, attempts=3, delay=2, expected_assets=None, revision_snapshot=None):
     report={'mode':mode,'result':'failed','rollback_verified':False}
     before=snapshot();report['before']=before
     if not before.get('complete'):
@@ -121,7 +121,7 @@ def coordinate(remote, mode='deploy', snapshot=health.snapshot, attempts=3, dela
     try:
         report['apply']=remote.action('apply')
         for attempt in range(attempts):
-            after=health.require_asset_revision(snapshot(),expected_assets);report['after']=after
+            after=health.require_asset_revision((revision_snapshot or snapshot)(),expected_assets);report['after']=after
             if after['ok']:break
             if attempt+1<attempts:time.sleep(delay)
         if not after['ok']:
@@ -157,7 +157,8 @@ if __name__=='__main__':
         if not run.isdigit() or not attempt.isdigit():raise ValueError('invalid_github_run_identity')
         release_id=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'-r'+run+'-a'+attempt+'-'+args.revision[:12]
         remote=Remote(args.bundle,args.revision,release_id)
-        try:report=coordinate(remote,args.operation,expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if p.startswith('public_html/') and p.endswith(('.js','.css'))})
+        expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if p.startswith('public_html/') and p.endswith(('.js','.css'))}
+        try:report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets))
         finally:remote.close()
         report['revision']=args.revision;report['release_id']=release_id
     except Exception as error:
