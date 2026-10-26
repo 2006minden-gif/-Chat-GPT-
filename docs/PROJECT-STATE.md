@@ -20,10 +20,22 @@ Production evidence: 18 файлов, verified file backup/recovery и finalize,
 
 Live smoke: verified HTTPS 200 для services.php, AI query, styles.css, guide.css и guide.js. Chromium 375×812 выполнял полученные production bytes: выбор AI, создание локального брифа, Telegram draft, сброс результата после правки, отсутствие overflow/JS errors. Прямой browser TLS не проверен; внешний Google Font исключён. Проверка не отправляла сообщения и персональные данные.
 
-Следующая точка: интегрировать последний merge/event-chain repair через permitted bootstrap path, затем проверить controller-owned PR → native preview → GHA merge → exact main dispatch → SpaceWeb → evidence.
+Последний code repair интегрирован PR#30: main `087b22bcef4eb7b2037ebdee505b93746f168d6a`. Историческая блокировка ниже снята обычным synchronize CI: push40282178098 и PR40282183543 нового exact head cfc29a80ea57e51e76907c45c37ee3546cd522b5 завершились SUCCESS, GitHub state стал clean, штатный merge разрешён. CI нового main40282458133 проверяется отдельно; предыдущие production evidence не заменяют его результат.
+
+Итоговая documentation-only ветка delivery-acceptance проверяет существующий GHA путь после repair. Runtime статус и production revision определяются authoritative run/evidence, а не предположением из этого снимка.
 
 ## Последняя проверка repair PR #30
 
 GHA создал PR#30 из docs/verified-delivery-result после trusted branch CI40281499149. Explicit native preview40281695641 завершился SUCCESS, включая Validate, full suite и release build. Исходный bot-triggered pull_request run40281697839 имеет action_required; PR остался unstable. Автоматическая проверка безопасности отклонила merge в этом состоянии. Он не был выполнен; не обходить эту блокировку.
 
 Этот documentation update фиксирует результаты перед повторной проверкой обычного push/PR CI нового head. Только fresh exact-head required checks и проверенный GitHub merge state позволяют продолжать. Если action_required останется, необходимо одобрение запуска через разрешённую GitHub workflow approval operation; в текущем наборе connector tools такой операции нет. Feature остаётся DEPLOYED_AND_VERIFIED на указанной выше production revision; полный repair не считать завершённым до законного merge, deploy и evidence.
+
+## Устойчивые контракты после PR #30
+
+- PR creation: trusted successful exact-head Validate, same repository, неизменённый deploy.yml; native/App token, отдельная concurrency; existing PR/race422/stale SHA учтены.
+- Integration: actual strict Actions Validate, admin enforcement и real review count; только controller-owned PR, separate native/App write token, --match-head-commit, без --admin. Legacy/manual PR#6 и draft CRM сохраняются.
+- Events: native PR preview запускается explicit dispatch существующего deploy.yml; successful same-repo non-main preview допускает approved job. Native merge сопровождается exact-main CI dispatch, так как обычный push event может быть подавлен.
+- Production: checked artifact, существующая SSH pipeline, health, file hashes, file backup/recovery; config/data/uploads сохранены, migrations=[].
+- Tests: 36 targeted PR automation tests; full hosted suite последней правки — 170 Python и 12 Node PASS, PHP8.4/MySQL5.7/browser/actionlint.
+
+При новом action_required не обходить gate: получить разрешённое workflow approval или доказанный fresh passing ordinary PR CI/clean state. Неполный/отменённый run не считать PASS.
