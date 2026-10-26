@@ -72,7 +72,7 @@ class PrAutomation(unittest.TestCase):
   self.post_error='HTTP 422 invalid_request';self.assertEqual(self.invoke()['number'],4);self.assertEqual(len(self.posts()),1)
  def test_missing_permission_has_actionable_bounded_diagnostic(self):
   self.post_error='HTTP 403 insufficient_permissions_or_policy'
-  with self.assertRaisesRegex(control.GitHubFailure,'pull_requests:write'):self.invoke()
+  with patch.object(control,'governance_diagnostics',return_value={'administrative_grant':False}),self.assertRaisesRegex(control.GitHubFailure,'pull_requests:write'):self.invoke()
  def test_native_token_requests_branch_validation_without_production_dispatch(self):
   with patch.dict(os.environ,{'GITHUB_TOKEN_FALLBACK':'true'}):self.invoke()
   dispatch=[p for m,u,p in self.calls if m=='POST' and u.endswith('/dispatches')]
@@ -159,6 +159,27 @@ class ProtectedNativeMerge(unittest.TestCase):
   self.assertEqual(self.run_merge(checks_ok=False),[]);self.assertEqual(self.run_merge(head_matches=False),[])
 
 class SafeFailureEvidence(unittest.TestCase):
+ def test_absent_auto_merge_field_is_not_reported_as_disabled(self):
+  repo={'full_name':control.REPO,'permissions':{'admin':True}}
+  with patch.object(control,'api',return_value=repo),patch.object(control,'governance_diagnostics',return_value={'auto_merge_field_present':False}),patch.object(control,'set_variable') as write:
+   with self.assertRaisesRegex(control.GitHubFailure,'not verified.*auto_merge_field_present'):control.configure_integration()
+   write.assert_not_called()
+ def test_diagnostics_only_export_allowlisted_policy_values_and_never_write(self):
+  calls=[]
+  def fake(method,path,*args):
+   calls.append(method)
+   if path.endswith('/workflow'):return {'can_approve_pull_request_reviews':False,'token':'SYNTHETIC_SECRET'}
+   return ActualIntegrationPolicy().policy(2)|{'secret':'SYNTHETIC_SECRET'}
+  with patch.object(control,'api',side_effect=fake):
+   result=control.governance_diagnostics('repos/'+control.REPO,{'permissions':{'admin':True},'allow_auto_merge':False,'token':'SYNTHETIC_SECRET'})
+  self.assertEqual(result['allow_auto_merge'],False);self.assertTrue(result['auto_merge_field_present'])
+  self.assertEqual(result['branches/main/protection']['required_approvals'],2)
+  self.assertFalse(result['actions/permissions/workflow']['can_approve_pull_request_reviews'])
+  self.assertNotIn('SYNTHETIC_SECRET',json.dumps(result));self.assertEqual(set(calls),{'GET'})
+ def test_inaccessible_diagnostics_are_unknown_not_false_policy(self):
+  with patch.object(control,'api',side_effect=control.GitHubFailure('403')):
+   result=control.governance_diagnostics('repos/'+control.REPO,{})
+  self.assertIsNone(result['allow_auto_merge']);self.assertEqual(result['branches/main/protection'],{'accessible':False})
  def test_actions_annotation_preserves_bounded_diagnosis_and_escapes_commands(self):
   with patch.dict(os.environ,{'GITHUB_ACTIONS':'true'}),patch('sys.stdout',new_callable=io.StringIO) as output:
    control.report_failure(control.GitHubFailure('Cannot verify policy\n::warning::data'))
