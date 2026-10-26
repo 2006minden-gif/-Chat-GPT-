@@ -7,12 +7,13 @@ import urllib.error
 import urllib.request
 
 DENIED_PATHS=['/~.htaccess','/index~.html','/.htaccess','/private/config.php','/index.html','/crm.html']
+METADATA_TYPES={'/favicon.svg':['image/svg+xml'],'/favicon.ico':['image/x-icon','image/vnd.microsoft.icon'],'/sitemap.xml':['application/xml','text/xml'],'/robots.txt':['text/plain']}
 ASSET_PATHS=['/styles.css','/crm.css','/script.js','/crm.js','/api-client.js']
 PATHS=['/','/studio.php','/api.php?r=privacy','/privacy.php','/api.php?r=session','/api.php?r=leads']+DENIED_PATHS+ASSET_PATHS
 
 def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=()):
     assets = list(dict.fromkeys(ASSET_PATHS + list(extra_assets)))
-    if any(not re.fullmatch(r'/[A-Za-z0-9_-][A-Za-z0-9_./-]*\.(css|js)', p) or '..' in p.split('/') for p in assets):
+    if any((p not in METADATA_TYPES and not re.fullmatch(r'/[A-Za-z0-9_-][A-Za-z0-9_./-]*\.(css|js)', p)) or '..' in p.split('/') for p in assets):
         raise ValueError('unsafe_health_asset_path')
     rows = {}
     for path in list(dict.fromkeys(PATHS + assets)):
@@ -44,11 +45,11 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_
                 policy=rows.get('/api.php?r=privacy',{})
                 row['ok']=policy.get('ok',False) and row['content_type']=='text/html' and (
                     (policy['enabled'] and response.status==200 and ('Версия: '+policy['version']) in text) or
-                    (not policy['enabled'] and response.status==503 and 'Приём заявок через форму отключён' in text))
+                    (not policy['enabled'] and (response.status==503 or (response.status==200 and 'data-privacy-mode="notice"' in text)) and 'Приём заявок через форму отключён' in text))
             elif path in ['/api.php?r=session','/api.php?r=leads']:
                 row['ok']=response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)
             elif path in assets:
-                expected=['text/css'] if path.endswith('.css') else ['application/javascript','text/javascript']
+                expected=METADATA_TYPES.get(path, ['text/css'] if path.endswith('.css') else ['application/javascript','text/javascript'])
                 row['ok']=response.status==200 and row['content_type'] in expected;row['sha256']=hashlib.sha256(body).hexdigest()
             else: row['ok']=response.status in [403,404]
             row['ok'] = bool(row['ok'] and not row['redirected'] and not row.get('oversized',False))

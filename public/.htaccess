@@ -25,3 +25,17 @@ DirectoryIndex index.php
     Require all denied
 </If>
 # END NEURODELO ISSUE10 SECURITY
+
+# Explicit content types for the public icon and crawl metadata.
+<Files "favicon.svg">
+    ForceType image/svg+xml
+</Files>
+<Files "favicon.ico">
+    ForceType image/x-icon
+</Files>
+<Files "sitemap.xml">
+    ForceType application/xml
+</Files>
+<Files "robots.txt">
+    ForceType text/plain
+</Files>

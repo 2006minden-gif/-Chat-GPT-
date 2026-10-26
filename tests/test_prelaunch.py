@@ -148,10 +148,29 @@ class Prelaunch(unittest.TestCase):
   self.assertEqual(requests.get(self.api('leads')).status_code,401)
   self.config['privacy_policy_approved']=False;self.write_config()
   try:
-   self.assertEqual(requests.get(self.base+'/privacy.php').status_code,503)
+   self.assertEqual(requests.get(self.base+'/privacy.php').status_code,200)
    self.assertFalse(requests.get(self.api('privacy')).json()['enabled'])
    self.assertEqual(requests.post(self.api('leads'),json=self.lead()).status_code,503)
   finally:self.config['privacy_policy_approved']=True;self.write_config()
+ def test_05_release_policy_activation_and_consent_binding(self):
+  legal=self.path/'private/legal/privacy-2026-10-26-v1.json';original=legal.read_bytes();old=dict(self.config)
+  try:
+   self.config.update(privacy_policy_approved=False,privacy_policy_version='');self.write_config()
+   doc=json.loads(original);version=doc['version']
+   policy=requests.get(self.api('privacy')).json();self.assertTrue(policy['enabled']);self.assertEqual(policy['version'],version)
+   page=requests.get(self.base+'/privacy.php');self.assertEqual(page.status_code,200);self.assertIn(doc['owner'],page.text)
+   consent=requests.get(self.base+'/consent.php');self.assertEqual(consent.status_code,200);self.assertIn(version,consent.text)
+   self.assertEqual(requests.post(self.api('leads'),json=self.lead(policy_version=version,consent=False)).status_code,422)
+   result=requests.post(self.api('leads'),json=self.lead(policy_version=version));self.assertEqual(result.status_code,201,result.text)
+   row=self.sql('SELECT policy_hash,policy_version FROM nd_leads WHERE id=?',params=[result.json()['lead_id']])[0]
+   self.assertEqual(row['policy_version'],version)
+   self.assertEqual(row['policy_hash'],hashlib.sha256((doc['policy']+'\nCONSENT\n'+doc['consent']).encode()).hexdigest())
+   for changed in [{**doc,'activation_requested':False},{**doc,'consent':''},{**doc,'version':'wrong'}]:
+    legal.write_text(json.dumps(changed));self.assertFalse(requests.get(self.api('privacy')).json()['enabled'])
+    self.assertEqual(requests.post(self.api('leads'),json=self.lead(policy_version=version)).status_code,503)
+   legal.write_bytes(original);self.config['privacy_policy_disabled']=True;self.write_config()
+   self.assertFalse(requests.get(self.api('privacy')).json()['enabled'])
+  finally:legal.write_bytes(original);self.config=old;self.write_config()
  def test_05_browser_consent_and_safe_retry(self):
   if self.stage<5:self.skipTest('Fix 5 not enabled')
   from playwright.sync_api import sync_playwright
@@ -195,15 +214,15 @@ class Prelaunch(unittest.TestCase):
    for content in [b'', b'   \n']:
     policy.write_bytes(content)
     self.assertEqual(requests.get(self.api('privacy')).json()['enabled'],False)
-    self.assertEqual(requests.get(self.base+'/privacy.php').status_code,503)
+    self.assertEqual(requests.get(self.base+'/privacy.php').status_code,200)
     self.assertEqual(requests.post(self.api('leads'),json=self.lead()).status_code,503)
    policy.unlink()
    self.assertFalse(requests.get(self.api('privacy')).json()['enabled'])
    policy.write_bytes(original);policy.chmod(0)
    if os.access(policy,os.R_OK):self.fail('Run privacy permission regression as an unprivileged user')
    r=requests.get(self.api('privacy'));self.assertEqual(r.status_code,200);self.assertFalse(r.json()['enabled'])
-   page=requests.get(self.base+'/privacy.php');self.assertEqual(page.status_code,503)
-   self.assertIn('ещё не опубликована',page.text);self.assertNotIn(str(self.path),page.text)
+   page=requests.get(self.base+'/privacy.php');self.assertEqual(page.status_code,200)
+   self.assertIn('data-privacy-mode="notice"',page.text);self.assertNotIn(str(self.path),page.text)
    self.assertEqual(requests.post(self.api('leads'),json=self.lead()).status_code,503)
    self.assertIn('privacy_policy_unreadable',(self.path/'server.log').read_text())
   finally:policy.chmod(0o600);policy.write_bytes(original)
