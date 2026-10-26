@@ -89,7 +89,8 @@ class PrAutomation(unittest.TestCase):
 class WorkflowSeparation(unittest.TestCase):
  def test_pr_creation_not_gated_by_auto_merge_and_uses_main_only(self):
   w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
-  j=w['jobs']['create_pr'];self.assertNotIn('AUTOMERGE_ENABLED',str(j));self.assertNotIn('needs',j)
+  j=w['jobs']['create_pr'];self.assertNotIn('AUTOMERGE_ENABLED',j['if']);self.assertNotIn('needs',j)
+  for step in j['steps']:self.assertNotIn('AUTOMERGE_ENABLED',step.get('if',''))
   for text in ["github.ref == 'refs/heads/main'","head_branch != 'main'","conclusion == 'success'","head_repository.full_name == github.repository"]:self.assertIn(text,j['if'])
   self.assertEqual(j['steps'][0]['with']['ref'],'main');self.assertEqual(j['environment'],'automation');self.assertEqual(j['concurrency']['cancel-in-progress'],'false')
   self.assertNotIn('download-artifact',str(j));self.assertNotIn('SSH_',str(j));self.assertEqual(j['permissions']['pull-requests'],'write')
@@ -97,6 +98,12 @@ class WorkflowSeparation(unittest.TestCase):
  def test_merge_operation_no_longer_calls_pr_creation(self):
   source=(ROOT/'scripts/github/control.py').read_text();merge=source[source.index('def auto_merge():'):source.index("if __name__=='__main__':")]
   self.assertNotIn('ensure_pr_for_validated_branch',merge);self.assertIn('integration_policy(base)',merge);self.assertIn("count>0 and review_decision!='APPROVED'",merge)
+ def test_workflow_shell_invokes_creation_with_merge_flag_false(self):
+  w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
+  step=next(s for s in w['jobs']['create_pr']['steps'] if s.get('name')=='Create missing PR without enabling merge')
+  for flag in ['false','true','']:
+   run=control.subprocess.run(['bash','-e'],input='python() { echo "CALLED:$*"; }\n'+step['run'],text=True,capture_output=True,env=dict(os.environ,AUTOMERGE_ENABLED=flag,VALIDATED_RUN='77'))
+   self.assertEqual(run.returncode,0,run.stderr);self.assertIn('CALLED:scripts/github/control.py create-pr --run-id 77',run.stdout)
 
 class ActualIntegrationPolicy(unittest.TestCase):
  def policy(self,count=0):
@@ -162,8 +169,21 @@ class SafeFailureEvidence(unittest.TestCase):
  def test_absent_auto_merge_field_is_not_reported_as_disabled(self):
   repo={'full_name':control.REPO,'permissions':{'admin':True}}
   with patch.object(control,'api',return_value=repo),patch.object(control,'governance_diagnostics',return_value={'auto_merge_field_present':False}),patch.object(control,'set_variable') as write:
-   with self.assertRaisesRegex(control.GitHubFailure,'not verified.*auto_merge_field_present'):control.configure_integration()
+   with self.assertRaisesRegex(control.GitHubFailure,'Cannot verify native auto-merge'):control.configure_integration()
    write.assert_not_called()
+ def test_missing_rest_setting_uses_exact_typed_graphql_repository(self):
+  with patch.object(control,'api',return_value={'data':{'repository':{'nameWithOwner':control.REPO,'autoMergeAllowed':True}}}) as api:
+   self.assertTrue(control.native_auto_merge_enabled({}))
+  self.assertEqual(api.call_args.args[:2],('POST','graphql'))
+ def test_explicit_false_is_not_overridden_and_unknown_graphql_fails_closed(self):
+  with patch.object(control,'api',side_effect=AssertionError('REST false must be preserved')):self.assertFalse(control.native_auto_merge_enabled({'allow_auto_merge':False}))
+  for value in [{'errors':[{'message':'denied'}]},{'data':{'repository':{'nameWithOwner':'another/repo','autoMergeAllowed':True}}},{'data':{'repository':{'nameWithOwner':control.REPO,'autoMergeAllowed':'true'}}}]:
+   with patch.object(control,'api',return_value=value),self.assertRaises(control.GitHubFailure):control.native_auto_merge_enabled({})
+ def test_pr_creation_uses_least_privileged_native_token_not_administrative_grant(self):
+  w=yaml.load((ROOT/'.github/workflows/auto-merge.yml').read_text(),Loader=yaml.BaseLoader)
+  step=next(s for s in w['jobs']['create_pr']['steps'] if s.get('name')=='Create missing PR without enabling merge')
+  self.assertNotIn('BOOTSTRAP_ADMIN_TOKEN',str(step['env']));self.assertIn('github.token',step['env']['GH_TOKEN'])
+  self.assertNotIn('BOOTSTRAP_ADMIN_TOKEN',step['env']['GITHUB_TOKEN_FALLBACK'])
  def test_diagnostics_only_export_allowlisted_policy_values_and_never_write(self):
   calls=[]
   def fake(method,path,*args):

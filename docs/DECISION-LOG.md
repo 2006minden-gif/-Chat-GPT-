@@ -11,3 +11,7 @@
 - Успешный deploy не означает работоспособность всей PR automation. Раздельно учитывать feature delivery и остаточные governance/permission blockers.
 
 Новых решений владельца о снижении защиты, отмене review или активации CRM нет.
+
+## Проверенный аудит existing grant
+
+Run40280063632 подтвердил ноль обязательных approvals, strict Validate с admin enforcement и Actions PR permission=true. Сохраняем именно эти правила. Отсутствующее REST-поле читаем через typed GraphQL, не включаем настройку вслепую. Создание PR использует минимальный native job token (либо configured App), administrative grant остаётся у существующей main-only проверки policy. Новых credentials и изменений scope не требуется предполагать до проверки native пути.
