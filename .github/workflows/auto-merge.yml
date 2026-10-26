@@ -202,6 +202,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BOOTSTRAP_ADMIN_TOKEN }}
           VALIDATED_MAIN_SHA: ${{ github.event.workflow_run.head_sha }}
+          PR_APP_ID_CONFIGURED: ${{ vars.AUTOMERGE_APP_ID != '' }}
+          PR_APP_KEY_CONFIGURED: ${{ secrets.AUTOMERGE_APP_PRIVATE_KEY != '' }}
+          PR_PAT_CONFIGURED: ${{ secrets.PR_AUTOMATION_TOKEN != '' }}
         run: |
           set -euo pipefail
           test -n "$GH_TOKEN" || { echo '::error::Existing automation administrative grant is unavailable'; exit 1; }

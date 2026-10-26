@@ -339,6 +339,11 @@ def integration_policy(base):
 
 def configure_integration():
     """One-time enablement after validated main. Never edits branch protection."""
+    if os.environ.get('GITHUB_ACTIONS')=='true':
+        print('Unattended PR credential metadata: '+json.dumps({
+            'app_id_configured':os.environ.get('PR_APP_ID_CONFIGURED')=='true',
+            'app_key_configured':os.environ.get('PR_APP_KEY_CONFIGURED')=='true',
+            'pat_configured':os.environ.get('PR_PAT_CONFIGURED')=='true'},sort_keys=True))
     base='repos/'+REPO;repo=api('GET',base)
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):
         raise GitHubFailure('Existing authorized administrative grant required to configure integration')
