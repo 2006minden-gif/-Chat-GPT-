@@ -228,7 +228,9 @@ def ensure_pr_for_validated_branch(run_id=None):
             if existing:
                 print('Concurrent PR creation detected; existing PR preserved');return existing[0]
         if 'HTTP 403' in str(error):
-            raise GitHubFailure('PR creation denied (HTTP 403). Verify pull_requests:write for the selected token/App installation and repository Actions permission to create PRs; no protection or credentials were changed.') from error
+            try:diagnosis=json.dumps(governance_diagnostics(base),sort_keys=True)
+            except GitHubFailure:diagnosis='selected grant cannot read repository diagnostics'
+            raise GitHubFailure('PR creation denied (HTTP 403). Verify pull_requests:write for the selected token/App installation and repository Actions permission to create PRs; '+diagnosis+'; no protection or credentials were changed.') from error
         raise
     print('Created PR',created['number'],'for validated SHA',sha,'run',run_id)
     if os.environ.get('GITHUB_TOKEN_FALLBACK')=='true':
@@ -334,7 +336,8 @@ def configure_integration():
     base='repos/'+REPO;repo=api('GET',base)
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):
         raise GitHubFailure('Existing authorized administrative grant required to configure integration')
-    if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository native auto-merge setting is disabled; existing setting preserved')
+    if repo.get('allow_auto_merge') is not True:
+        raise GitHubFailure('Native auto-merge is not verified by the selected administrative grant; '+json.dumps(governance_diagnostics(base,repo),sort_keys=True)+'; existing settings preserved')
     _,count,checks=integration_policy(base)
     verify_environment(base,'automation')
     expected=os.environ.get('VALIDATED_MAIN_SHA')
@@ -343,6 +346,27 @@ def configure_integration():
     set_variable(base,'AUTOMERGE_ENABLED','true')
     print(json.dumps({'result':'protected_integration_enabled','required_approvals':count,'required_checks':checks,
         'unattended_without_reviewer':count==0,'branch_protection_modified':False}))
+
+def governance_diagnostics(base,repo=None):
+    """Read only allowlisted booleans/counts; never export tokens or arbitrary API bodies."""
+    repo=repo if repo is not None else api('GET',base)
+    result={'auto_merge_field_present':'allow_auto_merge' in repo,
+            'allow_auto_merge':repo.get('allow_auto_merge') if isinstance(repo.get('allow_auto_merge'),bool) else None,
+            'administrative_grant':repo.get('permissions',{}).get('admin') is True}
+    for endpoint in ['actions/permissions/workflow','branches/main/protection']:
+        try:value=api('GET',base+'/'+endpoint)
+        except GitHubFailure:
+            result[endpoint]={'accessible':False};continue
+        if endpoint=='actions/permissions/workflow':
+            result[endpoint]={'accessible':True,'can_approve_pull_request_reviews':value.get('can_approve_pull_request_reviews') if isinstance(value.get('can_approve_pull_request_reviews'),bool) else None}
+        else:
+            checks=value.get('required_status_checks') or {};reviews=value.get('required_pull_request_reviews') or {}
+            count=reviews.get('required_approving_review_count',0)
+            result[endpoint]={'accessible':True,'enforce_admins':value.get('enforce_admins',{}).get('enabled') is True,
+                'strict_checks':checks.get('strict') is True,
+                'actions_validate':any(c.get('context')==REQUIRED_CHECK and c.get('app_id')==15368 for c in checks.get('checks',[])),
+                'required_approvals':count if type(count) is int and count>=0 else None}
+    return result
 
 def auto_merge():
     base='repos/'+REPO;repo=api('GET',base)
