@@ -140,10 +140,11 @@ def bootstrap():
             raise GitHubFailure('Configured GitHub App requires valid ID and available key metadata')
     set_variable(base,'BOOTSTRAP_CONFIGURED_SHA',api('GET',base+'/git/ref/heads/main')['object']['sha'])
     set_variable(base,'BOOTSTRAP_APPROVED_SHA','')
-    # A sole owner cannot independently approve her own PR. Keep automatic
-    # PR merging disabled until the separate review policy has been verified.
-    set_variable(base,'AUTOMERGE_ENABLED','false')
-    print('Strict release protection and secret scopes verified; PR auto-merge disabled; AUTOMATION_READY remains false until verified bootstrap delivery')
+    # Initial installations start disabled. Preserve a previously verified
+    # setting; integration has a separate policy/configuration job.
+    if api('GET',base+'/actions/variables/AUTOMERGE_ENABLED',missing=True) is None:
+        set_variable(base,'AUTOMERGE_ENABLED','false')
+    print('Strict release protection and secret scopes verified; merge setting preserved; AUTOMATION_READY remains false until verified bootstrap delivery')
 
 def verify_protection(protection):
     reviews=protection.get('required_pull_request_reviews') or {}
@@ -304,10 +305,48 @@ def ensure_main_ci():
     api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':'main','inputs':{'operation':operation,'expected_revision':head}})
     print('Requested tested main operation automatically:',operation,head)
 
+def integration_policy(base):
+    """Honor the actual server review rule; never invent or remove an approval."""
+    try:
+        protection=api('GET',base+'/branches/main/protection')
+    except GitHubFailure:
+        rules=api('GET',base+'/rules/branches/main')
+        checks=next((r.get('parameters',{}) for r in rules if r.get('type')=='required_status_checks'),{})
+        required=checks.get('required_status_checks',[])
+        if not checks.get('strict_required_status_checks_policy') or not any(c.get('context')==REQUIRED_CHECK and c.get('integration_id')==15368 for c in required):
+            raise GitHubFailure('Cannot verify active strict Actions Validate rule; integration blocked')
+        review=next((r.get('parameters',{}) for r in rules if r.get('type')=='pull_request'),{})
+        count=review.get('required_approving_review_count',0)
+        if not isinstance(count,int) or count<0 or (count>0 and not review.get('dismiss_stale_reviews_on_push')):
+            raise GitHubFailure('Cannot verify current review rule; integration blocked')
+        return {},count,[c['context'] for c in required]
+    checks=protection.get('required_status_checks') or {}
+    if not (protection.get('enforce_admins',{}).get('enabled') and checks.get('strict') and any(c.get('context')==REQUIRED_CHECK and c.get('app_id')==15368 for c in checks.get('checks',[]))):
+        raise GitHubFailure('Main must enforce strict GitHub Actions Validate for everyone; integration blocked')
+    review=protection.get('required_pull_request_reviews') or {};count=review.get('required_approving_review_count',0)
+    if not isinstance(count,int) or count<0 or (count>0 and not review.get('dismiss_stale_reviews')):
+        raise GitHubFailure('Cannot verify current review rule; integration blocked')
+    return protection,count,list(dict.fromkeys(checks.get('contexts',[])+[c['context'] for c in checks.get('checks',[])]))
+
+def configure_integration():
+    """One-time enablement after validated main. Never edits branch protection."""
+    base='repos/'+REPO;repo=api('GET',base)
+    if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):
+        raise GitHubFailure('Existing authorized administrative grant required to configure integration')
+    if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository native auto-merge setting is disabled; existing setting preserved')
+    _,count,checks=integration_policy(base)
+    verify_environment(base,'automation')
+    expected=os.environ.get('VALIDATED_MAIN_SHA')
+    if expected and (not re.fullmatch('[a-f0-9]{40}',expected) or api('GET',base+'/git/ref/heads/main')['object']['sha']!=expected):
+        raise GitHubFailure('Validated main is stale; integration setting preserved')
+    set_variable(base,'AUTOMERGE_ENABLED','true')
+    print(json.dumps({'result':'protected_integration_enabled','required_approvals':count,'required_checks':checks,
+        'unattended_without_reviewer':count==0,'branch_protection_modified':False}))
+
 def auto_merge():
     base='repos/'+REPO;repo=api('GET',base)
     if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository auto-merge is disabled')
-    protection,count,required=required_policy(base)
+    protection,count,required=integration_policy(base)
     for pr in pages(base+'/pulls?state=open&base=main'):
         if pr['draft'] or pr['head']['repo'] is None or pr['head']['repo']['full_name']!=REPO:continue
         number=pr['number'];pr=api('GET',base+'/pulls/'+str(number))
@@ -315,7 +354,8 @@ def auto_merge():
         head=pr['head']['sha'];reviews=pages(base+'/pulls/'+str(number)+'/reviews')
         review=api('POST','graphql',{'query':'query($n:Int!){repository(owner:"2006minden-gif",name:"-Chat-GPT-"){pullRequest(number:$n){reviewDecision headRefOid}}}','variables':{'n':number}})
         decision=review.get('data',{}).get('repository',{}).get('pullRequest',{})
-        if decision.get('reviewDecision')!='APPROVED' or decision.get('headRefOid')!=head:continue
+        review_decision=decision.get('reviewDecision')
+        if decision.get('headRefOid')!=head or review_decision not in [None,'APPROVED'] or (count>0 and review_decision!='APPROVED'):continue
         permissions={r['user']['login']:'write' if r.get('author_association') in ['OWNER','MEMBER','COLLABORATOR'] else 'none' for r in reviews}
         checked=head
         merge=pr.get('merge_commit_sha')
@@ -336,11 +376,12 @@ def auto_merge():
     ensure_main_ci()
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['bootstrap','auto-merge','create-pr']);parser.add_argument('--apply',action='store_true');parser.add_argument('--run-id');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['bootstrap','auto-merge','create-pr','configure-integration']);parser.add_argument('--apply',action='store_true');parser.add_argument('--run-id');args=parser.parse_args()
     try:
         if args.operation=='bootstrap':
             if not args.apply:print(json.dumps({'repository':REPO,'required_check':REQUIRED_CHECK,'reviews':1,'environments':['production','automation'],'branch':'main','note':'Use --apply with administrator gh authentication. No secrets are read or changed.'},indent=2))
             else:bootstrap()
+        elif args.operation=='configure-integration':configure_integration()
         elif args.operation=='create-pr':ensure_pr_for_validated_branch(args.run_id)
         else:auto_merge()
     except (GitHubFailure,subprocess.TimeoutExpired) as error:

@@ -96,4 +96,64 @@ class WorkflowSeparation(unittest.TestCase):
   self.assertIn("vars.AUTOMERGE_ENABLED == 'true'",w['jobs']['approved']['if'])
  def test_merge_operation_no_longer_calls_pr_creation(self):
   source=(ROOT/'scripts/github/control.py').read_text();merge=source[source.index('def auto_merge():'):source.index("if __name__=='__main__':")]
-  self.assertNotIn('ensure_pr_for_validated_branch',merge);self.assertIn('required_policy(base)',merge);self.assertIn("reviewDecision')!='APPROVED'",merge)
+  self.assertNotIn('ensure_pr_for_validated_branch',merge);self.assertIn('integration_policy(base)',merge);self.assertIn("count>0 and review_decision!='APPROVED'",merge)
+
+class ActualIntegrationPolicy(unittest.TestCase):
+ def policy(self,count=0):
+  return {'enforce_admins':{'enabled':True},'required_status_checks':{'strict':True,'contexts':['Validate'],'checks':[{'context':'Validate','app_id':15368}]},'required_pull_request_reviews':{'required_approving_review_count':count,'dismiss_stale_reviews':True}}
+ def test_zero_reviews_is_not_changed_into_a_fake_review_requirement(self):
+  with patch.object(control,'api',return_value=self.policy()):self.assertEqual(control.integration_policy('repos/'+control.REPO)[1],0)
+ def test_actual_review_count_and_stale_review_guard_preserved(self):
+  with patch.object(control,'api',return_value=self.policy(2)):self.assertEqual(control.integration_policy('repos/'+control.REPO)[1],2)
+  p=self.policy(1);p['required_pull_request_reviews']['dismiss_stale_reviews']=False
+  with patch.object(control,'api',return_value=p):
+   with self.assertRaises(control.GitHubFailure):control.integration_policy('repos/'+control.REPO)
+ def test_missing_strict_checks_or_admin_enforcement_blocks_integration(self):
+  for key in ['strict','enabled']:
+   p=self.policy();p['required_status_checks' if key=='strict' else 'enforce_admins'][key]=False
+   with patch.object(control,'api',return_value=p):
+    with self.assertRaises(control.GitHubFailure):control.integration_policy('repos/'+control.REPO)
+ def test_inaccessible_protection_without_verified_rules_is_not_permission_to_merge(self):
+  with patch.object(control,'api',side_effect=[control.GitHubFailure('403'),[]]):
+   with self.assertRaises(control.GitHubFailure):control.integration_policy('repos/'+control.REPO)
+ def test_active_ruleset_review_count_is_retained(self):
+  rules=[{'type':'required_status_checks','parameters':{'strict_required_status_checks_policy':True,'required_status_checks':[{'context':'Validate','integration_id':15368}]}},{'type':'pull_request','parameters':{'required_approving_review_count':1,'dismiss_stale_reviews_on_push':True}}]
+  with patch.object(control,'api',side_effect=[control.GitHubFailure('403'),rules]):self.assertEqual(control.integration_policy('repos/'+control.REPO)[1],1)
+ def test_configuration_only_sets_enable_variable_after_readonly_policy_verification(self):
+  mutations=[]
+  def fake(m,p,d=None,**kwargs):
+   if m!='GET':mutations.append((m,p,d));return None
+   if p.endswith('/protection'):return self.policy()
+   if p.endswith('/automation'):return {'deployment_branch_policy':{'protected_branches':False,'custom_branch_policies':True}}
+   if '/deployment-branch-policies?' in p:return {'branch_policies':[{'name':'main','type':'branch'}]}
+   if '/actions/variables/' in p:return {'value':'false'}
+   return {'full_name':control.REPO,'permissions':{'admin':True},'allow_auto_merge':True}
+  with patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.configure_integration()
+  self.assertEqual(len(mutations),1);self.assertTrue(mutations[0][1].endswith('/actions/variables/AUTOMERGE_ENABLED'));self.assertEqual(mutations[0][2]['value'],'true')
+
+class ProtectedNativeMerge(unittest.TestCase):
+ def run_merge(self,count=0,decision=None,head_matches=True,checks_ok=True,author_review=False):
+  sha='a'*40
+  pr={'number':55,'draft':False,'head':{'repo':{'full_name':control.REPO},'sha':sha},'base':{'ref':'main','sha':'b'*40},'user':{'login':'owner'},'mergeable':True,'merge_commit_sha':None}
+  reviews=[{'state':'APPROVED','user':{'login':'owner'},'commit_id':sha,'author_association':'OWNER'}] if author_review else []
+  def api(m,p,d=None,**kw):
+   if p=='repos/'+control.REPO:return {'allow_auto_merge':True,'allow_squash_merge':True}
+   if p=='graphql':return {'data':{'repository':{'pullRequest':{'reviewDecision':decision,'headRefOid':sha if head_matches else 'c'*40}}}}
+   if p.endswith('/pulls/55'):return pr
+   raise AssertionError('Unexpected request '+m+' '+p)
+  def pages(p,field=None):
+   if p.endswith('/pulls?state=open&base=main'):return [pr]
+   if p.endswith('/reviews'):return reviews
+   if '/check-runs?' in p:return [{'name':'Validate','head_sha':sha,'status':'completed','conclusion':'success' if checks_ok else 'failure','app':{'id':15368}}]
+   if p.endswith('/status'):return []
+   raise AssertionError('Unexpected page '+p)
+  with patch.object(control,'api',side_effect=api),patch.object(control,'pages',side_effect=pages),patch.object(control,'integration_policy',return_value=({},count,['Validate'])),patch.object(control,'ensure_main_ci'),patch.object(control.subprocess,'run') as merge,patch('sys.stdout',new_callable=io.StringIO):
+   merge.return_value.returncode=0;control.auto_merge();return merge.call_args_list
+ def test_zero_required_reviews_can_use_native_protected_auto_merge(self):
+  calls=self.run_merge();self.assertEqual(len(calls),1);args=calls[0].args[0]
+  self.assertIn('--auto',args);self.assertIn('--match-head-commit',args);self.assertIn('a'*40,args);self.assertNotIn('--admin',args)
+ def test_required_or_additional_reviews_cannot_be_bypassed(self):
+  self.assertEqual(self.run_merge(count=1),[]);self.assertEqual(self.run_merge(decision='REVIEW_REQUIRED'),[])
+  self.assertEqual(self.run_merge(count=1,decision='APPROVED',author_review=True),[])
+ def test_failed_ci_or_stale_review_head_cannot_merge(self):
+  self.assertEqual(self.run_merge(checks_ok=False),[]);self.assertEqual(self.run_merge(head_matches=False),[])

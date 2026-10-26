@@ -172,6 +172,37 @@ jobs:
             python scripts/github/control.py create-pr
           fi
 
+  configure_integration:
+    name: Verify and enable protected integration
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.event.workflow_run.conclusion == 'success' &&
+      vars.AUTOMATION_READY == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: automation
+    concurrency:
+      group: neurodelo-auto-merge
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Preserve actual review rules and enable verified merge path
+        env:
+          GH_TOKEN: ${{ secrets.BOOTSTRAP_ADMIN_TOKEN }}
+          VALIDATED_MAIN_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN" || { echo '::error::Existing automation administrative grant is unavailable'; exit 1; }
+          python scripts/github/control.py configure-integration
+
   approved:
     if: >-
       vars.AUTOMERGE_ENABLED == 'true' && github.ref == 'refs/heads/main' &&
@@ -211,10 +242,10 @@ jobs:
           permission-actions: read
       - name: Enable only independently reviewed passing PRs
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
+          GH_TOKEN: ${{ steps.app.outputs.token || secrets.BOOTSTRAP_ADMIN_TOKEN || github.token }}
           GITHUB_DISPATCH_TOKEN: ${{ github.token }}
           AUTOMATION_READY: ${{ vars.AUTOMATION_READY }}
           BOOTSTRAP_CONFIGURED_SHA: ${{ vars.BOOTSTRAP_CONFIGURED_SHA }}
           BOOTSTRAP_APPROVED_SHA: ${{ vars.BOOTSTRAP_APPROVED_SHA }}
-          GITHUB_TOKEN_FALLBACK: ${{ steps.app.outputs.token == '' && 'true' || 'false' }}
+          GITHUB_TOKEN_FALLBACK: ${{ steps.app.outputs.token == '' && secrets.BOOTSTRAP_ADMIN_TOKEN == '' && 'true' || 'false' }}
         run: python scripts/github/control.py auto-merge
