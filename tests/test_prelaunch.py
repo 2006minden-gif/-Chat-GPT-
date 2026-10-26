@@ -170,7 +170,7 @@ class Prelaunch(unittest.TestCase):
     self.assertEqual(requests.post(self.api('leads'),json=self.lead(policy_version=version)).status_code,503)
    legal.write_bytes(original);self.config['privacy_policy_disabled']=True;self.write_config()
    self.assertFalse(requests.get(self.api('privacy')).json()['enabled'])
-  finally:legal.write_bytes(original);self.config=old;self.write_config()
+  finally:legal.write_bytes(original);self.config.clear();self.config.update(old);self.write_config()
  def test_05_browser_consent_and_safe_retry(self):
   if self.stage<5:self.skipTest('Fix 5 not enabled')
   from playwright.sync_api import sync_playwright
