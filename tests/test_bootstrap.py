@@ -119,7 +119,7 @@ class BootstrapSafety(unittest.TestCase):
   repo={'full_name':control.REPO,'permissions':{'admin':True},'id':42,'allow_auto_merge':False}
   def fake(method,path,*args,**kwargs):
    if path=='repos/'+control.REPO:return repo
-   if path.endswith('/AUTOMERGE_APP_ID'):return None
+   if path.endswith(('/AUTOMERGE_APP_ID','/AUTOMERGE_ENABLED')):return None
    if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
    raise AssertionError('Unexpected request '+path)
   with patch.object(control,'api',side_effect=fake),patch.object(control,'required_delivery_policy'),patch.object(control,'verify_environment'),patch.object(control,'secret_metadata',return_value={'repository':set(),'production':set()}),patch.object(control,'set_variable') as write,patch('sys.stdout',new_callable=io.StringIO):
@@ -129,6 +129,17 @@ class BootstrapSafety(unittest.TestCase):
   self.assertEqual(settings['BOOTSTRAP_APPROVED_SHA'],'')
   self.assertEqual(settings['AUTOMERGE_ENABLED'],'false')
   self.assertEqual(settings['BOOTSTRAP_CONFIGURED_SHA'],'a'*40)
+
+ def test_bootstrap_preserves_previously_enabled_integration(self):
+  repo={'full_name':control.REPO,'permissions':{'admin':True},'id':42}
+  def fake(method,path,*args,**kwargs):
+   if path=='repos/'+control.REPO:return repo
+   if path.endswith('/AUTOMERGE_APP_ID'):return None
+   if path.endswith('/AUTOMERGE_ENABLED'):return {'value':'true'}
+   if path.endswith('/heads/main'):return {'object':{'sha':'a'*40}}
+   raise AssertionError('Unexpected request '+path)
+  with patch.object(control,'api',side_effect=fake),patch.object(control,'required_delivery_policy'),patch.object(control,'verify_environment'),patch.object(control,'secret_metadata',return_value={'repository':set(),'production':set()}),patch.object(control,'set_variable') as write,patch('sys.stdout',new_callable=io.StringIO):control.bootstrap()
+  self.assertFalse(any(c.args[1]=='AUTOMERGE_ENABLED' for c in write.call_args_list))
 
  def test_bootstrap_unhealthy_baseline_stops_before_transfer_or_backup(self):
   calls=[]

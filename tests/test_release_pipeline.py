@@ -313,7 +313,7 @@ class GovernanceTests(unittest.TestCase):
    if '/secrets?' in path:return {'secrets':[]}
    raise AssertionError('Unexpected API call '+method+' '+path)
   with patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.bootstrap()
-  self.assertEqual(variables['AUTOMATION_READY'],'false');self.assertEqual(variables['AUTOMERGE_ENABLED'],'false');self.assertEqual(variables['BOOTSTRAP_CONFIGURED_SHA'],'a'*40)
+  self.assertEqual(variables['AUTOMATION_READY'],'false');self.assertEqual(variables.get('AUTOMERGE_ENABLED','false'),'false');self.assertEqual(variables['BOOTSTRAP_CONFIGURED_SHA'],'a'*40)
   self.assertFalse(any(m in ['PUT','DELETE'] or ('/secrets' in p and m!='GET') for m,p,v in calls))
   self.assertTrue(protected['required_pull_request_reviews']['dismiss_stale_reviews'])
  def test_bootstrap_never_mutates_when_admin_read_is_blocked(self):
@@ -321,19 +321,10 @@ class GovernanceTests(unittest.TestCase):
    with self.assertRaises(control.GitHubFailure):control.bootstrap()
   self.assertEqual(api.call_count,1);self.assertEqual(api.call_args.args[0],'GET')
  def test_validated_branch_creates_pr_without_executing_branch_code(self):
-  with tempfile.TemporaryDirectory() as tmp:
-   path=Path(tmp)/'event.json';sha='a'*40
-   path.write_text(json.dumps({'workflow_run':{'id':77,'head_sha':sha,'head_branch':'feature/example','event':'push','conclusion':'success','head_repository':{'full_name':control.REPO}}}))
-   calls=[]
-   def fake(method,endpoint,payload=None,missing=False):
-    calls.append((method,endpoint,payload))
-    if '/actions/runs/' in endpoint:return {'head_sha':sha,'conclusion':'success','path':'.github/workflows/deploy.yml'}
-    if '/git/ref/' in endpoint:return {'object':{'sha':sha}}
-    if '/compare/' in endpoint:return {'ahead_by':1}
-    if method=='GET':return []
-    return {'number':1}
-   with patch.dict(os.environ,{'GITHUB_EVENT_NAME':'workflow_run','GITHUB_EVENT_PATH':str(path)}),patch.object(control,'api',side_effect=fake),patch('sys.stdout',new_callable=io.StringIO):control.ensure_pr_for_validated_branch()
-   created=[c for c in calls if c[0]=='POST'];self.assertEqual(len(created),1);self.assertEqual(created[0][2]['base'],'main');self.assertFalse(created[0][2]['draft'])
+  import test_pr_automation
+  case=test_pr_automation.PrAutomation('test_success_creates_one_pr_with_merge_disabled')
+  result=unittest.TestResult();case.run(result);self.assertTrue(result.wasSuccessful(),str(result.errors)+str(result.failures))
+
 
 
  def test_native_actions_uses_active_review_ruleset_without_admin_token(self):
