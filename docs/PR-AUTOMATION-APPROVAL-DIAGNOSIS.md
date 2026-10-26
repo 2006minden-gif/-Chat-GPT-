@@ -18,8 +18,8 @@ Observed repository evidence:
 | Evidence | Result |
 | --- | --- |
 | PR #31 | author github-actions[bot], author_association=CONTRIBUTOR, same source and target repository 2006minden-gif/-Chat-GPT- |
-| Run 40282925637 | pull_request, opened by github-actions[bot], exact head 8365fc0600217c8f3361a6e9a8b7858cbfcc0cb8, completed/action_required, jobs=[] |
-| Public run page | awaiting maintainer approval in #31; https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40282925637 |
+| Run 40282925637 | pull_request, opened by github-actions[bot], exact head 8365fc0600217c8f3361a6e9a8b7858cbfcc0cb8, initial completed/action_required, jobs=[]; after old bot merged #31 it became failure with zero jobs |
+| Public run page, captured before old bot merge | awaiting maintainer approval in #31; https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40282925637 |
 | Creating workflow 40282901041 | App token steps skipped; selected native fallback; created PR #31 |
 | Earlier #29/#30 | historical action_required recorded in previous session; current closed/superseded runs 40281042223/40281697839 now report failure with zero jobs; do not claim their current conclusion is action_required |
 | Preview 40282923688 | succeeded independently; did not release the held PR workflow or make PR #31 clean |
@@ -31,7 +31,7 @@ This is not a missing PR review. Nor is it evidence that a generic malicious-wor
 
 Use the existing pinned create-github-app-token integration, or an explicit dedicated fine-grained PAT. Remove the GITHUB_TOKEN and administrative-token fallback from PR writes. Missing credentials stop before network/PR creation. No automatic workflow approval, fake reviews, changed fork settings, pull_request_target execution, dummy commits, or native-token preview substitute.
 
-PR creation stays independent of AUTOMERGE_ENABLED. Exact repo/workflow/run/head checks, trusted-main controller, CI-definition comparison, concurrency, reuse/race handling remain. Merge uses the separate App/PAT write credential; existing BOOTSTRAP_ADMIN_TOKEN reads actual policy. Only clean controller-owned PRs with current required checks/reviews are eligible. Production still uses existing deploy.yml and SpaceWeb SSH delivery.
+PR creation stays independent of AUTOMERGE_ENABLED. Exact repo/workflow/run/head checks, trusted-main controller, CI-definition comparison, concurrency, reuse/race handling remain. Merge uses the separate App/PAT write credential; existing BOOTSTRAP_ADMIN_TOKEN reads actual policy. Only clean controller-owned PRs with current required checks/reviews and a completed successful normal pull_request run/Validate job for exact head/base and unchanged trusted CI definition are eligible. Production still uses existing deploy.yml and SpaceWeb SSH delivery.
 
 The native job token loses contents/PR write in these jobs. It can still explicitly dispatch existing main maintenance CI where that existing guarded path is needed; it is not used for PR creation, mutation or merge.
 

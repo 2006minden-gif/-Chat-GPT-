@@ -160,7 +160,7 @@ class ActualIntegrationPolicy(unittest.TestCase):
   self.assertEqual(len(mutations),1);self.assertTrue(mutations[0][1].endswith('/actions/variables/AUTOMERGE_ENABLED'));self.assertEqual(mutations[0][2]['value'],'true')
 
 class ProtectedNativeMerge(unittest.TestCase):
- def run_merge(self,count=0,decision=None,head_matches=True,checks_ok=True,author_review=False,managed=True,merge_state='clean'):
+ def run_merge(self,count=0,decision=None,head_matches=True,checks_ok=True,author_review=False,managed=True,merge_state='clean',pr_valid=True):
   sha='a'*40
   pr={'number':55,'draft':False,'head':{'repo':{'full_name':control.REPO},'sha':sha},'base':{'ref':'main','sha':'b'*40},'user':{'login':'owner'},'mergeable':True,'mergeable_state':merge_state,'merge_commit_sha':None}
   pr['body']='Created automatically after trusted Validate run 77 passed for '+sha+'.' if managed else 'Legacy/manual PR; preserve for separate review.'
@@ -176,7 +176,7 @@ class ProtectedNativeMerge(unittest.TestCase):
    if '/check-runs?' in p:return [{'name':'Validate','head_sha':sha,'status':'completed','conclusion':'success' if checks_ok else 'failure','app':{'id':15368}}]
    if p.endswith('/status'):return []
    raise AssertionError('Unexpected page '+p)
-  with patch.dict(os.environ,{'PR_AUTH_KIND':'app','GITHUB_TOKEN_FALLBACK':'false','GITHUB_MERGE_TOKEN':os.environ.get('GITHUB_MERGE_TOKEN') or 'SYNTHETIC_APP_TOKEN'}),patch.object(control,'api',side_effect=api),patch.object(control,'pages',side_effect=pages),patch.object(control,'integration_policy',return_value=({},count,['Validate'])),patch.object(control,'ensure_main_ci'),patch.object(control.subprocess,'run') as merge,patch('sys.stdout',new_callable=io.StringIO):
+  with patch.dict(os.environ,{'PR_AUTH_KIND':'app','GITHUB_TOKEN_FALLBACK':'false','GITHUB_MERGE_TOKEN':os.environ.get('GITHUB_MERGE_TOKEN') or 'SYNTHETIC_APP_TOKEN'}),patch.object(control,'api',side_effect=api),patch.object(control,'pages',side_effect=pages),patch.object(control,'integration_policy',return_value=({},count,['Validate'])),patch.object(control,'trusted_pr_validation',return_value=pr_valid),patch.object(control,'ensure_main_ci'),patch.object(control.subprocess,'run') as merge,patch('sys.stdout',new_callable=io.StringIO):
    merge.return_value.returncode=0;control.auto_merge();return merge.call_args_list
  def test_zero_required_reviews_can_use_native_protected_auto_merge(self):
   calls=self.run_merge();self.assertEqual(len(calls),1);args=calls[0].args[0]
@@ -198,8 +198,38 @@ class ProtectedNativeMerge(unittest.TestCase):
  def test_held_or_unknown_pr_state_cannot_merge_on_green_head_preview(self):
   for state in ['unstable','blocked','behind','unknown',None]:
    with self.subTest(state=state):self.assertEqual(self.run_merge(merge_state=state),[])
+ def test_clean_state_and_green_head_are_insufficient_without_normal_pr_validation(self):
+  self.assertEqual(self.run_merge(pr_valid=False),[])
  def test_failed_ci_or_stale_review_head_cannot_merge(self):
   self.assertEqual(self.run_merge(checks_ok=False),[]);self.assertEqual(self.run_merge(head_matches=False),[])
+
+class TrustedPrValidation(unittest.TestCase):
+ def setUp(self):
+  self.head='a'*40;self.base='b'*40;self.changed=False
+  self.pr={'number':55,'head':{'sha':self.head},'base':{'sha':self.base}}
+  self.run={'id':77,'event':'pull_request','status':'completed','conclusion':'success','head_sha':self.head,'path':'.github/workflows/deploy.yml','workflow_id':9,
+   'head_repository':{'full_name':control.REPO},'repository':{'full_name':control.REPO},
+   'pull_requests':[{'number':55,'head':{'sha':self.head},'base':{'sha':self.base}}]}
+  self.jobs=[{'name':'Validate','status':'completed','conclusion':'success'}]
+ def api(self,m,p,*args,**kw):
+  self.assertEqual(m,'GET')
+  if '/contents/' in p:return {'sha':'different' if self.changed and p.endswith(self.head) else 'trusted-definition'}
+  if p.endswith('/actions/workflows/deploy.yml'):return {'id':9}
+  if '/actions/runs?' in p:return {'workflow_runs':[self.run]}
+  raise AssertionError(p)
+ def invoke(self):
+  with patch.object(control,'api',side_effect=self.api),patch.object(control,'pages',return_value=self.jobs):return control.trusted_pr_validation('repos/'+control.REPO,self.pr)
+ def test_exact_normal_pr_validate_is_required(self):self.assertTrue(self.invoke())
+ def test_preview_or_approval_required_run_never_substitutes(self):
+  for changes in [{'event':'workflow_dispatch'},{'conclusion':'action_required'},{'conclusion':'failure'},{'status':'in_progress'},{'workflow_id':88},{'head_sha':'c'*40},{'head_repository':{'full_name':'fork/repo'}},{'repository':{'full_name':'other/repo'}}]:
+   with patch.dict(self.run,changes):self.assertFalse(self.invoke())
+ def test_wrong_pr_or_base_and_missing_actual_validate_block(self):
+  for prs in [[],[{'number':56,'head':{'sha':self.head},'base':{'sha':self.base}}],[{'number':55,'head':{'sha':self.head},'base':{'sha':'c'*40}}]]:
+   with patch.dict(self.run,{'pull_requests':prs}):self.assertFalse(self.invoke())
+  for jobs in [[],[{'name':'Validate','status':'completed','conclusion':'skipped'}],[{'name':'Validate','status':'in_progress','conclusion':None}]]:
+   self.jobs=jobs;self.assertFalse(self.invoke())
+ def test_changed_ci_definition_requires_separate_trusted_review(self):
+  self.changed=True;self.assertFalse(self.invoke())
 
 class SafeFailureEvidence(unittest.TestCase):
  def test_unattended_merge_cannot_silently_use_native_or_empty_write_credentials(self):

@@ -35,3 +35,7 @@ PR#30 native preview прошёл, но original PR workflow action_required о�
 Подтверждено официальными GitHub Docs и changelog11.06.2026: GITHUB_TOKEN-generated PR events opened/synchronize/reopened создают approval-required workflows. PR#31 same-repo/CONTRIBUTOR, run40282925637 jobs=0 подтверждает этот recurring gate. Предыдущее предположение о достаточности native preview отвергнуто.
 
 Подготовлен fail-closed App/PAT path без native/admin fallback для PR writes. Никаких workflow approvals, ослабления settings/protection или dummy commits. Установка scoped App либо dedicated PAT — ещё не принятое решение владельца; exact permissions/consequences и acceptance описаны в PR-AUTOMATION-APPROVAL-DIAGNOSIS.md. Completion требует следующего легитимного unattended PR → checks → integrate → SpaceWeb → evidence.
+
+## Наблюдение существующего bot merge во время диагностики
+
+Старый controller самостоятельно слил#31 в166fbfa в07:14:27Z. Original PR workflow40282925637 завершён failure с нулём jobs. Это НЕ acceptance. Ветка bootstrap обновлена настоящим merge текущего main с сохранением project records, без dummy commit. Добавлен отдельный exact head/base normal pull_request workflow/Validate gate, чтобы head preview и mergeable state не заменяли intended PR CI.

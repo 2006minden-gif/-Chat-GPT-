@@ -32,3 +32,5 @@ Documentation-updated source `cfc29a80ea57e51e76907c45c37ee3546cd522b5`: push402
 ## Исправление приёмочного критерия
 
 PR#31/run40282925637: action_required, zero jobs. Explicit preview success не равен successful normal PR CI и не доказывает постоянную automation. Last verified production остаётся087b22b/run40282458133; новый auth patch и bootstrap PR не считаются последующим unattended acceptance release. См. PR-AUTOMATION-APPROVAL-DIAGNOSIS.md.
+
+Старый bot позже слил#31 в166fbfad87415762a6db29537b553ccb6ec27c9d и запустил deploy40284583322. Original PR run при этом failure/jobs=0. Этот исторический релиз не удовлетворяет новому критерию unattended normal PR checks и не объявляется acceptance.

@@ -389,6 +389,26 @@ def governance_diagnostics(base,repo=None):
                 'required_approvals':count if type(count) is int and count>=0 else None}
     return result
 
+def trusted_pr_validation(base,pr):
+    """A head preview does not release the distinct, approval-held PR workflow."""
+    head=pr['head']['sha'];target=pr['base']['sha']
+    definitions=[api('GET',base+'/contents/.github/workflows/deploy.yml?ref='+ref) for ref in [target,head]]
+    if not definitions[0].get('sha') or definitions[0].get('sha')!=definitions[1].get('sha'):return False
+    workflow=api('GET',base+'/actions/workflows/deploy.yml')
+    if type(workflow.get('id')) is not int or workflow['id']<=0:return False
+    runs=api('GET',base+'/actions/runs?event=pull_request&head_sha='+head+'&per_page=100')['workflow_runs']
+    for run in runs:
+        if (run.get('event')!='pull_request' or run.get('status')!='completed' or run.get('conclusion')!='success'
+            or run.get('head_sha')!=head or run.get('path')!='.github/workflows/deploy.yml'
+            or run.get('workflow_id')!=workflow.get('id')
+            or run.get('head_repository',{}).get('full_name')!=REPO
+            or run.get('repository',{}).get('full_name')!=REPO):continue
+        if not any(p.get('number')==pr['number'] and p.get('head',{}).get('sha')==head and p.get('base',{}).get('sha')==target for p in run.get('pull_requests',[])):continue
+        if type(run.get('id')) is not int or run['id']<=0:continue
+        jobs=pages(base+'/actions/runs/'+str(run['id'])+'/jobs','jobs')
+        if any(j.get('name')==REQUIRED_CHECK and j.get('status')=='completed' and j.get('conclusion')=='success' for j in jobs):return True
+    return False
+
 def auto_merge():
     require_unattended_pr_auth('GITHUB_MERGE_TOKEN')
     base='repos/'+REPO;repo=api('GET',base)
@@ -401,6 +421,7 @@ def auto_merge():
         number=pr['number'];pr=api('GET',base+'/pulls/'+str(number))
         # A successful head preview must not override a held PR workflow.
         if pr.get('mergeable') is not True or pr.get('mergeable_state')!='clean':continue
+        if not trusted_pr_validation(base,pr):continue
         head=pr['head']['sha'];reviews=pages(base+'/pulls/'+str(number)+'/reviews')
         review=api('POST','graphql',{'query':'query($n:Int!){repository(owner:"2006minden-gif",name:"-Chat-GPT-"){pullRequest(number:$n){reviewDecision headRefOid}}}','variables':{'n':number}})
         decision=review.get('data',{}).get('repository',{}).get('pullRequest',{})
