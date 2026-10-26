@@ -24,3 +24,7 @@ Main/deployed `6f1291edf31bee8f31c0940970fc6631825b2c0f`; run40280808627 success
 ## Подготовленный последний repair, PR #30
 
 Source `348a7cb70a89690306fb621433549d4ad11afa3e`: branch CI40281499149 и explicit native preview40281695641 SUCCESS. GHA auto-created PR#30. Native preview выполняет обязательный Validate без production. Bot-triggered PR run40281697839: action_required; исходный head не интегрирован/не опубликован. Следующее обновление records получает собственный head и требует fresh CI; старый PASS не переносится на него автоматически.
+
+## Исправление приёмочного критерия
+
+PR#31/run40282925637: action_required, zero jobs. Explicit preview success не равен successful normal PR CI и не доказывает постоянную automation. Last verified production остаётся087b22b/run40282458133; новый auth patch и bootstrap PR не считаются последующим unattended acceptance release. См. PR-AUTOMATION-APPROVAL-DIAGNOSIS.md.

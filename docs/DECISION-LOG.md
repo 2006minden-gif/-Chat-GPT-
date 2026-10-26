@@ -25,3 +25,9 @@ PR#29 создан реальным GHA native token при выключенно
 ## Обработка action_required без обхода
 
 PR#30 native preview прошёл, но original PR workflow action_required оставил merge state unstable. Две попытки merge отклонены automatic approval review; merge не выполнен. Сохраняем gate. Документируем evidence и выполняем обычный CI после необходимых обновлений project records; не публикуем код в обход checks, не подделываем workflow/review approvals. При сохранении gate требуется одна внешняя workflow approval, не ручной merge или deployment.
+
+## Постоянная аутентификация, 26.10.2026
+
+Подтверждено официальными GitHub Docs и changelog11.06.2026: GITHUB_TOKEN-generated PR events opened/synchronize/reopened создают approval-required workflows. PR#31 same-repo/CONTRIBUTOR, run40282925637 jobs=0 подтверждает этот recurring gate. Предыдущее предположение о достаточности native preview отвергнуто.
+
+Подготовлен fail-closed App/PAT path без native/admin fallback для PR writes. Никаких workflow approvals, ослабления settings/protection или dummy commits. Установка scoped App либо dedicated PAT — ещё не принятое решение владельца; exact permissions/consequences и acceptance описаны в PR-AUTOMATION-APPROVAL-DIAGNOSIS.md. Completion требует следующего легитимного unattended PR → checks → integrate → SpaceWeb → evidence.
