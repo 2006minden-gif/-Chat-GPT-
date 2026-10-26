@@ -336,8 +336,8 @@ def configure_integration():
     base='repos/'+REPO;repo=api('GET',base)
     if repo.get('full_name')!=REPO or not repo.get('permissions',{}).get('admin'):
         raise GitHubFailure('Existing authorized administrative grant required to configure integration')
-    if repo.get('allow_auto_merge') is not True:
-        raise GitHubFailure('Native auto-merge is not verified by the selected administrative grant; '+json.dumps(governance_diagnostics(base,repo),sort_keys=True)+'; existing settings preserved')
+    if not native_auto_merge_enabled(repo):
+        raise GitHubFailure('Native auto-merge is disabled; '+json.dumps(governance_diagnostics(base,repo),sort_keys=True)+'; existing settings preserved')
     _,count,checks=integration_policy(base)
     verify_environment(base,'automation')
     expected=os.environ.get('VALIDATED_MAIN_SHA')
@@ -346,6 +346,16 @@ def configure_integration():
     set_variable(base,'AUTOMERGE_ENABLED','true')
     print(json.dumps({'result':'protected_integration_enabled','required_approvals':count,'required_checks':checks,
         'unattended_without_reviewer':count==0,'branch_protection_modified':False}))
+
+def native_auto_merge_enabled(repo):
+    """REST can omit this field for an otherwise authorized administrative token."""
+    if isinstance(repo.get('allow_auto_merge'),bool):return repo['allow_auto_merge']
+    value=api('POST','graphql',{'query':'query { repository(owner:"2006minden-gif",name:"-Chat-GPT-") { nameWithOwner autoMergeAllowed } }'})
+    repository=(value.get('data') or {}).get('repository') or {}
+    if value.get('errors') or repository.get('nameWithOwner')!=REPO or not isinstance(repository.get('autoMergeAllowed'),bool):
+        raise GitHubFailure('Cannot verify native auto-merge setting with selected grant; existing settings preserved')
+    print('Verified native auto-merge through typed GraphQL field; REST field absent')
+    return repository['autoMergeAllowed']
 
 def governance_diagnostics(base,repo=None):
     """Read only allowlisted booleans/counts; never export tokens or arbitrary API bodies."""
@@ -370,7 +380,7 @@ def governance_diagnostics(base,repo=None):
 
 def auto_merge():
     base='repos/'+REPO;repo=api('GET',base)
-    if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository auto-merge is disabled')
+    if not native_auto_merge_enabled(repo):raise GitHubFailure('Repository auto-merge is disabled')
     protection,count,required=integration_policy(base)
     for pr in pages(base+'/pulls?state=open&base=main'):
         if pr['draft'] or pr['head']['repo'] is None or pr['head']['repo']['full_name']!=REPO:continue

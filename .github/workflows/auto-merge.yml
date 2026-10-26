@@ -160,12 +160,18 @@ jobs:
           permission-actions: read
       - name: Create missing PR without enabling merge
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token || secrets.BOOTSTRAP_ADMIN_TOKEN || github.token }}
+          GH_TOKEN: ${{ steps.app.outputs.token || github.token }}
           GITHUB_DISPATCH_TOKEN: ${{ github.token }}
-          GITHUB_TOKEN_FALLBACK: ${{ steps.app.outputs.token == '' && secrets.BOOTSTRAP_ADMIN_TOKEN == '' && 'true' || 'false' }}
+          GITHUB_TOKEN_FALLBACK: ${{ steps.app.outputs.token == '' && 'true' || 'false' }}
+          AUTOMERGE_ENABLED: ${{ vars.AUTOMERGE_ENABLED }}
           VALIDATED_RUN: ${{ inputs.validated_run_id }}
         run: |
           set -euo pipefail
+          if [ "$AUTOMERGE_ENABLED" = true ]; then
+            echo 'PR creation is independent; merge flag currently true'
+          else
+            echo 'PR creation is independent; merge flag currently false or unset'
+          fi
           if [ -n "$VALIDATED_RUN" ]; then
             python scripts/github/control.py create-pr --run-id "$VALIDATED_RUN"
           else

@@ -12,3 +12,7 @@ Live URL: https://neurodelo.pro/services.php?service=ai. Verified production ass
 ## Earlier visible release, 25.10.2026
 
 PR#23, revision `30efb5f4285433c73be36325009f3e716f465883`, run40198377556: historically deployed_and_verified. Superseded by the revisions above.
+
+## Диагностика GHA grant, PR #27
+
+Main/deployed `c77710a8ac4ed467218211f0500ae34195dcfdd1`; run40279749813 Validate+Publish success, exporter40280063589: deployed_and_verified, file backup/recovery verified, migrations=[]. Application files сохранены. Аудит40280063632 выявил missing REST auto-merge field; сам automation repair пока не завершён.
