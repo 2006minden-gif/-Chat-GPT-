@@ -172,28 +172,70 @@ def eligible(pr,reviews,checks,statuses,permissions,required_count,required_chec
         if status['context']!=REQUIRED_CHECK:passed.add(status['context'])
     return set(required_checks)<=passed
 
-def ensure_pr_for_validated_branch():
-    # workflow_run is defined on trusted main. No branch artifact or source is executed here.
-    event_path=os.environ.get('GITHUB_EVENT_PATH')
-    if os.environ.get('GITHUB_EVENT_NAME')!='workflow_run' or not event_path:return
-    event=json.loads(Path(event_path).read_text());run=event.get('workflow_run',{})
-    branch=run.get('head_branch','');sha=run.get('head_sha','')
-    if run.get('event')!='push' or run.get('conclusion')!='success' or branch=='main' or run.get('head_repository',{}).get('full_name')!=REPO:return
-    if not branch or not re.fullmatch('[a-f0-9]{40}',sha):raise GitHubFailure('Invalid validated branch identity')
+def ensure_pr_for_validated_branch(run_id=None):
+    """Create PR only; deliberately independent of merge policy and production secrets."""
     base='repos/'+REPO
-    checked=api('GET',base+'/actions/runs/'+str(int(run['id'])))
-    if checked['head_sha']!=sha or checked['conclusion']!='success' or checked['path']!='.github/workflows/deploy.yml':raise GitHubFailure('Untrusted workflow identity')
-    current=api('GET',base+'/git/ref/heads/'+quote(branch,safe=''))
-    if current['object']['sha']!=sha:return
-    existing=api('GET',base+'/pulls?state=open&base=main&head='+quote(REPO.split('/')[0]+':'+branch,safe=''))
-    if existing:return
-    comparison=api('GET',base+'/compare/main...'+sha)
-    if comparison.get('ahead_by',0)==0:return
-    api('POST',base+'/pulls',{'head':branch,'base':'main','title':'NeuroDelo: '+branch,
-        'draft':branch.startswith(('draft/','wip/')),
-        'body':'Created automatically after Validate passed for '+sha+'. Independent review is required before auto-merge. No deployment from this branch.'})
-    print('Created review PR for validated branch',branch)
-
+    event_run=None
+    if run_id is None:
+        event_path=os.environ.get('GITHUB_EVENT_PATH')
+        if os.environ.get('GITHUB_EVENT_NAME')!='workflow_run' or not event_path:return
+        event_run=json.loads(Path(event_path).read_text()).get('workflow_run',{})
+        if event_run.get('event')!='push' or event_run.get('conclusion')!='success' or event_run.get('head_branch')=='main' or event_run.get('head_repository',{}).get('full_name')!=REPO:return
+        run_id=str(event_run.get('id',''))
+    if not re.fullmatch('[0-9]+',str(run_id)):raise GitHubFailure('Invalid validated run ID')
+    run=api('GET',base+'/actions/runs/'+str(run_id))
+    branch=run.get('head_branch','');sha=run.get('head_sha','')
+    if (run.get('event')!='push' or run.get('status')!='completed' or run.get('conclusion')!='success'
+        or run.get('head_repository',{}).get('full_name')!=REPO or run.get('repository',{}).get('full_name')!=REPO
+        or run.get('path')!='.github/workflows/deploy.yml'):
+        raise GitHubFailure('Untrusted or unsuccessful validation run; PR not created')
+    if not branch or branch=='main' or not re.fullmatch('[a-f0-9]{40}',sha):raise GitHubFailure('Invalid validated branch identity')
+    if event_run and any(event_run.get(k)!=run.get(k) for k in ['head_sha','head_branch','workflow_id']):raise GitHubFailure('Validation event does not match authoritative run')
+    workflow=api('GET',base+'/actions/workflows/deploy.yml')
+    if run.get('workflow_id')!=workflow.get('id'):raise GitHubFailure('Untrusted workflow ID')
+    jobs=pages(base+'/actions/runs/'+str(run_id)+'/jobs','jobs')
+    if not any(j.get('name')==REQUIRED_CHECK and j.get('conclusion')=='success' for j in jobs):raise GitHubFailure('Validate job must succeed; skipped jobs are not validation')
+    current_path=base+'/git/ref/heads/'+quote(branch,safe='')
+    if api('GET',current_path)['object']['sha']!=sha:
+        print('PR creation skipped: validated branch head is stale');return
+    # Retain stacked PRs and drafts, including those deliberately targeting another base.
+    pr_path=base+'/pulls?state=open&head='+quote(REPO.split('/')[0]+':'+branch,safe='')
+    existing=api('GET',pr_path)
+    if existing:
+        print('PR already exists for validated branch',branch);return existing[0]
+    main=api('GET',base+'/git/ref/heads/main')['object']['sha']
+    comparison=api('GET',base+'/compare/'+main+'...'+sha)
+    if comparison.get('ahead_by',0)<=0:
+        print('PR creation skipped: branch has no changes ahead of main');return
+    # Same path/name is insufficient if a branch rewrote Validate into a no-op.
+    import base64
+    definitions=[]
+    for revision in [main,sha]:
+        value=api('GET',base+'/contents/.github/workflows/deploy.yml?ref='+revision)
+        try:definitions.append(base64.b64decode(value['content'],validate=False))
+        except (KeyError,ValueError,TypeError):raise GitHubFailure('Cannot verify trusted CI definition')
+    if definitions[0]!=definitions[1]:raise GitHubFailure('CI definition changed; independent workflow review required before automatic PR creation')
+    if api('GET',current_path)['object']['sha']!=sha:
+        print('PR creation skipped: branch moved before PR creation');return
+    try:
+        created=api('POST',base+'/pulls',{'head':branch,'base':'main','title':'NeuroDelo: '+branch,
+            'draft':branch.startswith(('draft/','wip/')),
+            'body':'Created automatically after trusted Validate run '+str(run_id)+' passed for '+sha+'. Required repository checks and review rules remain enforced. No deployment from this branch.'})
+    except GitHubFailure as error:
+        if 'HTTP 422' in str(error):
+            existing=api('GET',pr_path)
+            if existing:
+                print('Concurrent PR creation detected; existing PR preserved');return existing[0]
+        if 'HTTP 403' in str(error):
+            raise GitHubFailure('PR creation denied (HTTP 403). Verify pull_requests:write for the selected token/App installation and repository Actions permission to create PRs; no protection or credentials were changed.') from error
+        raise
+    print('Created PR',created['number'],'for validated SHA',sha,'run',run_id)
+    if os.environ.get('GITHUB_TOKEN_FALLBACK')=='true':
+        # Native token PR events do not start CI. Dispatch existing validation-only
+        # branch path; deploy.yml refuses production outside main.
+        api('POST',base+'/actions/workflows/deploy.yml/dispatches',{'ref':branch,'inputs':{'operation':'preview','expected_revision':sha}})
+        print('Requested required validation for native-token PR',created['number'])
+    return created
 
 def required_delivery_policy(base):
     """Check protected, strict Actions Validate for publication; no PR automation implied.
@@ -266,7 +308,6 @@ def auto_merge():
     base='repos/'+REPO;repo=api('GET',base)
     if not repo.get('allow_auto_merge'):raise GitHubFailure('Repository auto-merge is disabled')
     protection,count,required=required_policy(base)
-    ensure_pr_for_validated_branch()
     for pr in pages(base+'/pulls?state=open&base=main'):
         if pr['draft'] or pr['head']['repo'] is None or pr['head']['repo']['full_name']!=REPO:continue
         number=pr['number'];pr=api('GET',base+'/pulls/'+str(number))
@@ -295,11 +336,12 @@ def auto_merge():
     ensure_main_ci()
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['bootstrap','auto-merge']);parser.add_argument('--apply',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('operation',choices=['bootstrap','auto-merge','create-pr']);parser.add_argument('--apply',action='store_true');parser.add_argument('--run-id');args=parser.parse_args()
     try:
         if args.operation=='bootstrap':
             if not args.apply:print(json.dumps({'repository':REPO,'required_check':REQUIRED_CHECK,'reviews':1,'environments':['production','automation'],'branch':'main','note':'Use --apply with administrator gh authentication. No secrets are read or changed.'},indent=2))
             else:bootstrap()
+        elif args.operation=='create-pr':ensure_pr_for_validated_branch(args.run_id)
         else:auto_merge()
     except (GitHubFailure,subprocess.TimeoutExpired) as error:
         print(str(error));raise SystemExit(1)
