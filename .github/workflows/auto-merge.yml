@@ -215,7 +215,7 @@ jobs:
       (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' ||
        (github.event.workflow_run.conclusion == 'success' &&
         (github.event.workflow_run.event == 'pull_request' ||
-         (github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch != 'main' &&
+         ((github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'workflow_dispatch') && github.event.workflow_run.head_branch != 'main' &&
           github.event.workflow_run.head_repository.full_name == github.repository))))
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -249,9 +249,10 @@ jobs:
       - name: Enable only independently reviewed passing PRs
         env:
           GH_TOKEN: ${{ steps.app.outputs.token || secrets.BOOTSTRAP_ADMIN_TOKEN || github.token }}
+          GITHUB_MERGE_TOKEN: ${{ steps.app.outputs.token || github.token }}
           GITHUB_DISPATCH_TOKEN: ${{ github.token }}
           AUTOMATION_READY: ${{ vars.AUTOMATION_READY }}
           BOOTSTRAP_CONFIGURED_SHA: ${{ vars.BOOTSTRAP_CONFIGURED_SHA }}
           BOOTSTRAP_APPROVED_SHA: ${{ vars.BOOTSTRAP_APPROVED_SHA }}
-          GITHUB_TOKEN_FALLBACK: ${{ steps.app.outputs.token == '' && secrets.BOOTSTRAP_ADMIN_TOKEN == '' && 'true' || 'false' }}
+          GITHUB_TOKEN_FALLBACK: ${{ steps.app.outputs.token == '' && 'true' || 'false' }}
         run: python scripts/github/control.py auto-merge

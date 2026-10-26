@@ -16,3 +16,7 @@ PR#23, revision `30efb5f4285433c73be36325009f3e716f465883`, run40198377556: hist
 ## Диагностика GHA grant, PR #27
 
 Main/deployed `c77710a8ac4ed467218211f0500ae34195dcfdd1`; run40279749813 Validate+Publish success, exporter40280063589: deployed_and_verified, file backup/recovery verified, migrations=[]. Application files сохранены. Аудит40280063632 выявил missing REST auto-merge field; сам automation repair пока не завершён.
+
+## Native PR и typed policy, PR #28
+
+Main/deployed `6f1291edf31bee8f31c0940970fc6631825b2c0f`; run40280808627 success. Exporter40281088490: exact revision deployed_and_verified, verified backup/recovery, migrations=[]. Configure integration40281088553 success, protection unchanged. Native creation proof40281018269 → draft#29 при false merging; replay40281288598 → тот же PR, без дубликата. Старый preview отменён новым head; это не PASS. Latest proof push/PR checks40281079415/40281084505 success.

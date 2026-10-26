@@ -384,6 +384,8 @@ def auto_merge():
     protection,count,required=integration_policy(base)
     for pr in pages(base+'/pulls?state=open&base=main'):
         if pr['draft'] or pr['head']['repo'] is None or pr['head']['repo']['full_name']!=REPO:continue
+        # Preserve older/manual PRs: this controller owns only its validated-run PRs.
+        if not re.match(r'^Created automatically after trusted Validate run [0-9]+ passed for [a-f0-9]{40}\.',pr.get('body') or ''):continue
         number=pr['number'];pr=api('GET',base+'/pulls/'+str(number))
         if pr.get('mergeable') is False:continue
         head=pr['head']['sha'];reviews=pages(base+'/pulls/'+str(number)+'/reviews')
@@ -405,7 +407,9 @@ def auto_merge():
         if not eligible(pr,reviews,checks,statuses,permissions,count,required):continue
         method='--squash' if repo.get('allow_squash_merge') else '--rebase' if repo.get('allow_rebase_merge') else '--merge'
         if method=='--merge' and protection.get('required_linear_history',{}).get('enabled'):raise GitHubFailure('No allowed linear merge method')
-        r=subprocess.run(['gh','pr','merge',str(number),'--repo',REPO,'--auto',method,'--match-head-commit',head],capture_output=True,text=True,timeout=45)
+        merge_env=dict(os.environ)
+        if merge_env.get('GITHUB_MERGE_TOKEN'):merge_env['GH_TOKEN']=merge_env['GITHUB_MERGE_TOKEN'].strip()
+        r=subprocess.run(['gh','pr','merge',str(number),'--repo',REPO,'--auto',method,'--match-head-commit',head],capture_output=True,text=True,timeout=45,env=merge_env)
         if r.returncode:raise GitHubFailure('Could not enable auto-merge for PR '+str(number))
         print('Auto-merge prepared for approved, passing PR',number)
     ensure_main_ci()
