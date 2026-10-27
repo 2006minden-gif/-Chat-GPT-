@@ -1,4 +1,5 @@
 User-agent: *
+Disallow: /max-webhook.php
 Disallow: /owner-setup.php
 Disallow: /api.php
 Disallow: /studio.php
