@@ -4,3 +4,5 @@
 #cc-modal-body,.print-document{overflow-wrap:anywhere}
 
 .lifecycle-documents main.portal{overflow-wrap:anywhere;min-width:0}.lifecycle-documents form{display:grid;gap:14px}.lifecycle-documents label{min-width:0}.lifecycle-documents input,.lifecycle-documents textarea{width:100%;min-width:0}.lifecycle-documents input[type=checkbox]{width:auto;align-self:start}
+
+.lifecycle-documents pre{white-space:pre-wrap;overflow-wrap:anywhere}

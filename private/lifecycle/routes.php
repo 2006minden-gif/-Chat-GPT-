@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__.'/documents.php';require_once __DIR__.'/payments.php';
+require_once __DIR__.'/documents.php';require_once __DIR__.'/payments.php';require_once __DIR__.'/flow.php';
 function lc_dispatch(bool $customer,string $route,string $method):never{
  try{$a=cc_actor($customer,$method!=='GET');lc_gate();rate('lifecycle:'.$a['type'].':'.$a['id'],150);
+ if(str_starts_with($route,'flow/'))lc_flow_dispatch($a,substr($route,5),$method);
  if(str_starts_with($route,'finance'))lc_finance_gate();
  if($method==='GET'){
   if($route==='finance')json_response(lc_finance_read($a));

@@ -1,0 +1,44 @@
+"""Synthetic lifecycle, isolated MySQL only; no real charges/deploys/fiscal documents."""
+import json,secrets,subprocess
+import test_lifecycle_payments as pay
+
+class OrderLifecycle(pay.LifecyclePayments):
+ @classmethod
+ def setUpClass(cls):
+  super().setUpClass();r=subprocess.run([cls.f.php,str(cls.f.path/'scripts/migrate-lifecycle.php'),'up'],capture_output=True,text=True)
+  if r.returncode:raise RuntimeError(r.stderr)
+ def fg(self,id,s=None):return self.lg('flow/orders/'+str(id),s)
+ def fp(self,id,action,s=None,**d):
+  d.setdefault('version',int(self.fg(id).json()['record']['version']));d.setdefault('reason','SYNTHETIC reviewed action');d.setdefault('confirm',True);return self.lp('flow/orders/'+str(id)+'/'+action,s,**d)
+ def must(self,r):self.assertEqual(r.status_code,200,r.text);return r.json()
+ def flow_ready(self):
+  t,q=self.prepare();r=self.owner.post(self.base+'/api.php?r=crm/collab/projects/'+str(self.project_id)+'/documents',json={'request_key':secrets.token_hex(32),'kind':'specification','title':'SYNTHETIC brief','fields':{'title':'SYNTHETIC brief','requirements':'SYNTHETIC explicit requirements and exclusions, test only','acceptance':'SYNTHETIC acceptance criteria'},'file_ids':[]});rev=self.must(r)['revision'];r=self.owner.post(self.base+'/api.php?r=crm/collab/revisions/'+str(rev['id'])+'/ready',json={'request_key':secrets.token_hex(32),'version':int(rev['version'])});rev=self.must(r)['revision'];q=self.approved_price()
+  f=self.must(self.lp('flow/orders',project_id=self.project_id))['record'];oid=int(f['order_id']);self.must(self.fp(oid,'qualify'));self.must(self.fp(oid,'brief',revision_id=int(rev['id'])));self.must(self.fp(oid,'quote',quotation_id=int(q['id'])))
+  r=self.generate(t,q);proposal=self.must(r)['record'];proposal=self.must(self.action(proposal,'send'))['record'];self.must(self.fp(oid,'proposal',binding_id=int(proposal['id'])));self.must(self.fp(oid,'decision/PROPOSAL',self.customer,checksum=proposal['generated_hash'],decision='ACCEPT'))
+  t=self.approved_template('agreement');b=self.must(self.generate(t,q))['record'];b=self.must(self.action(b,'send'))['record'];r=self.customer.post(self.base+'/customer-api.php?r=collab/upload',data={'project_id':str(self.project_id),'request_key':secrets.token_hex(32)},files={'file':('SYNTHETIC-not-real-signature.pdf',self.pdf(),'application/pdf')});fid=int(self.must(r)['file']['id']);b=self.must(self.action(b,'signed-copy',self.customer,file_id=fid))['record'];b=self.must(self.action(b,'verify'))['record'];self.must(self.fp(oid,'agreement',binding_id=int(b['id'])));t=self.approved_template('invoice');self.must(self.lp('finance/agreements/'+str(b['id'])+'/activate',invoice_template_id=int(t['id']),confirm=True));items=sorted([i for i in self.lg('finance').json()['items'] if int(i['order_id'])==oid],key=lambda i:int(i['id']));return oid,items
+ def material_ready(self,oid,kind='MATERIAL',file=None):
+  r=self.must(self.fp(oid,'obligations',kind=kind,title='SYNTHETIC '+kind,details='SYNTHETIC reviewed item, no credentials',required=True));iid=r['id'];self.must(self.fp(oid,'obligations/'+str(iid)+'/submit',version=1,file_id=file));self.must(self.fp(oid,'obligations/'+str(iid)+'/verify',version=2));return iid
+ def stage(self):return self.must(self.owner.post(self.base+'/api.php?r=crm/stages',json={'project_id':self.project_id,'title':'SYNTHETIC stage','position':1,'request_key':secrets.token_hex(32)}))['record']
+ def evidence(self,stage,**extra):
+  d=dict(stage_id=int(stage['id']),deliverables='SYNTHETIC no real deployment',acceptance_criteria='SYNTHETIC checks',test_results='SYNTHETIC isolated CI fixture only',ci_url='https://github.com/example/test/actions/runs/1',preview_url='https://client-preview.example.invalid/',deployment_url='https://client-result.example.invalid/',published_revision='TEST-REVISION-1',verification_evidence='SYNTHETIC test, not production verification',owner_review='SYNTHETIC owner attestation',confirm_actual_deployment=True);d.update(extra);return d
+ def respond(self,oid,id,kind):
+  v=self.f.sql('SELECT version,checksum FROM nd_lc_milestone_versions WHERE id=?',params=[id])[0];return self.fp(oid,'milestones/'+str(id)+'/respond',self.customer,version=int(v['version']),checksum=v['checksum'],kind=kind,feedback='SYNTHETIC consolidated feedback')
+ def test_flow_01_mandatory_commercial_payment_materials_and_roles(self):
+  oid,items=self.flow_ready();self.assertEqual(self.fg(oid,self.stranger).status_code,404);self.assertEqual(self.fp(oid,'qualify',self.customer).status_code,403);self.assertEqual(self.fp(oid,'start-production').status_code,409)
+  self.material_ready(oid);self.assertEqual(self.fp(oid,'start-production').status_code,409);deposit=items[0];n=int(deposit['total_minor']);self.must(self.bank(deposit,amount=f'{n//100}.{n%100:02}'));self.must(self.fp(oid,'start-production'));f=self.fg(oid,self.customer).json()['record'];self.assertEqual(f['delivery_state'],'IN_PRODUCTION');self.assertNotIn('notes',f['order'])
+  stage=self.stage();self.assertEqual(self.fp(oid,'milestones',**self.evidence(stage,deployment_url='https://neurodelo.pro/')).status_code,422);self.assertEqual(self.fp(oid,'milestones',**self.evidence(stage,confirm_actual_deployment=False)).status_code,422)
+  self.must(self.fp(oid,'pause'));self.assertEqual(self.fp(oid,'milestones',**self.evidence(stage)).status_code,409);self.assertEqual(self.lg('finance',self.customer).status_code,200);self.must(self.fp(oid,'resume'))
+ def test_flow_02_versions_defect_resolution_final_and_handover_gate(self):
+  oid,items=self.flow_ready();self.material_ready(oid);n=int(items[0]['total_minor']);self.must(self.bank(items[0],amount=f'{n//100}.{n%100:02}'));self.must(self.fp(oid,'start-production'));stage=self.stage();v1=self.must(self.fp(oid,'milestones',**self.evidence(stage)))['id'];self.assertEqual(self.fp(oid,'request-final').status_code,409);feedback=self.must(self.respond(oid,v1,'DEFECT'))['id'];v2=self.must(self.fp(oid,'milestones',**self.evidence(stage,published_revision='TEST-REVISION-2')))['id'];self.must(self.respond(oid,v2,'ACCEPT'));self.assertEqual(self.fp(oid,'request-final').status_code,409);self.must(self.fp(oid,'feedback/'+str(feedback)+'/resolve',version=1,resolution_version_id=v2));self.must(self.fp(oid,'request-final'));f=self.fg(oid).json()['record'];self.must(self.fp(oid,'decision/FINAL',self.customer,checksum=f['final_hash'],decision='ACCEPT'));self.assertEqual(self.fp(oid,'prepare-handover').status_code,409)
+  # Handover is delayed until its actual agreed payment, not until every arbitrary status.
+  n=int(items[1]['total_minor']);self.must(self.bank(items[1],amount=f'{n//100}.{n%100:02}'));r=self.owner.post(self.base+'/api.php?r=crm/collab/upload',data={'project_id':str(self.project_id),'request_key':secrets.token_hex(32),'visibility':'internal'},files={'file':('SYNTHETIC-handover.pdf',self.pdf(),'application/pdf')});fid=int(self.must(r)['file']['id']);self.material_ready(oid,'HANDOVER',fid);download=self.base+'/collab-download.php?mode=customer&id='+str(fid);self.assertEqual(self.customer.get(download).status_code,404);self.must(self.fp(oid,'prepare-handover'));self.assertEqual(self.customer.get(download).status_code,200);f=self.fg(oid,self.customer).json()['record'];self.must(self.fp(oid,'decision/HANDOVER',self.customer,checksum=f['handover_hash'],decision='ACCEPT'));self.assertEqual(self.fg(oid).json()['record']['delivery_state'],'HANDED_OVER')
+  self.assertEqual(self.f.sql("SELECT COUNT(*) n FROM nd_lc_receipt_evidence WHERE action='ISSUANCE_RECORDED'")[0]['n'],0)
+ def test_flow_03_request_changes_preserves_agreed_order_and_mobile_owner(self):
+  oid,items=self.flow_ready();before=self.f.sql('SELECT total_amount FROM nd_orders WHERE id=?',params=[oid]);r=self.must(self.fp(oid,'changes',self.customer,request_body='SYNTHETIC request for additional scope'));self.assertFalse(r['price_changed']);self.assertEqual(self.f.sql('SELECT total_amount FROM nd_orders WHERE id=?',params=[oid]),before)
+  import os
+  from playwright.sync_api import sync_playwright
+  with sync_playwright() as p:
+   browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);page=browser.new_page(viewport={'width':375,'height':812});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(self.base+'/studio.php');page.locator('#password').fill(self.f.password);page.locator('#login-form button').click();page.locator('#dashboard').wait_for(state='visible');page.goto(self.base+'/orders.php?mode=owner#'+str(oid));page.get_by_text('Материалы и передача',exact=True).wait_for();self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'));self.assertEqual(errors,[]);browser.close()
+
+for name in dir(pay.LifecyclePayments):
+ if name.startswith('test_'):setattr(OrderLifecycle,name,None)

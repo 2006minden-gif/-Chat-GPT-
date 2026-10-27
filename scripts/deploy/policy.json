@@ -52,6 +52,8 @@
     "operations.js",
     "ordering.js",
     "ordering.php",
+    "orders.js",
+    "orders.php",
     "owner-setup.js",
     "owner-setup.php",
     "payment-webhook.php",
@@ -120,6 +122,7 @@
     "legal/privacy-2026-10-26-v1.json",
     "legal/privacy-2026-10-27-v2.json",
     "lifecycle/documents.php",
+    "lifecycle/flow.php",
     "lifecycle/payments.php",
     "lifecycle/routes.php",
     "lifecycle/schedule.php",
@@ -273,6 +276,16 @@
       "depends_on": "014_lifecycle_documents",
       "up_sha256": "e8cfe57a955849b840d19f6d207c1a9f1cbf8cb7ef8ac5f504c55c8878c4113f",
       "down_sha256": "e0fa321d3e1d3eb5cddd3ade1f1ce7c9a634effee1f1413e17057a9d854a2867"
+    },
+    {
+      "version": "016_order_lifecycle",
+      "kind": "reviewed_additive",
+      "automatic": true,
+      "required": true,
+      "operator": "scripts/migrate-lifecycle.php",
+      "depends_on": "015_lifecycle_payments",
+      "up_sha256": "5dadf929b21da95d610f3f866f70134722d2048a2c08654fa9e3474887fc2ab8",
+      "down_sha256": "de31bc077731cbc92b0310d51e9635bf436a55717d2a071903bf2f22c7c5d8c4"
     }
   ],
   "database_recovery_required": true
