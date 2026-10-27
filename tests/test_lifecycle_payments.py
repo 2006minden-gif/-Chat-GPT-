@@ -57,5 +57,20 @@ class LifecyclePayments(docs.LifecycleDocuments):
    page.goto(self.base+'/studio.php');page.locator('#password').fill(self.f.password);page.locator('#login-form button').click();page.locator('#dashboard').wait_for(state='visible')
    page.goto(self.base+'/finance.php?mode=owner');page.get_by_text('Проверка реального поступления',exact=True).first.wait_for();page.get_by_text('Проверка реального поступления',exact=True).first.click();page.locator('input[name=bank_entry_id]').first.wait_for(state='visible');self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'));self.assertEqual(errors,[]);browser.close()
 
+ def test_pay_05_concurrent_independent_bank_verifications_create_one_income(self):
+  import subprocess
+  _,items=self.activate();invoice=items[0];entry='SYNTHETIC-CONCURRENT-'+secrets.token_hex(16)
+  code='$v=json_decode(stream_get_contents(STDIN),true);require $v["root"]."/private/app.php";require $v["root"]."/private/lifecycle/routes.php";$a=["type"=>"owner","id"=>1];$d=$v["data"];try{$r=lc_mutation($a,"lifecycle/finance/invoices/".$v["invoice"]."/verify",$d,fn()=>lc_verify_bank($a,$v["invoice"],$d));echo json_encode(["ok"=>true,"id"=>$r["id"]]);}catch(PDOException $e){echo json_encode(["conflict"=>$e->getCode()==="23000"||$e->getCode()==="40001"]);}catch(CrmFailure $e){echo json_encode(["conflict"=>$e->status===409]);}'
+  processes=[]
+  for _ in range(2):
+   d=dict(request_key=secrets.token_hex(32),amount='1.00',paid_at='2026-01-10 12:00:00',payer='SYNTHETIC payer',reference='SYNTHETIC simultaneous record',bank_entry_id=entry,method='cash',reason='SYNTHETIC concurrency test, no real transfer',confirm_actual_bank=True,service_description='SYNTHETIC deposit')
+   p=subprocess.Popen([self.f.php,'-r',code],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True);p.stdin.write(json.dumps({'root':str(self.f.path),'data':d,'invoice':int(invoice['id'])}));p.stdin.close();processes.append(p)
+  results=[]
+  for p in processes:
+   p.wait(timeout=30);self.assertEqual(p.returncode,0);results.append(json.loads(p.stdout.read()));p.stdout.close();p.stderr.close()
+  self.assertEqual(sum(r.get('ok',False) for r in results),1);self.assertEqual(sum(r.get('conflict',False) for r in results),1)
+  self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_payment_transactions t JOIN nd_payment_attempts p ON p.id=t.attempt_id WHERE p.invoice_id=?',params=[invoice['id']])[0]['n'],1)
+  self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_lc_receipt_tasks r JOIN nd_payment_transactions t ON t.id=r.transaction_id JOIN nd_payment_attempts p ON p.id=t.attempt_id WHERE p.invoice_id=?',params=[invoice['id']])[0]['n'],1)
+
 for name in dir(docs.LifecycleDocuments):
  if name.startswith('test_'):setattr(LifecyclePayments,name,None)
