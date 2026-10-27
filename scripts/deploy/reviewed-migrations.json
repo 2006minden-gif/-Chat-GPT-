@@ -70,5 +70,11 @@
     "operator_sha256": "ae1225bd962ec68b0017ccc472abbe26c91b866369e1e23823b30ec89e1465b1",
     "up_sha256": "e8cfe57a955849b840d19f6d207c1a9f1cbf8cb7ef8ac5f504c55c8878c4113f",
     "down_sha256": "e0fa321d3e1d3eb5cddd3ade1f1ce7c9a634effee1f1413e17057a9d854a2867"
+  },
+  "016_order_lifecycle": {
+    "operator": "scripts/migrate-lifecycle.php",
+    "operator_sha256": "e16f5ed0e589c723489027b2e93e63da71637876169b9fc9ac3ea756cd5a9f3b",
+    "up_sha256": "5dadf929b21da95d610f3f866f70134722d2048a2c08654fa9e3474887fc2ab8",
+    "down_sha256": "de31bc077731cbc92b0310d51e9635bf436a55717d2a071903bf2f22c7c5d8c4"
   }
 }
