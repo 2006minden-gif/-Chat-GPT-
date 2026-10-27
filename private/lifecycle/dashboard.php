@@ -10,7 +10,7 @@ function lc_owner_dashboard():array{
  'missing_materials'=>"SELECT COUNT(*) FROM nd_lc_obligations WHERE kind='MATERIAL' AND required=1 AND state NOT IN ('VERIFIED','NOT_APPLICABLE')",
  'payment_claims'=>"SELECT COUNT(*) FROM nd_lc_payment_claims WHERE state='REPORTED'",
  'receipt_tasks'=>"SELECT COUNT(*) FROM nd_lc_receipt_tasks WHERE state<>'TRANSMISSION_RECORDED'",
- 'overdue_receipts'=>"SELECT COUNT(*) FROM nd_lc_receipt_tasks WHERE state<>'TRANSMISSION_RECORDED' AND due_at<UTC_TIMESTAMP()",
+ 'overdue_receipts'=>"SELECT COUNT(*) FROM nd_lc_receipt_tasks WHERE state IN ('MISSING','OWNER_RECORDED') AND due_at<UTC_TIMESTAMP()",
  'active_work'=>"SELECT COUNT(*) FROM nd_lc_order_flow WHERE case_state='ACTIVE' AND delivery_state='IN_PRODUCTION'",
  'acceptance'=>"SELECT COUNT(*) FROM nd_lc_order_flow WHERE case_state='ACTIVE' AND (delivery_state='CLIENT_REVIEW' OR acceptance_state='REVIEW')",
  'feedback'=>"SELECT COUNT(*) FROM nd_lc_feedback WHERE state='OPEN'",
