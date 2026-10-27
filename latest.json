@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "source_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
-  "nonce": "workflow-40490304885",
-  "run_id": "40490347914",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40490347914",
-  "time": "2026-10-27T10:40:54.658231+00:00",
+  "nonce": "workflow-40493756620",
+  "run_id": "40494887858",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40494887858",
+  "time": "2026-10-27T11:16:26.811864+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40490304885,
-    "name": "Enable approved auto-merge",
-    "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
-    "head_branch": "main",
-    "event": "schedule",
+    "id": 40493756620,
+    "name": "Validate b6b68c0dd174b05514af6c430f1dd357bb8a9c3a",
+    "head_sha": "621f30310d41f7344408120aec4a115221422598",
+    "head_branch": "feature/lifecycle-a",
+    "event": "pull_request",
     "status": "completed",
-    "conclusion": "failure",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40490304885",
-    "path": ".github/workflows/auto-merge.yml"
+    "conclusion": "success",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40493756620",
+    "path": ".github/workflows/deploy.yml"
   },
   "inspection": {
     "repository": {
@@ -109,10 +109,10 @@
           "state": "open",
           "draft": false,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/pull/39",
-          "merge_commit_sha": "3efda42808f62a3a6681e0209f36be5a3ab37e1a",
+          "merge_commit_sha": "b6b68c0dd174b05514af6c430f1dd357bb8a9c3a",
           "head": {
             "ref": "feature/lifecycle-a",
-            "sha": "e37faa0387f891846e5885221b9cb8bf5285ee90"
+            "sha": "621f30310d41f7344408120aec4a115221422598"
           },
           "base": {
             "ref": "main",
@@ -234,18 +234,126 @@
       "status": 200,
       "runs": [
         {
-          "id": 40490347914,
+          "id": 40494902741,
+          "name": "Enable approved auto-merge",
+          "event": "schedule",
+          "head_branch": "main",
+          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
+          "status": "queued",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40494902741",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 122157768556,
+              "name": "approved",
+              "status": "pending",
+              "conclusion": null,
+              "steps": []
+            },
+            {
+              "id": 122157770433,
+              "name": "Create PR after trusted branch validation",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 122157770562,
+              "name": "Configure CI/CD after validated main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40494887970,
+          "name": "Enable approved auto-merge",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40494887970",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 122157717275,
+              "name": "Create PR after trusted branch validation",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 122157717470,
+              "name": "approved",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Enable only independently reviewed passing PRs",
+                  "conclusion": "failure",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "in_progress"
+                }
+              ]
+            },
+            {
+              "id": 122157717750,
+              "name": "Verify and enable protected integration",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 122157757210,
+              "name": "Enable routine deployment only after verified bootstrap",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 122157772479,
+              "name": "Configure CI/CD after validated main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40494887858,
           "name": "Record Git-readable automation evidence",
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40490347914",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40494887858",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
-              "id": 122142421649,
+              "id": 122157715029,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -269,6 +377,425 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40494749590,
+          "name": "Validate f2dd853a36b2ce043755126db489cf42da4949ea",
+          "event": "push",
+          "head_branch": "feature/lifecycle-documents",
+          "head_sha": "f2dd853a36b2ce043755126db489cf42da4949ea",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40494749590",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 122157247154,
+              "name": "Validate",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Validate dispatched revision",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40493756620,
+          "name": "Validate b6b68c0dd174b05514af6c430f1dd357bb8a9c3a",
+          "event": "pull_request",
+          "head_branch": "feature/lifecycle-a",
+          "head_sha": "621f30310d41f7344408120aec4a115221422598",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40493756620",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 122153878617,
+              "name": "Validate",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Validate dispatched revision",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 122157694496,
+              "name": "Publish approved main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 122157695729,
+              "name": "Enable verified routine publication",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40493750215,
+          "name": "Validate 621f30310d41f7344408120aec4a115221422598",
+          "event": "push",
+          "head_branch": "feature/lifecycle-a",
+          "head_sha": "621f30310d41f7344408120aec4a115221422598",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40493750215",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 122153855392,
+              "name": "Validate",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Validate dispatched revision",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40493293015,
+          "name": "Retry MAX notifications",
+          "event": "schedule",
+          "head_branch": "main",
+          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40493293015",
+          "path": ".github/workflows/notifications.yml",
+          "jobs": [
+            {
+              "id": 122152316298,
+              "name": "retry",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Verify current main before SSH",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Retry pending delivery on SpaceWeb",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40490347914,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40490347914",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 122142421649,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -666,731 +1193,6 @@
               "status": "completed",
               "conclusion": "skipped",
               "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40484773362,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40484773362",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 122123704001,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40484765358,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40484765358",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 122123677829,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40484765283,
-          "name": "Enable approved auto-merge",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
-          "status": "completed",
-          "conclusion": "skipped",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40484765283",
-          "path": ".github/workflows/auto-merge.yml",
-          "jobs": [
-            {
-              "id": 122123678806,
-              "name": "Enable routine deployment only after verified bootstrap",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 122123679735,
-              "name": "approved",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 122123722081,
-              "name": "Create PR after trusted branch validation",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 122123731334,
-              "name": "Configure CI/CD after validated main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 122123733540,
-              "name": "Verify and enable protected integration",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40483916905,
-          "name": "Validate 3efda42808f62a3a6681e0209f36be5a3ab37e1a",
-          "event": "pull_request",
-          "head_branch": "feature/lifecycle-a",
-          "head_sha": "e37faa0387f891846e5885221b9cb8bf5285ee90",
-          "status": "completed",
-          "conclusion": "failure",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40483916905",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 122120815959,
-              "name": "Validate",
-              "status": "completed",
-              "conclusion": "failure",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Initialize containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Validate dispatched revision",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Install isolated test dependencies",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Syntax and workflow validation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Unit, integration, Apache, security and migration tests",
-                  "conclusion": "failure",
-                  "status": "completed"
-                },
-                {
-                  "name": "Build checked release",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Stop containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ],
-              "diagnostics": {
-                "errors": [
-                  "2026-10-27T10:09:06.4770191Z ",
-                  "2026-10-27T10:09:06.4770904Z ======================================================================",
-                  "2026-10-27T10:09:06.4772835Z FAIL: test_secure_cookie_flags_and_https_only_outside_test (test_customer_auth.CustomerAuth.test_secure_cookie_flags_and_https_only_outside_test)",
-                  "2026-10-27T10:09:06.4774292Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4775019Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4776335Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 235, in test_secure_cookie_flags_and_https_only_outside_test",
-                  "2026-10-27T10:09:06.4779129Z     r=requests.get(self.url('session'));self.assertEqual(r.status_code,200);cookie=r.headers['Set-Cookie'];self.assertIn('__Host-nd_customer=',cookie);self.assertIn('secure',cookie.lower());self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie);self.assertIn('path=/',cookie.lower());self.assertNotIn('domain=',cookie.lower())",
-                  "2026-10-27T10:09:06.4780951Z                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4781329Z AssertionError: 503 != 200",
-                  "2026-10-27T10:09:06.4781508Z ",
-                  "2026-10-27T10:09:06.4781728Z ======================================================================",
-                  "2026-10-27T10:09:06.4782866Z FAIL: test_session_expiry_logout_and_no_crm_regression (test_customer_auth.CustomerAuth.test_session_expiry_logout_and_no_crm_regression)",
-                  "2026-10-27T10:09:06.4783715Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4784157Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4784730Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T10:09:06.4785326Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T10:09:06.4785711Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4786313Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T10:09:06.4787258Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T10:09:06.4787963Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4789037Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T10:09:06.4791313Z ",
-                  "2026-10-27T10:09:06.4791681Z ======================================================================",
-                  "2026-10-27T10:09:06.4793551Z FAIL: test_smtp_transient_failure_retries_without_duplicate_account (test_customer_auth.CustomerAuth.test_smtp_transient_failure_retries_without_duplicate_account)",
-                  "2026-10-27T10:09:06.4794975Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4795776Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4796804Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T10:09:06.4797841Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T10:09:06.4798329Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4798930Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T10:09:06.4799803Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T10:09:06.4800449Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4801317Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T10:09:06.4801741Z ",
-                  "2026-10-27T10:09:06.4801948Z ======================================================================",
-                  "2026-10-27T10:09:06.4803232Z FAIL: test_token_hashes_and_single_use_verification (test_customer_auth.CustomerAuth.test_token_hashes_and_single_use_verification)",
-                  "2026-10-27T10:09:06.4803992Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4804400Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4804939Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T10:09:06.4805480Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T10:09:06.4805832Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4806373Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T10:09:06.4807220Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T10:09:06.4807883Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4808848Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T10:09:06.4809272Z ",
-                  "2026-10-27T10:09:06.4809469Z ======================================================================",
-                  "2026-10-27T10:09:06.4810267Z FAIL: test_unverified_cannot_be_activated_by_lifecycle (test_customer_auth.CustomerAuth.test_unverified_cannot_be_activated_by_lifecycle)",
-                  "2026-10-27T10:09:06.4811010Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4811399Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4811923Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T10:09:06.4812712Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T10:09:06.4813071Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4813621Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T10:09:06.4814470Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T10:09:06.4815134Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4815936Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T10:09:06.4816363Z ",
-                  "2026-10-27T10:09:06.4816559Z ======================================================================",
-                  "2026-10-27T10:09:06.4817426Z FAIL: test_verification_legal_change_requires_current_checkbox (test_customer_auth.CustomerAuth.test_verification_legal_change_requires_current_checkbox)",
-                  "2026-10-27T10:09:06.4818237Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4818630Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4819143Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T10:09:06.4819697Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T10:09:06.4820061Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4820595Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T10:09:06.4821427Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T10:09:06.4822066Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4823238Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T10:09:06.4824105Z ",
-                  "2026-10-27T10:09:06.4824515Z ======================================================================",
-                  "2026-10-27T10:09:06.4826196Z FAIL: test_07_shared_config_failure_and_readonly_diagnostics (test_prelaunch.Prelaunch.test_07_shared_config_failure_and_readonly_diagnostics)",
-                  "2026-10-27T10:09:06.4828007Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4828476Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4829231Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 257, in test_07_shared_config_failure_and_readonly_diagnostics",
-                  "2026-10-27T10:09:06.4830008Z     r=requests.get(self.base+route);self.assertEqual(r.status_code,503)",
-                  "2026-10-27T10:09:06.4830474Z                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4830817Z AssertionError: 404 != 503",
-                  "2026-10-27T10:09:06.4830981Z ",
-                  "2026-10-27T10:09:06.4831192Z ======================================================================",
-                  "2026-10-27T10:09:06.4831995Z FAIL: test_08_setup_authentication_session_and_logout (test_prelaunch.Prelaunch.test_08_setup_authentication_session_and_logout)",
-                  "2026-10-27T10:09:06.4833016Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4833561Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4834271Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 287, in test_08_setup_authentication_session_and_logout",
-                  "2026-10-27T10:09:06.4835016Z     self.assertEqual(requests.get(self.base+'/setup.php').status_code,403)",
-                  "2026-10-27T10:09:06.4835434Z AssertionError: 404 != 403",
-                  "2026-10-27T10:09:06.4835595Z ",
-                  "2026-10-27T10:09:06.4835795Z ======================================================================",
-                  "2026-10-27T10:09:06.4836696Z FAIL: test_07_shared_config_failure_and_readonly_diagnostics (test_prelaunch_foundation.MigratedPrelaunch.test_07_shared_config_failure_and_readonly_diagnostics)",
-                  "2026-10-27T10:09:06.4837534Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4837924Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4838632Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 257, in test_07_shared_config_failure_and_readonly_diagnostics",
-                  "2026-10-27T10:09:06.4839378Z     r=requests.get(self.base+route);self.assertEqual(r.status_code,503)",
-                  "2026-10-27T10:09:06.4839823Z                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4840156Z AssertionError: 404 != 503",
-                  "2026-10-27T10:09:06.4840316Z ",
-                  "2026-10-27T10:09:06.4840508Z ======================================================================",
-                  "2026-10-27T10:09:06.4841349Z FAIL: test_08_setup_authentication_session_and_logout (test_prelaunch_foundation.MigratedPrelaunch.test_08_setup_authentication_session_and_logout)",
-                  "2026-10-27T10:09:06.4842127Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4842758Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4843445Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 287, in test_08_setup_authentication_session_and_logout",
-                  "2026-10-27T10:09:06.4844188Z     self.assertEqual(requests.get(self.base+'/setup.php').status_code,403)",
-                  "2026-10-27T10:09:06.4844608Z AssertionError: 404 != 403",
-                  "2026-10-27T10:09:06.4844764Z ",
-                  "2026-10-27T10:09:06.4844956Z ======================================================================",
-                  "2026-10-27T10:09:06.4845775Z FAIL: test_09_shared_navigation_flags_and_real_routes (test_system_integration.SystemIntegration.test_09_shared_navigation_flags_and_real_routes)",
-                  "2026-10-27T10:09:06.4846537Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4846915Z Traceback (most recent call last):",
-                  "2026-10-27T10:09:06.4847614Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_system_integration.py\", line 79, in test_09_shared_navigation_flags_and_real_routes",
-                  "2026-10-27T10:09:06.4849208Z     html=self.owner.get(self.base+'/handoff.php').text;self.assertIn('Каталог услуг и интерактивный бриф пока недоступны',html);self.assertNotIn('href=\"/ai.php',html);self.assertNotIn('href=\"/production.php',html);self.assertIn('href=\"/handoff.php',html)",
-                  "2026-10-27T10:09:06.4850296Z                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T10:09:06.4858879Z AssertionError: 'Каталог услуг и интерактивный бриф пока недоступны' not found in '<!doctype html><html lang=\"ru\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>НейроДело — ручная передача задания</title><link rel=\"stylesheet\" href=\"operations.css\"><link rel=\"stylesheet\" href=\"production.css\"></head><body><main class=\"portal\"><details class=\"product-navigation\"><summary>Разделы CRM</summary><nav class=\"tabs\" aria",
-                  "2026-10-27T10:09:06.4864447Z ",
-                  "2026-10-27T10:09:06.4864683Z ----------------------------------------------------------------------",
-                  "2026-10-27T10:09:06.4865079Z Ran 386 tests in 446.138s",
-                  "2026-10-27T10:09:06.4865228Z ",
-                  "2026-10-27T10:09:06.4865351Z FAILED (failures=11)",
-                  "2026-10-27T10:09:06.4865984Z Unattended PR credential metadata: {\"app_id_configured\": false, \"app_key_configured\": false, \"pat_configured\": false}",
-                  "2026-10-27T10:09:06.4866711Z Verified native auto-merge through typed GraphQL field; REST field absent",
-                  "2026-10-27T10:09:06.5184268Z ##[error]Process completed with exit code 1."
-                ]
-              }
-            },
-            {
-              "id": 122128685482,
-              "name": "Publish approved main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 122128686622,
-              "name": "Enable verified routine publication",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40483864022,
-          "name": "Validate e37faa0387f891846e5885221b9cb8bf5285ee90",
-          "event": "push",
-          "head_branch": "feature/lifecycle-a",
-          "head_sha": "e37faa0387f891846e5885221b9cb8bf5285ee90",
-          "status": "completed",
-          "conclusion": "failure",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40483864022",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 122120635119,
-              "name": "Validate",
-              "status": "completed",
-              "conclusion": "failure",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Initialize containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Validate dispatched revision",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Install isolated test dependencies",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Syntax and workflow validation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Unit, integration, Apache, security and migration tests",
-                  "conclusion": "failure",
-                  "status": "completed"
-                },
-                {
-                  "name": "Build checked release",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Stop containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ],
-              "diagnostics": {
-                "errors": [
-                  "2026-10-27T09:57:35.0371986Z ",
-                  "2026-10-27T09:57:35.0374606Z ======================================================================",
-                  "2026-10-27T09:57:35.0375480Z FAIL: test_secure_cookie_flags_and_https_only_outside_test (test_customer_auth.CustomerAuth.test_secure_cookie_flags_and_https_only_outside_test)",
-                  "2026-10-27T09:57:35.0376184Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0376549Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0377201Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 235, in test_secure_cookie_flags_and_https_only_outside_test",
-                  "2026-10-27T09:57:35.0378766Z     r=requests.get(self.url('session'));self.assertEqual(r.status_code,200);cookie=r.headers['Set-Cookie'];self.assertIn('__Host-nd_customer=',cookie);self.assertIn('secure',cookie.lower());self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie);self.assertIn('path=/',cookie.lower());self.assertNotIn('domain=',cookie.lower())",
-                  "2026-10-27T09:57:35.0379792Z                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0380002Z AssertionError: 503 != 200",
-                  "2026-10-27T09:57:35.0380099Z ",
-                  "2026-10-27T09:57:35.0380216Z ======================================================================",
-                  "2026-10-27T09:57:35.0380643Z FAIL: test_session_expiry_logout_and_no_crm_regression (test_customer_auth.CustomerAuth.test_session_expiry_logout_and_no_crm_regression)",
-                  "2026-10-27T09:57:35.0381048Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0381270Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0381569Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T09:57:35.0381877Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T09:57:35.0382087Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0382397Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T09:57:35.0383237Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T09:57:35.0383593Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0384292Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T09:57:35.0384527Z ",
-                  "2026-10-27T09:57:35.0384638Z ======================================================================",
-                  "2026-10-27T09:57:35.0385134Z FAIL: test_smtp_transient_failure_retries_without_duplicate_account (test_customer_auth.CustomerAuth.test_smtp_transient_failure_retries_without_duplicate_account)",
-                  "2026-10-27T09:57:35.0385587Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0385807Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0386108Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T09:57:35.0386412Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T09:57:35.0386615Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0386921Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T09:57:35.0387369Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T09:57:35.0387714Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0388140Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T09:57:35.0388362Z ",
-                  "2026-10-27T09:57:35.0388469Z ======================================================================",
-                  "2026-10-27T09:57:35.0389081Z FAIL: test_token_hashes_and_single_use_verification (test_customer_auth.CustomerAuth.test_token_hashes_and_single_use_verification)",
-                  "2026-10-27T09:57:35.0389480Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0389697Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0389973Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T09:57:35.0390266Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T09:57:35.0390465Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0390750Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T09:57:35.0391190Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T09:57:35.0391530Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0391958Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T09:57:35.0393360Z ",
-                  "2026-10-27T09:57:35.0393477Z ======================================================================",
-                  "2026-10-27T09:57:35.0393903Z FAIL: test_unverified_cannot_be_activated_by_lifecycle (test_customer_auth.CustomerAuth.test_unverified_cannot_be_activated_by_lifecycle)",
-                  "2026-10-27T09:57:35.0394302Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0394519Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0394797Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T09:57:35.0395088Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T09:57:35.0395283Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0395574Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T09:57:35.0396024Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T09:57:35.0396480Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0396919Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T09:57:35.0397140Z ",
-                  "2026-10-27T09:57:35.0397244Z ======================================================================",
-                  "2026-10-27T09:57:35.0397706Z FAIL: test_verification_legal_change_requires_current_checkbox (test_customer_auth.CustomerAuth.test_verification_legal_change_requires_current_checkbox)",
-                  "2026-10-27T09:57:35.0398139Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0398353Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0398631Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 67, in setUp",
-                  "2026-10-27T09:57:35.0398917Z     self.s=requests.Session();self.bootstrap(self.s)",
-                  "2026-10-27T09:57:35.0399126Z                               ^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0399416Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_customer_auth.py\", line 70, in bootstrap",
-                  "2026-10-27T09:57:35.0399856Z     r=s.get(self.url('session'));self.assertEqual(r.status_code,200,r.text);s.headers['X-CSRF-Token']=r.json()['csrf'];return r.json()",
-                  "2026-10-27T09:57:35.0400200Z                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0400621Z AssertionError: 503 != 200 : {\"detail\":\"Кабинет временно недоступен. Регистрация пока закрыта.\",\"error_code\":\"registration_unavailable\"}",
-                  "2026-10-27T09:57:35.0400843Z ",
-                  "2026-10-27T09:57:35.0400945Z ======================================================================",
-                  "2026-10-27T09:57:35.0401381Z FAIL: test_07_shared_config_failure_and_readonly_diagnostics (test_prelaunch.Prelaunch.test_07_shared_config_failure_and_readonly_diagnostics)",
-                  "2026-10-27T09:57:35.0401883Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0402102Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0402484Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 257, in test_07_shared_config_failure_and_readonly_diagnostics",
-                  "2026-10-27T09:57:35.0402885Z     r=requests.get(self.base+route);self.assertEqual(r.status_code,503)",
-                  "2026-10-27T09:57:35.0403746Z                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0403931Z AssertionError: 404 != 503",
-                  "2026-10-27T09:57:35.0404022Z ",
-                  "2026-10-27T09:57:35.0404124Z ======================================================================",
-                  "2026-10-27T09:57:35.0404528Z FAIL: test_08_setup_authentication_session_and_logout (test_prelaunch.Prelaunch.test_08_setup_authentication_session_and_logout)",
-                  "2026-10-27T09:57:35.0404910Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0405122Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0405500Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 287, in test_08_setup_authentication_session_and_logout",
-                  "2026-10-27T09:57:35.0405892Z     self.assertEqual(requests.get(self.base+'/setup.php').status_code,403)",
-                  "2026-10-27T09:57:35.0406123Z AssertionError: 404 != 403",
-                  "2026-10-27T09:57:35.0406210Z ",
-                  "2026-10-27T09:57:35.0406314Z ======================================================================",
-                  "2026-10-27T09:57:35.0406789Z FAIL: test_07_shared_config_failure_and_readonly_diagnostics (test_prelaunch_foundation.MigratedPrelaunch.test_07_shared_config_failure_and_readonly_diagnostics)",
-                  "2026-10-27T09:57:35.0407234Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0407445Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0407821Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 257, in test_07_shared_config_failure_and_readonly_diagnostics",
-                  "2026-10-27T09:57:35.0408217Z     r=requests.get(self.base+route);self.assertEqual(r.status_code,503)",
-                  "2026-10-27T09:57:35.0408557Z                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0408739Z AssertionError: 404 != 503",
-                  "2026-10-27T09:57:35.0408828Z ",
-                  "2026-10-27T09:57:35.0408932Z ======================================================================",
-                  "2026-10-27T09:57:35.0409377Z FAIL: test_08_setup_authentication_session_and_logout (test_prelaunch_foundation.MigratedPrelaunch.test_08_setup_authentication_session_and_logout)",
-                  "2026-10-27T09:57:35.0409802Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0410016Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0410372Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_prelaunch.py\", line 287, in test_08_setup_authentication_session_and_logout",
-                  "2026-10-27T09:57:35.0410766Z     self.assertEqual(requests.get(self.base+'/setup.php').status_code,403)",
-                  "2026-10-27T09:57:35.0410992Z AssertionError: 404 != 403",
-                  "2026-10-27T09:57:35.0411080Z ",
-                  "2026-10-27T09:57:35.0411187Z ======================================================================",
-                  "2026-10-27T09:57:35.0411625Z FAIL: test_09_shared_navigation_flags_and_real_routes (test_system_integration.SystemIntegration.test_09_shared_navigation_flags_and_real_routes)",
-                  "2026-10-27T09:57:35.0412040Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0412252Z Traceback (most recent call last):",
-                  "2026-10-27T09:57:35.0412628Z   File \"/home/runner/work/-Chat-GPT-/-Chat-GPT-/tests/test_system_integration.py\", line 79, in test_09_shared_navigation_flags_and_real_routes",
-                  "2026-10-27T09:57:35.0413587Z     html=self.owner.get(self.base+'/handoff.php').text;self.assertIn('Каталог услуг и интерактивный бриф пока недоступны',html);self.assertNotIn('href=\"/ai.php',html);self.assertNotIn('href=\"/production.php',html);self.assertIn('href=\"/handoff.php',html)",
-                  "2026-10-27T09:57:35.0414176Z                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-                  "2026-10-27T09:57:35.0418696Z AssertionError: 'Каталог услуг и интерактивный бриф пока недоступны' not found in '<!doctype html><html lang=\"ru\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>НейроДело — ручная передача задания</title><link rel=\"stylesheet\" href=\"operations.css\"><link rel=\"stylesheet\" href=\"production.css\"></head><body><main class=\"portal\"><details class=\"product-navigation\"><summary>Разделы CRM</summary><nav class=\"tabs\" aria",
-                  "2026-10-27T09:57:35.0421554Z ",
-                  "2026-10-27T09:57:35.0421681Z ----------------------------------------------------------------------",
-                  "2026-10-27T09:57:35.0421891Z Ran 386 tests in 353.973s",
-                  "2026-10-27T09:57:35.0421997Z ",
-                  "2026-10-27T09:57:35.0422071Z FAILED (failures=11)",
-                  "2026-10-27T09:57:35.0422457Z Unattended PR credential metadata: {\"app_id_configured\": false, \"app_key_configured\": false, \"pat_configured\": false}",
-                  "2026-10-27T09:57:35.0422851Z Verified native auto-merge through typed GraphQL field; REST field absent",
-                  "2026-10-27T09:57:35.0719315Z ##[error]Process completed with exit code 1."
-                ]
-              }
-            },
-            {
-              "id": 122123657030,
-              "name": "Publish approved main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 122123657661,
-              "name": "Enable verified routine publication",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40482676957,
-          "name": "Retry MAX notifications",
-          "event": "schedule",
-          "head_branch": "main",
-          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40482676957",
-          "path": ".github/workflows/notifications.yml",
-          "jobs": [
-            {
-              "id": 122116641088,
-              "name": "retry",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Verify current main before SSH",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Retry pending delivery on SpaceWeb",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40482189762,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "f7653f197e7c36b1de20cb46124816741997e92e",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40482189762",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 122114986070,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
             }
           ]
         }
