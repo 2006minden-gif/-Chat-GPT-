@@ -1,0 +1,6 @@
+<?php
+declare(strict_types=1);
+ini_set('display_errors','0');require dirname(__DIR__).'/private/app.php';security_headers();header('Cache-Control: no-store');header('X-Robots-Tag: noindex,nofollow');
+try{if((config()['billing_enabled']??false)!==true){http_response_code(404);exit;}}catch(Throwable $e){server_error($e);}
+$owner=($_GET['mode']??'customer')==='owner';
+?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>НейроДело — оплата и счета</title><link rel="stylesheet" href="operations.css"><link rel="stylesheet" href="billing.css"></head><body data-mode="<?= $owner?'owner':'customer' ?>"><main class="portal"><?php require_once dirname(__DIR__).'/private/product-navigation.php';product_navigation($owner); ?><header><h1><?= $owner?'Финансы':'Оплата и счета' ?></h1><a href="<?= $owner?'/workspace.php':'/portal.php' ?>">Заказы и проекты</a><a href="<?= $owner?'/studio.php':'/customer.php' ?>">Вход и профиль</a></header><p id="billing-error" role="status" aria-live="polite"></p><nav id="billing-nav" class="tabs" aria-label="Финансы"></nav><section id="billing-content"></section><footer><button id="billing-prev">Назад</button><span id="billing-page"></span><button id="billing-next">Далее</button></footer></main><script src="billing.js"></script></body></html>

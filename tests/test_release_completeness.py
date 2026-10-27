@@ -28,7 +28,11 @@ class PackageCompleteness(unittest.TestCase):
     self.assertIn(p,m['files']);self.assertEqual(release.digest(b/p),release.digest(ROOT/('public/'+p[12:] if p.startswith('public_html/') else p)))
    policy=release.policy_check()
    for entry in policy['migrations']:self.assertIn(entry['operator'],m['tools'])
-   self.assertTrue(all(not x['automatic'] and x['required'] for x in m['migrations']))
+   pins=json.loads((ROOT/'scripts/deploy/reviewed-migrations.json').read_text())
+   self.assertEqual(set(pins),{x['version'] for x in m['migrations']})
+   for x in m['migrations']:
+    self.assertEqual(x['kind'],'reviewed_additive');self.assertTrue(x['automatic'] and x['required'])
+    self.assertTrue(all(x[k]==v for k,v in pins[x['version']].items()))
  def test_missing_unlisted_new_source_blocks_build(self):
   with tempfile.TemporaryDirectory() as tmp:
    root=Path(tmp)/'root';shutil.copytree(ROOT/'scripts/deploy',root/'scripts/deploy');shutil.copytree(ROOT/'database',root/'database');shutil.copytree(ROOT/'scripts',root/'scripts',dirs_exist_ok=True);shutil.copytree(ROOT/'tests',root/'tests');shutil.copytree(ROOT/'public',root/'public');shutil.copytree(ROOT/'private',root/'private')

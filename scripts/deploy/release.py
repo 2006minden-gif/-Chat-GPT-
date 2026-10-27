@@ -49,7 +49,14 @@ def policy_check(root=ROOT):
         if entry['automatic']:
             sql = re.sub(r'^--[^\n]*$', '', (folder / 'up.sql').read_text(), flags=re.M)
             statements = [s.strip() for s in sql.split(';') if s.strip()]
-            # Narrow automatic contract: only the tested, additive Stage 3 operator.
+            # Exact reviewed lifecycle batch; unknown SQL and operators remain refused.
+            reviewed = json.loads((root / 'scripts/deploy/reviewed-migrations.json').read_text()) if (root / 'scripts/deploy/reviewed-migrations.json').exists() else {}
+            if entry.get('kind') == 'reviewed_additive':
+                pin=reviewed.get(version)
+                if not pin or any(entry.get(k)!=v for k,v in pin.items()) or not entry['required']:
+                    raise ValueError('automatic_migration_not_supported')
+                continue
+            # Legacy additive Stage 3 contract.
             if version != '004_crm_foundation' or entry['kind'] != 'additive' or not statements:
                 raise ValueError('automatic_migration_not_supported')
             if any(not re.fullmatch(r'CREATE TABLE nd_[a-z_]+\s*\([\s\S]+\)\s*ENGINE=InnoDB[\s\S]*', s) for s in statements):
@@ -92,6 +99,7 @@ def build(output, revision, root=ROOT):
             copy(root / source_dir / name, prefix + '/' + name, files)
     copy(root / 'scripts/deploy/remote.php', 'remote.php', tools)
     copy(root / 'scripts/deploy/recovery.php', 'recovery.php', tools)
+    copy(root / 'scripts/deploy/reviewed-migrations.php', 'reviewed-migrations.php', tools)
     # Delivery is independent from execution approval. All versioned SQL/CLI stays private.
     for source in sorted((root / 'database').rglob('*.sql')):
         path=source.relative_to(root).as_posix()

@@ -17,42 +17,7 @@ function save_json(string $path,array $value):void {
     chmod($tmp,0600);insist(rename($tmp,$path),'metadata_rename_failed');
 }
 function paths():array {
-    return [
-        'public_html/.htaccess',
-        'public_html/api-client.js',
-        'public_html/api.php',
-        'public_html/consent.php',
-        'public_html/crm.css',
-        'public_html/crm.html',
-        'public_html/crm.js',
-        'public_html/favicon.ico',
-        'public_html/favicon.svg',
-        'public_html/index.html',
-        'public_html/index.php',
-        'public_html/max-settings.js',
-        'public_html/max-webhook.php',
-        'public_html/owner-setup.js',
-        'public_html/owner-setup.php',
-        'public_html/privacy.php',
-        'public_html/robots.txt',
-        'public_html/script.js',
-        'public_html/services.php',
-        'public_html/services/guide.css',
-        'public_html/services/guide.js',
-        'public_html/sitemap.php',
-        'public_html/sitemap.xml',
-        'public_html/studio.php',
-        'public_html/styles.css',
-        'private/.htaccess',
-        'private/app.php',
-        'private/legal/privacy-2026-10-26-v1.json',
-        'private/legal/privacy-2026-10-27-v2.json',
-        'private/notifications/max.php',
-        'private/notifications/worker.php',
-        'private/owner-bootstrap.json',
-        'private/owner-bootstrap.php',
-        'private/services/catalog.php',
-    ];
+    return ['public_html/.htaccess', 'public_html/ai-public-api.php', 'public_html/ai-widget.js', 'public_html/ai.css', 'public_html/ai.js', 'public_html/ai.php', 'public_html/api-client.js', 'public_html/api.php', 'public_html/billing.css', 'public_html/billing.js', 'public_html/billing.php', 'public_html/catalog-api.php', 'public_html/catalog-owner.js', 'public_html/catalog-owner.php', 'public_html/catalog.css', 'public_html/catalog.js', 'public_html/catalog.php', 'public_html/collab-download.php', 'public_html/collab-print.js', 'public_html/collab-print.php', 'public_html/collaboration.css', 'public_html/collaboration.js', 'public_html/collaboration.php', 'public_html/consent.php', 'public_html/crm.css', 'public_html/crm.html', 'public_html/crm.js', 'public_html/customer-api.php', 'public_html/customer-owner.js', 'public_html/customer.css', 'public_html/customer.js', 'public_html/customer.php', 'public_html/favicon.ico', 'public_html/favicon.svg', 'public_html/handoff.js', 'public_html/handoff.php', 'public_html/index.html', 'public_html/index.php', 'public_html/invoice-document.php', 'public_html/max-settings.js', 'public_html/max-webhook.php', 'public_html/operations.css', 'public_html/operations.js', 'public_html/ordering.js', 'public_html/ordering.php', 'public_html/owner-setup.js', 'public_html/owner-setup.php', 'public_html/payment-webhook.php', 'public_html/portal.js', 'public_html/portal.php', 'public_html/pricing.js', 'public_html/privacy.php', 'public_html/production.css', 'public_html/production.js', 'public_html/production.php', 'public_html/robots.txt', 'public_html/script.js', 'public_html/services.php', 'public_html/services/guide.css', 'public_html/services/guide.js', 'public_html/sitemap.php', 'public_html/sitemap.xml', 'public_html/studio.php', 'public_html/styles.css', 'public_html/workspace.php', 'private/.htaccess', 'private/ai/approvals.php', 'private/ai/context.php', 'private/ai/core.php', 'private/ai/engine.php', 'private/ai/provider.php', 'private/ai/public.php', 'private/ai/read.php', 'private/ai/registry.php', 'private/ai/routes.php', 'private/ai/rules.php', 'private/ai/schema.php', 'private/ai/tasks.php', 'private/app.php', 'private/billing/core.php', 'private/billing/hooks.php', 'private/billing/invoices.php', 'private/billing/notifications.php', 'private/billing/payments.php', 'private/billing/provider.php', 'private/billing/read.php', 'private/billing/routes.php', 'private/catalog/bindings.php', 'private/catalog/contracts.php', 'private/catalog/core.php', 'private/catalog/manage.php', 'private/catalog/offers.php', 'private/catalog/read.php', 'private/catalog/requests.php', 'private/catalog/routes.php', 'private/collab/approvals.php', 'private/collab/core.php', 'private/collab/documents.php', 'private/collab/files.php', 'private/collab/messages.php', 'private/collab/routes.php', 'private/crm/core.php', 'private/crm/portal.php', 'private/crm/read.php', 'private/crm/routes.php', 'private/crm/write.php', 'private/customer-auth.php', 'private/customer-mail.php', 'private/legal/privacy-2026-10-26-v1.json', 'private/legal/privacy-2026-10-27-v2.json', 'private/manual/actions.php', 'private/manual/core.php', 'private/manual/routes.php', 'private/manual/seal.php', 'private/notifications/max.php', 'private/notifications/worker.php', 'private/owner-bootstrap.json', 'private/owner-bootstrap.php', 'private/pricing/automation.php', 'private/pricing/core.php', 'private/pricing/engine.php', 'private/pricing/routes.php', 'private/product-navigation.php', 'private/production/artifacts.php', 'private/production/contracts.php', 'private/production/core.php', 'private/production/costs.php', 'private/production/engine.php', 'private/production/packages.php', 'private/production/plans.php', 'private/production/qa.php', 'private/production/read.php', 'private/production/registry.php', 'private/production/routes.php', 'private/production/seal.php', 'private/release-features.php', 'private/services/catalog.php'];
 }
 function hash_file_safe(string $path):?string {
     $parent=$path;do {insist(!is_link($parent),'symlink_refused');$next=dirname($parent);if($next===$parent)break;$parent=$next;} while(true);
@@ -110,7 +75,7 @@ function verify_bundle(string $candidate,string $id):array {
     foreach(array_keys($m['tools']) as $path)insist(!str_starts_with($path,'private/')&&!str_starts_with($path,'public_html/'),'unsafe_tool_path');
     foreach(array_merge($m['files'],$m['tools']) as $path=>$hash) {
         insist(!in_array('..',explode('/',$path),true)&&!in_array('.',explode('/',$path),true)&&!str_contains($path,'//'),'unsafe_release_path');
-        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^(remote|recovery)\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
+        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^(remote|recovery|reviewed-migrations)\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
     $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
@@ -150,13 +115,15 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
     $c=require $root.'/private/config.php';
     $pdo=new PDO('mysql:host='.$c['db_host'].';port='.($c['db_port']??3306).';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     $exists=(bool)$pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='nd_schema_migrations'")->fetchColumn();
-    $pending=[];
+    $pending=[];$reviewed=false;
+    if(is_file($candidate.'/reviewed-migrations.php'))require_once $candidate.'/reviewed-migrations.php';
     foreach($entries as $entry) {
         insist(is_bool($entry['automatic']??null)&&is_bool($entry['required']??null)&&preg_match('/^[0-9]{3}_[a-z_]+$/D',$entry['version']??'')===1,'invalid_migration_approval');
         foreach(['up','down'] as $direction)insist(hash_file_safe($candidate.'/database/migrations/'.$entry['version'].'/'.$direction.'.sql')===($entry[$direction.'_sha256']??null),'migration_checksum_mismatch');
         $row=false;if($exists){$q=$pdo->prepare('SELECT * FROM nd_schema_migrations WHERE version=?');$q->execute([$entry['version']]);$row=$q->fetch(PDO::FETCH_ASSOC);}
         if($row){insist($row['state']==='applied'&&$row['up_checksum']===$entry['up_sha256']&&$row['down_checksum']===$entry['down_sha256'],'migration_state_or_checksum_mismatch');continue;}
         if(!$entry['automatic']){insist(!$entry['required'],'manual_migration_approval_required');continue;}
+        if(($entry['kind']??'')==='reviewed_additive'){insist(function_exists('reviewed_migration')&&reviewed_migration($entry,$candidate),'unapproved_reviewed_migration');$reviewed=true;$pending[]=$entry['version'];continue;}
         insist($entry['version']==='004_crm_foundation'&&$entry['kind']==='additive','unapproved_automatic_migration');
         $up=(string)file_get_contents($candidate.'/database/migrations/'.$entry['version'].'/up.sql');
         $sql=preg_replace('/^--[^\n]*$/m','',$up);$statements=array_values(array_filter(array_map('trim',explode(';',$sql))));
@@ -172,6 +139,12 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
     $current=read_json($backup.'/backup.json');
     insist(($good['baseline']['ok']??false)===true&&($current['baseline']['ok']??false)===true,'pipeline_backup_recovery_not_verified');
     foreach($good['files'] as $path=>$entry)insist(hash_file_safe(dirname(dirname($backup)).'/backups/good-'.$previous.'/files/'.$path)===$entry['before'],'verified_recovery_snapshot_corrupt');
+    if($reviewed){
+        insist(($m['database_recovery_required']??false)===true,'database_recovery_required');
+        reviewed_recovery_proof(dirname(dirname($backup)).'/backups/'.$previous.'/database-recovery');
+        reviewed_recovery_proof($backup.'/database-recovery');
+        foreach(['fileinfo','zip','openssl','tokenizer','mbstring','pdo_mysql'] as $extension)insist(extension_loaded($extension),'lifecycle_extension_missing_'.$extension);
+    }
     // credentials are read from the existing protected config, never from GitHub or command arguments.
     $defaults=$backup.'/.mysql-client.cnf';
     $quote=static fn($v)=>'"'.str_replace(["\\","\"","\n","\r"],["\\\\","\\\"","\\n","\\r"],(string)$v).'"';
@@ -194,7 +167,7 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
     $configLink=$candidate.'/private/config.php';insist(!file_exists($configLink)&&!is_link($configLink),'candidate_config_collision');
     insist(symlink($root.'/private/config.php',$configLink),'candidate_config_link_failed');
     try {
-        execute_private([getenv('NEURO_PHP_BIN')?:PHP_BINARY,$candidate.'/scripts/migrate.php','up'],$backup.'/migration.log');
+        foreach($entries as $entry)if(in_array($entry['version'],$pending,true))execute_private([getenv('NEURO_PHP_BIN')?:PHP_BINARY,$candidate.'/'.($entry['operator']??'scripts/migrate.php'),'up'],$backup.'/migration-'.$entry['version'].'.log');
         // Confirm persistence in the migration journal, not only a successful process exit.
         foreach($entries as $entry)if(in_array($entry['version'],$pending,true)) {
             $q=$pdo->prepare('SELECT state,up_checksum,down_checksum FROM nd_schema_migrations WHERE version=?');$q->execute([$entry['version']]);$row=$q->fetch(PDO::FETCH_ASSOC);

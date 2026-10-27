@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS nd_cc_decisions;
+DROP TABLE IF EXISTS nd_cc_approvals;
+DROP TABLE IF EXISTS nd_cc_revision_files;
+DROP TABLE IF EXISTS nd_cc_revisions;
+DROP TABLE IF EXISTS nd_cc_documents;
+DROP TABLE IF EXISTS nd_cc_message_files;
+DROP TABLE IF EXISTS nd_cc_files;
+DROP TABLE IF EXISTS nd_cc_reads;
+DROP TABLE IF EXISTS nd_cc_messages;

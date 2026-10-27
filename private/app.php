@@ -6,6 +6,7 @@ function config(): array {
         $path = __DIR__ . '/config.php';
         if (!is_file($path)) fail(503, 'Сайт ещё не настроен. Напишите нам в Telegram.');
         $config = require $path;
+        if(is_array($config)){require_once __DIR__.'/release-features.php';$config=nd_release_config($config);}
         if (!is_array($config) || empty($config['app_url'])) fail(503, 'Не завершена настройка сервера');
     }
     return $config;

@@ -1,0 +1,15 @@
+DROP TABLE IF EXISTS nd_prod_profitability;
+DROP TABLE IF EXISTS nd_prod_expenses;
+DROP TABLE IF EXISTS nd_prod_events;
+DROP TABLE IF EXISTS nd_prod_decisions;
+DROP TABLE IF EXISTS nd_prod_packages;
+DROP TABLE IF EXISTS nd_prod_revisions;
+DROP TABLE IF EXISTS nd_prod_findings;
+DROP TABLE IF EXISTS nd_prod_qa_reports;
+DROP TABLE IF EXISTS nd_prod_artifacts;
+DROP TABLE IF EXISTS nd_prod_step_attempts;
+DROP TABLE IF EXISTS nd_prod_dependencies;
+DROP TABLE IF EXISTS nd_prod_steps;
+DROP TABLE IF EXISTS nd_prod_runs;
+DROP TABLE IF EXISTS nd_prod_plans;
+DROP TABLE IF EXISTS nd_prod_rate_scopes;

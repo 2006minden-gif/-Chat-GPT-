@@ -1,0 +1,41 @@
+-- Manual owner handoff only, no external executor.
+CREATE TABLE nd_manual_jobs (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ project_id BIGINT UNSIGNED NOT NULL,
+ task_id BIGINT UNSIGNED NOT NULL,
+ spec_revision_id BIGINT UNSIGNED NOT NULL,
+ source_json MEDIUMTEXT NOT NULL,
+ source_hash CHAR(64) NOT NULL,
+ assignment MEDIUMTEXT NOT NULL,
+ assignment_hash CHAR(64) NOT NULL,
+ prepared_by TINYINT UNSIGNED NOT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ KEY nd_manual_project(project_id,id),
+ FOREIGN KEY (project_id) REFERENCES nd_projects(id) ON DELETE RESTRICT,
+ FOREIGN KEY (task_id) REFERENCES nd_tasks(id) ON DELETE RESTRICT,
+ FOREIGN KEY (spec_revision_id) REFERENCES nd_cc_revisions(id) ON DELETE RESTRICT,
+ FOREIGN KEY (prepared_by) REFERENCES nd_admin(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_manual_results (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ job_id BIGINT UNSIGNED NOT NULL,
+ revision_number SMALLINT UNSIGNED NOT NULL,
+ body MEDIUMTEXT NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ state VARCHAR(32) NOT NULL DEFAULT 'DRAFT',
+ review_json MEDIUMTEXT NULL,
+ feedback VARCHAR(1000) NULL,
+ approved_by TINYINT UNSIGNED NULL,
+ approved_checksum CHAR(64) NULL,
+ approved_at DATETIME NULL,
+ file_id BIGINT UNSIGNED NULL UNIQUE,
+ delivery_revision_id BIGINT UNSIGNED NULL UNIQUE,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY nd_manual_revision(job_id,revision_number),
+ FOREIGN KEY (job_id) REFERENCES nd_manual_jobs(id) ON DELETE RESTRICT,
+ FOREIGN KEY (approved_by) REFERENCES nd_admin(id) ON DELETE RESTRICT,
+ FOREIGN KEY (file_id) REFERENCES nd_cc_files(id) ON DELETE RESTRICT,
+ FOREIGN KEY (delivery_revision_id) REFERENCES nd_cc_revisions(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

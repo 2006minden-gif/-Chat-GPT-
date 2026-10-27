@@ -1,0 +1,4 @@
+<?php
+declare(strict_types=1);
+if(PHP_SAPI!=='cli'){http_response_code(404);exit;}ini_set('display_errors','0');require dirname(__DIR__).'/private/app.php';require dirname(__DIR__).'/private/ai/routes.php';
+try{if(count($argv)>2||isset($argv[1])&&!preg_match('/^[1-9][0-9]*$/D',$argv[1]))throw new RuntimeException('invalid_arguments');prod_gate();$runs=isset($argv[1])?[['id'=>(int)$argv[1]]]:crm_query("SELECT id FROM nd_prod_runs WHERE state='EXECUTING' ORDER BY id LIMIT 1")->fetchAll();$processed=0;foreach($runs as $r){$out=prod_tick((int)$r['id']);$processed+=$out['tasks_processed'];}echo ai_json(['ok'=>true,'tasks_processed'=>$processed,'scheduler_verified'=>false,'generated_code_executed'=>false]).PHP_EOL;}catch(Throwable $e){fwrite(STDERR,"{\"error\":\"production_worker_unavailable\"}\n");exit(1);}
