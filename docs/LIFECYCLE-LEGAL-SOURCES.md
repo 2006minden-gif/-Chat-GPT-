@@ -33,3 +33,18 @@ FNS receipt. Official-link host is restricted to lknpd.nalog.ru; files require
 owner confirmation of actual MyTax issuance. The application never creates a
 fiscal number/QR, annuls a receipt, transfers money or connects a bank. Refund
 recording creates an explicit MyTax review/correction task and preserves history.
+
+## Client activation checkpoint (27October2026)
+
+Current Article9 requires consent separately from other documents:
+https://mintrud.gov.ru/docs/laws/130 and
+https://www.consultant.ru/document/Cons_doc_LAW_61801/6c94959bc017ac80140621762d2ac59f6006b08c/ .
+The customer consent is a separate versioned page; no prechecked box, contract
+acceptance, payment verification or advertising consent is bundled with it.
+Operator-specific legal basis, retention and processors require real owner review.
+
+SpaceWeb's SMTP configuration source:
+https://help.sweb.ru/nastrojka-smtp-na-sajte_973.html .
+Fixed smtp.spaceweb.ru465SSL uses the actual mailbox login/from and protected
+password input, with peer verification. A real received-code challenge follows
+SMTP acceptance; no fake mailbox or transport credential is seeded in production.

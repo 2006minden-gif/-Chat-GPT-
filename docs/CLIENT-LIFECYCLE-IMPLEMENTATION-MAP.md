@@ -252,3 +252,32 @@ Other tests verify signed scope-change deposit credit/retry, unchanged prior
 agreements and closure blocking/explicit override with remaining receipt tasks.
 All data/accounts/signature copies in these tests are labelled synthetic and
 exist only in disposable loopback DBs; no production legal decision is fabricated.
+
+### Client activation and configured notifications (slice F)
+
+`/client-settings.php` is an owner-session/CSRF-protected setup path. Known owner
+name/village/MAX/TG are prefilled; missing INN, full address, bank details, legal
+basis, retention and actual processors are never invented. Separate policy and
+consent snapshots require explicit owner approval of their exact hash. Existing
+lead privacy v2 remains unchanged. Customer registration, invitations and request
+submission stay closed until approved scoped documents, explicit preparation and
+actual SMTP/inbox-code verification, followed by an explicit owner opening.
+
+SMTP is fixed to SpaceWeb465/TLS with peer verification; mailbox password lives
+only in a0600 private atomic runtime file, never in responses or Git. SMTP
+acceptance and actual owner's inbox code are separate evidence. Prepared audit
+events activate only with the atomic state commit; audit failures block changes.
+
+Owner-selectable email and existing-MAX workflow channels retain portal fallback.
+The main-only retry worker processes bounded email leases and MAX acknowledgment
+IDs separately from lead IDs; late lower IDs are not lost. MAX gets only an event
+number and protected link, no client name/message/financial data. SMTP acceptance
+is labelled as such, not read/delivery proof. Ambiguous network acknowledgments
+can still yield duplicate transport messages; business mutations remain idempotent.
+No new MAX connection or token change is required. No bank, paid AI, fiscal receipt
+creation or external Codex invocation is enabled.
+
+Owner one-time production setup remains real business input: approve scoped
+policy/templates, enter authentic requisites, provide an actual SpaceWeb mailbox
+in the protected form, confirm its received code, then choose/open channels.
+Code deployment does not fabricate those decisions or credentials.

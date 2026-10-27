@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__.'/customer-mail.php';
+require_once __DIR__.'/customer-mail.php';require_once __DIR__.'/customer-settings-state.php';
 final class CustomerFailure extends RuntimeException {
     public function __construct(public int $status, public string $errorCode, string $message) {parent::__construct($message);}
 }
@@ -8,7 +8,7 @@ function ca_fail(int $status,string $code,string $message): never {throw new Cus
 function ca_enabled(): bool {
     $c=config();$host=parse_url($c['app_url'],PHP_URL_HOST);
     $safeOrigin=parse_url($c['app_url'],PHP_URL_SCHEME)==='https' || (($c['customer_auth_test_mode']??false)===true && in_array($host,['127.0.0.1','localhost','::1'],true));
-    return ($c['customer_auth_enabled']??false)===true && ($c['customer_auth_privacy_approved']??false)===true && $safeOrigin && privacy_settings()['enabled'];
+    return ($c['customer_auth_enabled']??false)===true && ($c['customer_auth_privacy_approved']??false)===true && $safeOrigin && ca_privacy_settings()['enabled'];
 }
 function ca_gate(): void {
     if (!ca_enabled()) ca_fail(503,'registration_unavailable','Кабинет временно недоступен. Регистрация пока закрыта.');
@@ -29,7 +29,7 @@ function ca_password(array $data,bool $confirm=true): string {
     return $p;
 }
 function ca_consent(array $data): array {
-    $policy=privacy_settings();
+    $policy=ca_privacy_settings();
     if (!$policy['enabled'])ca_fail(503,'registration_unavailable','Регистрация пока закрыта.');
     if (($data['consent']??null)!==true)ca_fail(422,'consent_required','Подтвердите согласие на обработку данных.');
     if (($data['policy_version']??'')!==$policy['version'])ca_fail(409,'policy_changed','Документы обновлены. Прочитайте их и подтвердите согласие заново.');
@@ -76,7 +76,7 @@ function ca_account(int $id,bool $lock=false):array|false {
     $q=db()->prepare('SELECT a.*,c.status AS customer_status,c.name,h.email_verified_at,h.registration_method,h.policy_version,h.policy_hash FROM nd_customer_accounts a JOIN nd_customers c ON c.id=a.customer_id JOIN nd_customer_auth h ON h.account_id=a.id WHERE a.id=?'.($lock?' FOR UPDATE':''));$q->execute([$id]);return $q->fetch();
 }
 function ca_account_allowed(array|false $a):bool {return $a && $a['status']==='active'&&$a['customer_status']==='active'&&$a['email_verified_at']!==null;}
-function ca_current_consent(array $a):bool {$p=privacy_settings();return $p['enabled']&&$a['policy_version']===$p['version']&&hash_equals($p['hash'],$a['policy_hash']);}
+function ca_current_consent(array $a):bool {$p=ca_privacy_settings();return $p['enabled']&&$a['policy_version']===$p['version']&&hash_equals($p['hash'],$a['policy_hash']);}
 function ca_record_consent(int $id,array $p,string $purpose):void {
     db()->prepare('UPDATE nd_customer_auth SET consent_at=?,policy_version=?,policy_hash=? WHERE account_id=?')->execute([time(),$p['version'],$p['hash'],$id]);
     db()->prepare('INSERT INTO nd_customer_consents(account_id,consent,consent_at,policy_version,policy_hash,purpose) VALUES (?,1,?,?,?,?)')->execute([$id,time(),$p['version'],$p['hash'],$purpose]);
@@ -130,7 +130,7 @@ function ca_consume(array $data,string $purpose,?string $newPassword=null,?array
 }
 function ca_dispatch(string $route,string $method):never {
     if($route==='settings'&&$method==='GET'){
-        $p=privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'policy'=>$p]);
+        $p=ca_privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'policy'=>$p]);
     }
     ca_gate();
     ca_rate('ip',120,$_SERVER['REMOTE_ADDR']??'unknown');

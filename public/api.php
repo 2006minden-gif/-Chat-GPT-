@@ -7,6 +7,7 @@ header('Cache-Control: no-store');header('X-Robots-Tag: noindex, nofollow');
 try {
     $route=$_GET['r'] ?? ''; $method=$_SERVER['REQUEST_METHOD'];
     if(!is_string($route)) fail(404,'Не найдено');
+    if($route==='owner/customer-settings'||str_starts_with($route,'owner/customer-settings/')){require_once dirname(__DIR__).'/private/customer-settings.php';try{ocs_dispatch(substr($route,strlen('owner/customer-settings/')),$method);}catch(OwnerCustomerSettingsFailure $e){fail($e->status,$e->getMessage(),'owner_customer_settings');}}
     if(str_starts_with($route,'crm/')){require dirname(__DIR__).'/private/crm/routes.php';crm_dispatch(substr($route,4),$method);}
     if($route==='privacy' && $method==='GET') {
         $policy=privacy_settings();unset($policy['hash']);json_response($policy);

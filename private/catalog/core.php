@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
-require_once dirname(__DIR__).'/ai/routes.php';require_once dirname(__DIR__).'/crm/write.php';require_once __DIR__.'/contracts.php';
+require_once dirname(__DIR__).'/customer-settings-state.php';require_once dirname(__DIR__).'/ai/routes.php';require_once dirname(__DIR__).'/crm/write.php';require_once __DIR__.'/contracts.php';
 function cat_installed():bool{return crm_query("SELECT state FROM nd_schema_migrations WHERE version='013_service_ordering'")->fetchColumn()==='applied';}
 function cat_gate(bool $requests=false):void{
  if((config()['catalog_enabled']??false)!==true||!cat_installed())crm_fail(503,'Каталог услуг пока не открыт.');
- if($requests&&((config()['catalog_requests_enabled']??false)!==true||(config()['catalog_privacy_approved']??false)!==true||!privacy_settings()['enabled']))crm_fail(503,'Приём брифов закрыт до настройки и одобрения документов.');
+ if($requests&&((config()['catalog_requests_enabled']??false)!==true||(config()['catalog_privacy_approved']??false)!==true||!ca_privacy_settings()['enabled']))crm_fail(503,'Приём брифов закрыт до настройки и одобрения документов.');
 }
 function cat_requests_open():bool{require_once dirname(__DIR__).'/customer-auth.php';return (config()['catalog_requests_enabled']??false)===true&&(config()['catalog_privacy_approved']??false)===true&&(config()['crm_operations_enabled']??false)===true&&(config()['client_collaboration_enabled']??false)===true&&ca_enabled();}
 function cat_actor(bool $customer,bool $write):array{$a=cc_actor($customer,$write);cat_gate($customer);return $a;}
@@ -21,7 +21,7 @@ function cat_request(array $a,int $id,bool $lock=false):array{
  $r=cat_record('request',$id,$lock);if($a['type']==='customer'&&(int)$r['customer_id']!==(int)$a['customer_id'])crm_fail(404,'Запись не найдена.');cc_project($a,(int)$r['project_id']);return $r;
 }
 function cat_package(array $v,string $key):array{foreach($v['data']['packages'] as $p)if($p['id']===$key)return $p;crm_fail(422,'Выберите существующий пакет услуги.');}
-function cat_consent(array $d):array{$p=privacy_settings();if(!$p['enabled']||($d['consent']??false)!==true)crm_fail(422,'Нужно отдельное согласие на обработку брифа.');if(($d['policy_version']??null)!==$p['version'])crm_fail(409,'Документы обновились. Прочитайте их и подтвердите согласие заново.');return $p;}
+function cat_consent(array $d):array{$p=ca_privacy_settings();if(!$p['enabled']||($d['consent']??false)!==true)crm_fail(422,'Нужно отдельное согласие на обработку брифа.');if(($d['policy_version']??null)!==$p['version'])crm_fail(409,'Документы обновились. Прочитайте их и подтвердите согласие заново.');return $p;}
 function cat_brief(array $r):array{$b=crm_query('SELECT * FROM nd_catalog_briefs WHERE request_id=? AND revision_number=?',[$r['id'],$r['head_revision']])->fetch();if(!$b)crm_fail(409,'Бриф ещё не отправлен.');if(!hash_equals($b['checksum'],hash('sha256',$b['structured_json'])))crm_fail(409,'Бриф не прошёл проверку целостности.');return $b;}
 function cat_files(array $a,int $project,mixed $ids):array{if(!is_array($ids)||!array_is_list($ids))crm_fail(422,'Проверьте список вложений.');$out=[];foreach(cc_files_for($a,$project,$ids) as $f)$out[]=['id'=>(int)$f['id'],'name'=>$f['display_name'],'checksum'=>$f['checksum']];return $out;}
 function cat_event(array $a,array $r,string $action):void{cc_event($a,(int)$r['project_id'],'catalog_'.$action);}

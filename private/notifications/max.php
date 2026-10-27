@@ -49,12 +49,19 @@ function max_queue(array $s): array {
     $ids=db()->query('SELECT id FROM nd_leads ORDER BY id')->fetchAll(PDO::FETCH_COLUMN);
     return array_values(array_filter($ids,static fn($id)=>!isset($done[$id])));
 }
+function max_workflow_queue(array $s):array{
+    if((config()['max_workflow_notifications_enabled']??false)!==true)return [];
+    $exists=(bool)db()->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='nd_crm_notifications'")->fetchColumn();if(!$exists)return [];
+    $done=array_fill_keys($s['completed_workflow_ids']??[],true);
+    $rows=db()->query("SELECT id,entity,record_id FROM nd_crm_notifications WHERE event_key LIKE 'lc-claim:%' OR event_key LIKE 'lc-receipt:%' OR event_key LIKE 'lc-flow:%' OR event_key LIKE 'billing:lc-%' ORDER BY id")->fetchAll();
+    return array_values(array_filter($rows,static fn($r)=>!isset($done[$r['id']])));
+}
 function max_status(): array {
     return max_locked(function(){
         $s=max_read();$connected=isset($s['user_id'])&&($s['enabled']??false)===true;
         $pending=$connected?count(max_queue($s)):0;
         return ['configured'=>isset($s['token']),'connected'=>$connected,'bot_username'=>$s['bot_username']??'',
-            'pending'=>$pending,'last_sent_at'=>$s['last_sent_at']??null,'error_code'=>$s['error_code']??''];
+            'pending'=>$pending,'pending_workflow'=>$connected?count(max_workflow_queue($s)):0,'last_sent_at'=>$s['last_sent_at']??null,'error_code'=>$s['error_code']??''];
     });
 }
 function max_connect(string $token,?callable $http=null): array {
@@ -100,12 +107,14 @@ function max_pump(int $limit=1,?callable $http=null): array {
     return max_locked(function()use($limit,$http){$s=max_read();$sent=0;
         if(($s['enabled']??false)!==true||!isset($s['user_id']))return ['ok'=>true,'sent'=>0,'configured'=>false];
         if(($s['retry_at']??0)>time())return ['ok'=>true,'sent'=>0,'deferred'=>true];
-        $ids=array_slice(max_queue($s),0,$limit);
-        foreach($ids as $id){
+        $events=[];foreach(array_slice(max_queue($s),0,$limit) as $id)$events[]=['id'=>(int)$id,'kind'=>'lead','url'=>'https://neurodelo.pro/studio.php'];
+        if($limit>count($events))foreach(array_slice(max_workflow_queue($s),0,$limit-count($events)) as $row)$events[]=['id'=>(int)$row['id'],'kind'=>'workflow','url'=>$row['entity']==='orders'?'https://neurodelo.pro/orders.php?mode=owner#'.(int)$row['record_id']:'https://neurodelo.pro/finance.php?mode=owner'];
+        foreach($events as $event){$id=$event['id'];
             if($sent)usleep(550000);
-            try{$response=$http('POST','/messages?user_id='.$s['user_id'].'&disable_link_preview=true',$s['token'],['text'=>'Новая заявка №'.$id.' на НейроДело.','notify'=>true,'attachments'=>[['type'=>'inline_keyboard','payload'=>['buttons'=>[[['type'=>'link','text'=>'Открыть кабинет','url'=>'https://neurodelo.pro/studio.php']]]]]]]);
+            try{$response=$http('POST','/messages?user_id='.$s['user_id'].'&disable_link_preview=true',$s['token'],['text'=>$event['kind']==='lead'?'Новая заявка №'.$id.' на НейроДело.':'Рабочее событие НейроДело №'.$id.'. Проверьте действие в закрытом кабинете.','notify'=>true,'attachments'=>[['type'=>'inline_keyboard','payload'=>['buttons'=>[[['type'=>'link','text'=>'Открыть кабинет','url'=>$event['url']]]]]]]]);
                 if(!isset($response['message']['body']['mid']))throw new RuntimeException('max_invalid_response');
-                $s['cursor']=max($s['cursor']??0,(int)$id);$s['completed_ids'][]=(int)$id;$s['last_sent_at']=time();$s['error_code']='';$s['failures']=0;unset($s['retry_at']);max_write($s);$sent++;
+                if($event['kind']==='lead'){$s['cursor']=max($s['cursor']??0,(int)$id);$s['completed_ids'][]=(int)$id;}else $s['completed_workflow_ids'][]=(int)$id;
+                $s['last_sent_at']=time();$s['error_code']='';$s['failures']=0;unset($s['retry_at']);max_write($s);$sent++;
             }catch(Throwable $e){$s['error_code']=in_array($e->getMessage(),['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response'],true)?$e->getMessage():'max_delivery_failed';$s['failures']=min(10,($s['failures']??0)+1);$s['retry_at']=time()+min(3600,30*(2**$s['failures']));max_write($s);break;}
         }
         return ['ok'=>true,'sent'=>$sent,'error_code'=>$s['error_code']??''];

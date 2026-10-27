@@ -3,7 +3,7 @@ declare(strict_types=1);
 final class CrmFailure extends RuntimeException {public function __construct(public int $status,string $message){parent::__construct($message);}}
 function crm_fail(int $status,string $message):never{throw new CrmFailure($status,$message);}
 function crm_gate():void{
- if((config()['crm_operations_enabled']??false)!==true||!privacy_settings()['enabled'])crm_fail(503,'Работа CRM отключена до одобрения документов и настройки владельцем.');
+ if((config()['crm_operations_enabled']??false)!==true||(!privacy_settings()['enabled']&&(!function_exists('ca_privacy_settings')||!ca_privacy_settings()['enabled'])))crm_fail(503,'Работа CRM отключена до одобрения документов и настройки владельцем.');
  db()->exec("SET time_zone='+00:00'");
  $q=db()->query("SELECT version,state FROM nd_schema_migrations WHERE version IN ('004_crm_foundation','005_customer_auth','006_crm_operations')");
  $rows=$q->fetchAll();if(count($rows)!==3||array_filter($rows,fn($r)=>$r['state']!=='applied'))crm_fail(503,'CRM ещё не подготовлена. Требуется проверенная установка схемы.');

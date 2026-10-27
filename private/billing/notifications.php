@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 function bill_templates():array{return [
- 'document_approved'=>'Документ согласован','new_request'=>'Получена новая заявка','new_message'=>'Новый комментарий по проекту','invoice_issued'=>'Новый счёт','invoice_adjusted'=>'Корректировка счёта','payment_pending'=>'Платёж обрабатывается','payment_confirmed'=>'Оплата подтверждена','payment_failed'=>'Оплата не прошла','payment_overdue'=>'Напоминание об оплате','refund_completed'=>'Возврат оформлен','awaiting_approval'=>'Документ ожидает согласования','changes_requested'=>'Запрошена доработка','new_deliverable'=>'Результат работы готов','project_completed'=>'Проект завершён','task_soon'=>'Приближается срок задачи','task_overdue'=>'Просрочен срок задачи'
+ 'workflow_updated'=>'По заказу изменился следующий шаг','document_approved'=>'Документ согласован','new_request'=>'Получена новая заявка','new_message'=>'Новый комментарий по проекту','invoice_issued'=>'Новый счёт','invoice_adjusted'=>'Корректировка счёта','payment_pending'=>'Платёж обрабатывается','payment_confirmed'=>'Оплата подтверждена','payment_failed'=>'Оплата не прошла','payment_overdue'=>'Напоминание об оплате','refund_completed'=>'Возврат оформлен','awaiting_approval'=>'Документ ожидает согласования','changes_requested'=>'Запрошена доработка','new_deliverable'=>'Результат работы готов','project_completed'=>'Проект завершён','task_soon'=>'Приближается срок задачи','task_overdue'=>'Просрочен срок задачи'
 ];}
 function bill_emit(string $key,string $template,string $entity,int $id,?int $customer,bool $essential=true):void{
  $title=bill_templates()[$template]??null;if($title===null)throw new LogicException('unknown_notification_template');
@@ -23,7 +23,7 @@ function bill_bridge_events():int{
 }
 function bill_email_message(array $n,string $recipient):string{
  $title=bill_templates()[$n['template']]??'Уведомление НейроДело';$text=$title."\r\n\r\nПодробности доступны после входа в кабинет НейроДело.\r\n";
- $url=rtrim(config()['app_url'],'/').'/billing.php'.($n['recipient_type']==='owner'?'?mode=owner':'').'#notifications';
+ $lifecycle=str_starts_with($n['event_key'],'lc-');$page=$lifecycle?($n['entity']==='invoices'?'finance.php':'orders.php'):'billing.php';$url=rtrim(config()['app_url'],'/').'/'.$page.($n['recipient_type']==='owner'?'?mode=owner':'').($lifecycle?'#'.(int)$n['record_id']:'#notifications');
  $text.=$url."\r\n\r\nЭто уведомление о работе сервиса, не рекламная рассылка.\r\n";$esc=fn($s)=>htmlspecialchars($s,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
  $html='<!doctype html><html lang="ru"><body><main><h1>НейроДело</h1><h2>'.$esc($title).'</h2><p>Подробности доступны после входа в кабинет.</p><p><a href="'.$esc($url).'">Открыть кабинет</a></p><p>Это уведомление о работе сервиса, не рекламная рассылка.</p></main></body></html>';
  $boundary='nd_'.bin2hex(random_bytes(16));$from=config()['customer_mail']['from']??'';
