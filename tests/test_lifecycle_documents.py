@@ -17,7 +17,7 @@ class LifecycleDocuments(catalog.Catalog):
   self.assertEqual(t['state'],'NEEDS_LEGAL_REVIEW')
   r=self.lp('templates/'+str(tid)+'/approve',version=int(t['version']),checksum=t['checksum'],confirm=True,reason='SYNTHETIC TEST approval, not a production legal decision');self.assertEqual(r.status_code,200,r.text);return r.json()['record']
  def inputs(self):
-  labels=self.lg('settings').json()['fields'];d={k:'SYNTHETIC TEST '+v for k,v in labels.items()};prefix='9900000000';digit=lambda text,w:str(sum(int(a)*b for a,b in zip(text,w))%11%10);inn=prefix+digit(prefix,[7,2,4,10,3,5,9,4,6,8]);inn+=digit(inn,[3,7,2,4,10,3,5,9,4,6,8]);d.update(owner_inn=inn,client_type='person',client_inn='',bank_account='9'*20,bank_bik='9'*9,bank_corr='8'*20,owner_name='SYNTHETIC owner',client_name='TEST <script>alert(1)</script>');
+  labels=self.lg('settings').json()['fields'];d={k:'SYNTHETIC TEST '+v for k,v in labels.items()};prefix='9900000000';digit=lambda text,w:str(sum(int(a)*b for a,b in zip(text,w))%11%10);inn=prefix+digit(prefix,[7,2,4,10,3,5,9,4,6,8]);inn+=digit(inn,[3,7,2,4,10,3,5,9,4,6,8]);d.update(revision_rounds='2',owner_inn=inn,client_type='person',client_inn='',bank_account='9'*20,bank_bik='9'*9,bank_corr='8'*20,owner_name='SYNTHETIC owner',client_name='TEST <script>alert(1)</script>');
   rows=self.f.sql("SELECT calculation_json FROM nd_quotations WHERE project_id=? AND state='APPROVED' ORDER BY id DESC LIMIT 1",params=[self.project_id]);total=int(json.loads(rows[0]['calculation_json'])['selling_minor']) if rows else 28875;deposit=total//2
   d['payment_schedule']=json.dumps([{'label':'SYNTHETIC deposit','amount':f'{deposit//100}.{deposit%100:02}','due_on':'2099-01-01','gate':'production','stage_id':None},{'label':'SYNTHETIC balance','amount':f'{(total-deposit)//100}.{(total-deposit)%100:02}','due_on':'2099-02-01','gate':'handover','stage_id':None}]);return d
  def prepare(self):
@@ -56,6 +56,9 @@ class LifecycleDocuments(catalog.Catalog):
    browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);page=browser.new_page(viewport={'width':375,'height':812});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
    page.goto(self.base+'/studio.php');page.locator('#password').fill(self.f.password);page.locator('#login-form button').click();page.locator('#dashboard').wait_for(state='visible')
    page.goto(self.base+'/documents.php?mode=owner#template/'+str(t['id']));page.get_by_role('button',name='Сохранить как новую версию-черновик').wait_for();self.assertEqual(errors,[]);self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'));browser.close()
+
+ def test_lc_05_corrupt_historical_retry_never_repeats_mutation(self):
+  k=secrets.token_hex(32);self.assertEqual(self.lp('templates/initial',request_key=k).status_code,200);before=self.f.sql('SELECT COUNT(*) n FROM nd_lc_templates')[0]['n'];self.f.sql('UPDATE nd_crm_requests SET result=? WHERE request_key=?',params=['{',k]);r=self.lp('templates/initial',request_key=k);self.assertEqual(r.status_code,409,r.text);self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_lc_templates')[0]['n'],before)
 
 for name in dir(catalog.Catalog):
  if name.startswith('test_'):setattr(LifecycleDocuments,name,None)

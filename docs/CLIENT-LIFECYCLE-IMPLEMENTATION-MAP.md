@@ -220,3 +220,35 @@ Validation:14 focused MySQL/HTTP/recovery/package checks plus2 price/role guards
 pass against non-strict MySQL5.7 with session hardening; mobile375px workflow
 works without horizontal overflow. Closure, signed final act, applied scope-change
 accounting, owner SMTP/purpose-scoped privacy and complete E2E remain for slice E.
+
+### Closure/change slice E (release candidate)
+
+017 adds closure proofs and immutable signed-change applications to the existing
+order/document/payment models. Final acts derive actual accepted milestone
+versions, deployment evidence and final-manifest hash; owners cannot substitute
+arbitrary drafted deliverables. Handover/support documents derive checked source
+records. Signed final act must match the exact accepted result. Ordinary clicks
+remain business decisions, not electronic signatures.
+
+Accepted scope changes require independent owner/client decisions, then a
+matching verified signed change document before application. Outstanding old
+payment requests receive explicit audited adjustments; new schedule requests
+credit actual prior net receipts, never create new income. A lower new price
+below verified receipts requires a separately completed/verified external refund.
+Old agreement/invoice snapshots and receipt tasks remain intact.
+
+Closure verifies acceptance, signed act, actual settlement, receipt/transmission
+and correction tasks, checked handover, support and unresolved issues. Explicit
+owner override records each remaining obligation and reason; it neither erases
+tax obligations nor invents fiscal evidence. Closed/disputed projects retain
+receipt/history access.
+
+Full synthetic zero-charge order passed inquiry qualification → brief → approved
+shared-cost price → proposal/client business decision → verified signed agreement
+→ explicit no-payment schedule → verified materials → isolated milestone evidence
+→ client acceptance → signed actual act → checked handover/client acknowledgment
+→ normal closure, without override, payment records, charges or fiscal receipts.
+Other tests verify signed scope-change deposit credit/retry, unchanged prior
+agreements and closure blocking/explicit override with remaining receipt tasks.
+All data/accounts/signature copies in these tests are labelled synthetic and
+exist only in disposable loopback DBs; no production legal decision is fabricated.

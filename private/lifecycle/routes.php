@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-require_once __DIR__.'/documents.php';require_once __DIR__.'/payments.php';require_once __DIR__.'/flow.php';
+require_once __DIR__.'/documents.php';require_once __DIR__.'/payments.php';require_once __DIR__.'/flow.php';require_once __DIR__.'/closure.php';
 function lc_dispatch(bool $customer,string $route,string $method):never{
  try{$a=cc_actor($customer,$method!=='GET');lc_gate();rate('lifecycle:'.$a['type'].':'.$a['id'],150);
  if(str_starts_with($route,'flow/'))lc_flow_dispatch($a,substr($route,5),$method);
@@ -13,7 +13,7 @@ function lc_dispatch(bool $customer,string $route,string $method):never{
   if($route==='documents'){$params=[];$where='';if($customer){$where=" WHERE o.customer_id=? AND b.state<>'OWNER_REVIEW'";$params[]=$a['customer_id'];}json_response(['ok'=>true,'items'=>crm_query('SELECT b.id,b.order_id,b.revision_id,b.state,b.generated_hash,b.version,b.created_at,t.title,t.kind,t.revision_number FROM nd_lc_document_bindings b JOIN nd_orders o ON o.id=b.order_id JOIN nd_lc_templates t ON t.id=b.template_id'.$where.' ORDER BY b.id DESC LIMIT 100',$params)->fetchAll()]);}
   if(preg_match('~^documents/([1-9][0-9]*)$~D',$route,$m)){$b=lc_binding($a,(int)$m[1]);$b['audit']=crm_query("SELECT actor_type,actor_id,action,prior_version,evidence_json,created_at FROM nd_lc_audit WHERE entity='document' AND record_id=? ORDER BY id",[$b['id']])->fetchAll();json_response(['ok'=>true,'record'=>$b]);}
  }
- if($method==='POST'){$d=input();$result=cc_mutation($a,'lifecycle/'.$route,$d,function()use($a,$route,$d){
+ if($method==='POST'){$d=input();$result=lc_mutation($a,'lifecycle/'.$route,$d,function()use($a,$route,$d){
   if(preg_match('~^finance/agreements/([1-9][0-9]*)/activate$~D',$route,$m))return lc_schedule_activate($a,(int)$m[1],$d);
   if(preg_match('~^finance/invoices/([1-9][0-9]*)/(claim|verify)$~D',$route,$m))return $m[2]==='claim'?lc_payment_claim($a,(int)$m[1],$d):lc_verify_bank($a,(int)$m[1],$d);
   if(preg_match('~^finance/claims/([1-9][0-9]*)/(link|reject)$~D',$route,$m))return lc_claim_decide($a,(int)$m[1],$m[2],$d);
