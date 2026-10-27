@@ -43,10 +43,16 @@ function max_http(string $method,string $path,string $token,?array $body=null): 
     if($status!==200||$raw===false||strlen($raw)>131072)throw new RuntimeException('max_api_failed');
     $data=json_decode($raw,true);if(!is_array($data))throw new RuntimeException('max_invalid_response');return $data;
 }
+function max_queue(array $s): array {
+    // Track acknowledged IDs, not a MAX(id) cursor: commit order can differ from ID order.
+    $done=array_fill_keys($s['completed_ids']??[],true);
+    $ids=db()->query('SELECT id FROM nd_leads ORDER BY id')->fetchAll(PDO::FETCH_COLUMN);
+    return array_values(array_filter($ids,static fn($id)=>!isset($done[$id])));
+}
 function max_status(): array {
     return max_locked(function(){
         $s=max_read();$connected=isset($s['user_id'])&&($s['enabled']??false)===true;
-        $pending=0;if($connected){$q=db()->prepare('SELECT COUNT(*) FROM nd_leads WHERE id>?');$q->execute([$s['cursor']??0]);$pending=(int)$q->fetchColumn();}
+        $pending=$connected?count(max_queue($s)):0;
         return ['configured'=>isset($s['token']),'connected'=>$connected,'bot_username'=>$s['bot_username']??'',
             'pending'=>$pending,'last_sent_at'=>$s['last_sent_at']??null,'error_code'=>$s['error_code']??''];
     });
@@ -85,7 +91,7 @@ function max_confirm(?callable $http=null): void {
         $result=$http('POST','/messages?user_id='.$s['pending_user_id'].'&disable_link_preview=true',$s['token'],['text'=>'НейроДело: уведомления подключены. Новые заявки будут приходить сюда.','notify'=>true]);
         if(!isset($result['message']['body']['mid']))throw new RuntimeException('max_invalid_response');
         $s['user_id']=$s['pending_user_id'];unset($s['pending_user_id']);$s['enabled']=true;
-        $s['cursor']=(int)db()->query('SELECT COALESCE(MAX(id),0) FROM nd_leads')->fetchColumn();$s['last_sent_at']=time();$s['error_code']='';max_write($s);
+        $s['completed_ids']=array_map('intval',db()->query('SELECT id FROM nd_leads')->fetchAll(PDO::FETCH_COLUMN));$s['cursor']=$s['completed_ids']?max($s['completed_ids']):0;$s['last_sent_at']=time();$s['error_code']='';max_write($s);
     });
 }
 function max_pending_pair(): bool {return max_locked(fn()=>isset(max_read()['pending_user_id']));}
@@ -94,12 +100,12 @@ function max_pump(int $limit=1,?callable $http=null): array {
     return max_locked(function()use($limit,$http){$s=max_read();$sent=0;
         if(($s['enabled']??false)!==true||!isset($s['user_id']))return ['ok'=>true,'sent'=>0,'configured'=>false];
         if(($s['retry_at']??0)>time())return ['ok'=>true,'sent'=>0,'deferred'=>true];
-        $q=db()->prepare('SELECT id FROM nd_leads WHERE id>? ORDER BY id LIMIT '.$limit);$q->execute([$s['cursor']??0]);$ids=$q->fetchAll(PDO::FETCH_COLUMN);
+        $ids=array_slice(max_queue($s),0,$limit);
         foreach($ids as $id){
             if($sent)usleep(550000);
             try{$response=$http('POST','/messages?user_id='.$s['user_id'].'&disable_link_preview=true',$s['token'],['text'=>'Новая заявка №'.$id.' на НейроДело.','notify'=>true,'attachments'=>[['type'=>'inline_keyboard','payload'=>['buttons'=>[[['type'=>'link','text'=>'Открыть кабинет','url'=>'https://neurodelo.pro/studio.php']]]]]]]);
                 if(!isset($response['message']['body']['mid']))throw new RuntimeException('max_invalid_response');
-                $s['cursor']=(int)$id;$s['last_sent_at']=time();$s['error_code']='';$s['failures']=0;unset($s['retry_at']);max_write($s);$sent++;
+                $s['cursor']=max($s['cursor']??0,(int)$id);$s['completed_ids'][]=(int)$id;$s['last_sent_at']=time();$s['error_code']='';$s['failures']=0;unset($s['retry_at']);max_write($s);$sent++;
             }catch(Throwable $e){$s['error_code']=in_array($e->getMessage(),['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response'],true)?$e->getMessage():'max_delivery_failed';$s['failures']=min(10,($s['failures']??0)+1);$s['retry_at']=time()+min(3600,30*(2**$s['failures']));max_write($s);break;}
         }
         return ['ok'=>true,'sent'=>$sent,'error_code'=>$s['error_code']??''];

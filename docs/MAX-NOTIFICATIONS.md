@@ -20,12 +20,12 @@ publishing code does not establish a live token or verified phone delivery.
 State and secret live under private/notifications/runtime (directory0700,
 files0600), outside explicit deployment file paths. Atomic replace and flock
 serialize pairing/configuration/sending. Runtime files survive code deployments
-and rollback. A disconnect invalidates pairing. No database migrations.
+and rollback. A disconnect invalidates pairing. No database migrations. Acknowledged IDs, rather than a MAX(id) cursor, prevent loss when insert commits arrive out of ID order.
 
-Existing nd_leads is the durable queue; the private cursor advances only after
+Existing nd_leads is the durable queue; the private acknowledgement ledger advances only after
 MAX acknowledges an actual message ID. Only new leads after connection are sent.
 Notification payload contains just lead number and an authenticated CRM link,
-not client name/contact/description. Failed sends preserve the cursor and use
+not client name/contact/description. Failed sends preserve pending IDs and use
 bounded exponential backoff. Immediate send is attempted after saving a lead;
 therefore MAX failure never rejects or loses the saved lead. Idempotent form
 replay also retries the queue without re-inserting a lead.

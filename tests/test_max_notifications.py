@@ -76,6 +76,13 @@ $mock=function($method,$path,$token,$body)use($v){
   calls=json.loads((self.path/'max-calls.json').read_text());texts=json.dumps(calls,ensure_ascii=False)
   self.assertNotIn('PRIVATE_NAME',texts);self.assertNotIn('private@example.com',texts);self.assertNotIn('PRIVATE_DESCRIPTION',texts)
   self.assertIn('Новая заявка №'+str(lead),texts)
+ def test_lower_id_committing_after_higher_id_is_not_lost(self):
+  self.bind()
+  self.sql("INSERT INTO nd_leads(id,name,contact,service,idea,notes,created) VALUES (1000000,'TEST','t@example.com','Сайт или лендинг','test','',?)",params=[int(time.time())])
+  self.assertEqual(self.run_php('echo json_encode(max_pump(1,$mock));')['sent'],1)
+  self.sql("INSERT INTO nd_leads(id,name,contact,service,idea,notes,created) VALUES (999999,'TEST','t@example.com','Сайт или лендинг','test','',?)",params=[int(time.time())])
+  self.assertEqual(self.run_php('echo json_encode(max_pump(1,$mock));')['sent'],1)
+  self.assertIn(999999,self.state()['completed_ids']);self.assertIn(1000000,self.state()['completed_ids'])
  def test_symlink_state_refused(self):
   runtime=self.path/'private/notifications/runtime';runtime.mkdir();target=self.path/'untouched';target.write_text('KEEP');(runtime/'state.json').symlink_to(target)
   result=self.run_php("try{max_read();echo '{}';}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}")
