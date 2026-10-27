@@ -17,7 +17,7 @@ def safe_application_path(name):
     return (bool(parts) and all(re.fullmatch(r'[A-Za-z0-9_-][A-Za-z0-9_.-]*|\.htaccess', p)
             and p not in {'.', '..'} for p in parts)
             and parts[-1] not in FORBIDDEN_NAMES
-            and (parts[-1] == '.htaccess' or parts[-1].endswith(('.php', '.html', '.css', '.js')) or name in {'favicon.svg','favicon.ico','sitemap.xml','robots.txt','legal/privacy-2026-10-26-v1.json','owner-bootstrap.json'}))
+            and (parts[-1] == '.htaccess' or parts[-1].endswith(('.php', '.html', '.css', '.js')) or name in {'favicon.svg','favicon.ico','sitemap.xml','robots.txt','legal/privacy-2026-10-26-v1.json','legal/privacy-2026-10-27-v2.json','owner-bootstrap.json'}))
 
 def check_source_path(source, root):
     if any(p.is_symlink() for p in [source, *source.parents] if p == root or root in p.parents):

@@ -91,6 +91,7 @@ function server_error(Throwable $e): void {
 }
 function valid_contact(string $contact): bool {
     if (filter_var($contact, FILTER_VALIDATE_EMAIL)!==false) return true;
+    if (preg_match('#^https://max\.ru/u/[A-Za-z0-9_-]{1,180}$#D',$contact)) return true;
     if (preg_match('/^@[A-Za-z][A-Za-z0-9_]{4,31}$/D', $contact)) return true;
     // Supported telephone region: Russia, +7/8 + 10 digits (area/mobile codes 3,4,8,9).
     if (!preg_match('/^\+?[0-9 ()-]+$/D',$contact)) return false;
@@ -100,10 +101,10 @@ function valid_contact(string $contact): bool {
 }
 /** Owner-authorized, versioned public legal documents; contains no secrets. */
 function release_legal_documents(): array {
-    $file=__DIR__.'/legal/privacy-2026-10-26-v1.json';
+    $file=__DIR__.'/legal/privacy-2026-10-27-v2.json';
     $raw=@file_get_contents($file);
     $data=$raw===false ? null : json_decode($raw,true);
-    if (!is_array($data) || ($data['version']??'')!=='privacy-2026-10-26-v1'
+    if (!is_array($data) || ($data['version']??'')!=='privacy-2026-10-27-v2'
         || ($data['activation_requested']??false)!==true) return [];
     foreach(['policy','consent','owner','address','contact'] as $key) {
         if (!is_string($data[$key]??null) || trim($data[$key])==='') return [];

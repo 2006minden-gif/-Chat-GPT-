@@ -12,6 +12,8 @@
     "favicon.svg",
     "index.html",
     "index.php",
+    "max-settings.js",
+    "max-webhook.php",
     "owner-setup.js",
     "owner-setup.php",
     "privacy.php",
@@ -29,6 +31,9 @@
     ".htaccess",
     "app.php",
     "legal/privacy-2026-10-26-v1.json",
+    "legal/privacy-2026-10-27-v2.json",
+    "notifications/max.php",
+    "notifications/worker.php",
     "owner-bootstrap.json",
     "owner-bootstrap.php",
     "services/catalog.php"

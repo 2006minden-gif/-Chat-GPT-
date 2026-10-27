@@ -44,7 +44,7 @@
     try {
       if (!navigator.clipboard || !window.isSecureContext) throw new Error('clipboard_unavailable');
       await navigator.clipboard.writeText(text);
-      status.textContent = summary.value === text && !result.hidden ? 'Бриф скопирован. Вставьте его в сообщение в Telegram.' : 'Скопирован предыдущий вариант. Подготовьте новый бриф после изменений.';
+      status.textContent = summary.value === text && !result.hidden ? 'Бриф скопирован. Вставьте его в сообщение в MAX или Telegram.' : 'Скопирован предыдущий вариант. Подготовьте новый бриф после изменений.';
     } catch {
       summary.focus(); summary.select();
       status.textContent = 'Автоматическое копирование недоступно. Выделите текст и скопируйте его вручную.';

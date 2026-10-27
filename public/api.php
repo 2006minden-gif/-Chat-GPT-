@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require dirname(__DIR__).'/private/app.php';
+require dirname(__DIR__).'/private/notifications/max.php';
 security_headers();
 header('Cache-Control: no-store');header('X-Robots-Tag: noindex, nofollow');
 try {
@@ -8,6 +9,23 @@ try {
     if(!is_string($route)) fail(404,'Не найдено');
     if($route==='privacy' && $method==='GET') {
         $policy=privacy_settings();unset($policy['hash']);json_response($policy);
+    }
+    if($route==='notifications/max' && $method==='GET') {
+        current_session();$status=max_status();$status['pair_received']=max_pending_pair();json_response($status);
+    }
+    if($route==='notifications/max' && $method==='POST') {
+        current_session(true);$data=input();rate('max-settings',20);
+        try {
+            if(($data['action']??'')==='connect') {
+                $token=$data['token']??'';
+                if(!is_string($token)||!preg_match('/^[A-Za-z0-9._:-]{20,512}$/D',$token))fail(422,'Проверьте токен бота');
+                json_response(max_connect($token));
+            }
+            if(($data['action']??'')==='confirm'){max_confirm();json_response(['ok'=>true]);}
+            if(($data['action']??'')==='retry'){max_pump();json_response(['ok'=>true]);}
+            if(($data['action']??'')==='disable'){max_locked(function(){$s=max_read();$s['enabled']=false;unset($s['pending_user_id'],$s['pair_hash'],$s['pair_expires']);max_write($s);});json_response(['ok'=>true]);}
+            fail(422,'Неизвестное действие');
+        }catch(RuntimeException $e){fail(502,'Не удалось подключиться к MAX. Проверьте токен и повторите позже.','max_connection_error');}
     }
     if($route==='login' && $method==='POST') {
         same_origin();rate('login',10);$data=input();
@@ -28,7 +46,7 @@ try {
     if($route==='leads' && $method==='POST') {
         same_origin();$data=input();
         $values=[field($data,'name',100),field($data,'contact',200),field($data,'service',100),field($data,'idea',5000)];
-        if(!valid_contact($values[1]))fail(422,'Укажите корректный email, Telegram @username (5–32 символа) или телефон РФ в формате +7/8 и 10 цифр.','invalid_contact');
+        if(!valid_contact($values[1]))fail(422,'Укажите корректный email, Telegram @username (5–32 символа) телефон РФ в формате +7/8 и 10 цифр или ссылку профиля MAX.','invalid_contact');
         if(!in_array($values[2],['Сайт или лендинг','ИИ-агент','Веб-приложение','Другая идея'],true))fail(422,'Выберите услугу из списка','invalid_service');
         $key=$data['idempotency_key'] ?? '';
         if(!is_string($key) || !preg_match('/^[a-f0-9]{64}$/D',$key))fail(422,'Не удалось проверить отправку. Обновите страницу и повторите попытку.');
@@ -41,7 +59,7 @@ try {
             $q=db()->prepare('SELECT id,request_hash FROM nd_leads WHERE request_key=?');$q->execute([$key]);$row=$q->fetch();
             if($row) {
                 if(!hash_equals($row['request_hash'],$hash))fail(409,'Этот запрос уже использован для другой заявки. Отправьте изменённую заявку заново.','idempotency_conflict');
-                json_response(['ok'=>true,'lead_id'=>(int)$row['id']],201);
+                max_after_lead();json_response(['ok'=>true,'lead_id'=>(int)$row['id']],201);
             }
         };
         $replay();rate('lead',20);
@@ -51,7 +69,7 @@ try {
             if($e->getCode()==='23000')$replay();
             throw $e;
         }
-        json_response(['ok'=>true,'lead_id'=>(int)db()->lastInsertId()],201);
+        $leadId=(int)db()->lastInsertId();max_after_lead();json_response(['ok'=>true,'lead_id'=>$leadId],201);
     }
     if($route==='leads' && $method==='GET') {
         current_session();$rows=db()->query('SELECT * FROM nd_leads ORDER BY id DESC')->fetchAll();

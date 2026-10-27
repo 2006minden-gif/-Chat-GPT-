@@ -153,7 +153,7 @@ class Prelaunch(unittest.TestCase):
    self.assertEqual(requests.post(self.api('leads'),json=self.lead()).status_code,503)
   finally:self.config['privacy_policy_approved']=True;self.write_config()
  def test_05_release_policy_activation_and_consent_binding(self):
-  legal=self.path/'private/legal/privacy-2026-10-26-v1.json';original=legal.read_bytes();old=dict(self.config)
+  legal=self.path/'private/legal/privacy-2026-10-27-v2.json';original=legal.read_bytes();old=dict(self.config)
   try:
    self.config.update(privacy_policy_approved=False,privacy_policy_version='');self.write_config()
    doc=json.loads(original);version=doc['version']
