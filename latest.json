@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "source_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
-  "nonce": "workflow-40474108696",
-  "run_id": "40474130155",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474130155",
-  "time": "2026-10-27T08:31:58.468785+00:00",
+  "source_sha": "5b0653b158e180b61292f471695c141fafa3e977",
+  "nonce": "workflow-40474166851",
+  "run_id": "40474573542",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474573542",
+  "time": "2026-10-27T08:35:34.221915+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40474108696,
-    "name": "Enable approved auto-merge",
-    "head_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
+    "id": 40474166851,
+    "name": "Validate 5b0653b158e180b61292f471695c141fafa3e977",
+    "head_sha": "5b0653b158e180b61292f471695c141fafa3e977",
     "head_branch": "main",
-    "event": "workflow_run",
+    "event": "push",
     "status": "completed",
-    "conclusion": "failure",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474108696",
-    "path": ".github/workflows/auto-merge.yml"
+    "conclusion": "success",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474166851",
+    "path": ".github/workflows/deploy.yml"
   },
   "inspection": {
     "repository": {
@@ -103,22 +103,6 @@
     "open_prs": {
       "status": 200,
       "pulls": [
-        {
-          "number": 36,
-          "title": "Unify MAX and Telegram contact buttons across homepage and brief",
-          "state": "open",
-          "draft": false,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/pull/36",
-          "merge_commit_sha": "570e06df6c681763594004f52946e64fc0f7d7e9",
-          "head": {
-            "ref": "style/messenger-buttons",
-            "sha": "9ca3377766d0e029949255043de555c0c2a876fb"
-          },
-          "base": {
-            "ref": "main",
-            "sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976"
-          }
-        },
         {
           "number": 22,
           "title": "Stage 6: private client collaboration files documents and approvals",
@@ -234,18 +218,18 @@
       "status": 200,
       "runs": [
         {
-          "id": 40474130155,
+          "id": 40474573542,
           "name": "Record Git-readable automation evidence",
           "event": "workflow_run",
           "head_branch": "main",
-          "head_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
+          "head_sha": "5b0653b158e180b61292f471695c141fafa3e977",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474130155",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474573542",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
-              "id": 122088040303,
+              "id": 122089514485,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -269,6 +253,329 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40474573392,
+          "name": "Enable approved auto-merge",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "5b0653b158e180b61292f471695c141fafa3e977",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474573392",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 122089514524,
+              "name": "Verify and enable protected integration",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Preserve actual review rules and enable verified merge path",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
+            },
+            {
+              "id": 122089515519,
+              "name": "Configure CI/CD after validated main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 122089555868,
+              "name": "Create PR after trusted branch validation",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40474166879,
+          "name": "Retry MAX notifications",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "5b0653b158e180b61292f471695c141fafa3e977",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474166879",
+          "path": ".github/workflows/notifications.yml",
+          "jobs": [
+            {
+              "id": 122088162331,
+              "name": "retry",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Verify current main before SSH",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Retry pending delivery on SpaceWeb",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40474166851,
+          "name": "Validate 5b0653b158e180b61292f471695c141fafa3e977",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "5b0653b158e180b61292f471695c141fafa3e977",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474166851",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 122088162126,
+              "name": "Validate",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Validate dispatched revision",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 122088887230,
+              "name": "Publish approved main",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Require one-time protection bootstrap",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Skip obsolete commits",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Recheck production environment before secret use",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Publish or maintain checked release",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Record deployment evidence",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 122089496923,
+              "name": "Enable verified routine publication",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40474130155,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40474130155",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 122088040303,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -980,297 +1287,453 @@
               ]
             }
           ]
-        },
-        {
-          "id": 40472296131,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40472296131",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 122082039553,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40472281889,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
-          "status": "completed",
-          "conclusion": "cancelled",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40472281889",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 122081992513,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "cancelled",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40472273713,
-          "name": "Retry MAX notifications",
-          "event": "push",
-          "head_branch": "main",
-          "head_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40472273713",
-          "path": ".github/workflows/notifications.yml",
-          "jobs": [
-            {
-              "id": 122081967779,
-              "name": "retry",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Verify current main before SSH",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Retry pending delivery on SpaceWeb",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40472273567,
-          "name": "Validate d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
-          "event": "push",
-          "head_branch": "main",
-          "head_sha": "d071fd36eaf5d99e33eb9617a1a8e706a5fd2976",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40472273567",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 122081965856,
-              "name": "Validate",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Initialize containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Validate dispatched revision",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Install isolated test dependencies",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Syntax and workflow validation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Unit, integration, Apache, security and migration tests",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Build checked release",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Stop containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 122082637056,
-              "name": "Publish approved main",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Require one-time protection bootstrap",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Skip obsolete commits",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Recheck production environment before secret use",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Publish or maintain checked release",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Record deployment evidence",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 122083188542,
-              "name": "Enable verified routine publication",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
         }
       ]
     }
   },
-  "deployment_evidence": null
+  "deployment_evidence": {
+    "mode": "deploy",
+    "result": "deployed_and_verified",
+    "rollback_verified": false,
+    "revision": "5b0653b158e180b61292f471695c141fafa3e977",
+    "release_id": "20261027T083404Z-r40474166851-a1-5b0653b158e1",
+    "before": {
+      "ok": true,
+      "complete": true,
+      "checks": {
+        "/": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/studio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=privacy": {
+          "status": 200,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "enabled": true,
+          "version": "privacy-2026-10-27-v2"
+        },
+        "/privacy.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=session": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=leads": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/~.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index~.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/private/config.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/crm.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/styles.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "776865af42272f3581b8f4b044ae78092d786e5a0ee80bb4a235c01cf152e016"
+        },
+        "/crm.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "c435ecb98a9df9a55782423917296d144e40d5b3c754e107bb2b6a8675163b99"
+        },
+        "/script.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "971c5c8ef75a742c277dfe94609c2e0f27e609b5b1ef415fc533d25e877d6ebf"
+        },
+        "/crm.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "acd59a3f180a71d0395970d36ec7f78fa70c132c8d45b0864f8cec73fa998d70"
+        },
+        "/api-client.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20"
+        }
+      }
+    },
+    "after": {
+      "ok": true,
+      "complete": true,
+      "checks": {
+        "/": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/studio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=privacy": {
+          "status": 200,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "enabled": true,
+          "version": "privacy-2026-10-27-v2"
+        },
+        "/privacy.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=session": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=leads": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/~.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index~.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/private/config.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/crm.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/styles.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "c5d2d25aad3233ee809c4f4b6ff8dc37c7650dee82c4ccd4912df41b043725b7"
+        },
+        "/crm.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "c435ecb98a9df9a55782423917296d144e40d5b3c754e107bb2b6a8675163b99"
+        },
+        "/script.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "971c5c8ef75a742c277dfe94609c2e0f27e609b5b1ef415fc533d25e877d6ebf"
+        },
+        "/crm.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "acd59a3f180a71d0395970d36ec7f78fa70c132c8d45b0864f8cec73fa998d70"
+        },
+        "/api-client.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20"
+        },
+        "/favicon.ico": {
+          "status": 200,
+          "content_type": "image/x-icon",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "4ca8234f48266b2e1efc708a7bbfe87b2f5adaa0cbb8f68d54a5a1b8cbccf19e"
+        },
+        "/favicon.svg": {
+          "status": 200,
+          "content_type": "image/svg+xml",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "d51ef61e2e56597ca0036305ff509c6398bc16564c9b1f7885305ee44fc469d3"
+        },
+        "/max-settings.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "7915d93718253a56636bde4b469a18eb0dbed337e447f3c579ceb77811580512"
+        },
+        "/owner-setup.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "472fe72c011992f81400ba83961f48fc51792abc465cd36df496c3feda848652"
+        },
+        "/robots.txt": {
+          "status": 200,
+          "content_type": "text/plain",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "325850551f3a50acf9ecfa8687bee1e8b99715540824d323ff24b21f4ae06ad0"
+        },
+        "/services/guide.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "e7ad599b75536bfcb815dee3cc9a5143792bd04a66b7d1a63a410d264ca97fc1"
+        },
+        "/services/guide.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "8ef4f40579a6ec609373ca269c7c7c38d636e8c348c33126c6e3a116b653b9c1"
+        },
+        "/sitemap.xml": {
+          "status": 200,
+          "content_type": "application/xml",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "9aede7ee36635f74febb5e575e188b52408b60153843d15c5d82c55540db9573"
+        }
+      }
+    },
+    "preflight": {
+      "ok": true,
+      "php": "8.4.27",
+      "database_connected": true,
+      "admin_exists": true,
+      "privacy_approved": false,
+      "database_inventory": {
+        "mysql_version": "5.7.27-30-log",
+        "tables": [
+          "nd_admin",
+          "nd_leads",
+          "nd_limits",
+          "nd_sessions"
+        ],
+        "journal": [],
+        "schema_sha256": "8aaa4e0c7ef7a95d31ff84a72b06385cc5084c124d0212d34a5d907d9042387c"
+      }
+    },
+    "apply": {
+      "backup_verified": true,
+      "recovery_verified": true,
+      "files_sha256": {
+        "public_html/.htaccess": "6337cdefd79dfa4cf7334405350b6fa9a779d5c879162fdf831bbcfbf4e2cdf5",
+        "public_html/api-client.js": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20",
+        "public_html/api.php": "678e0ba85b096a723637aba5075f775e07db942a6b9ddc8b051f70a199ce711f",
+        "public_html/consent.php": "3ac0a40a853b6ac63895d224839bd8033ab570f665bcd8f19f516ddcbf90d41d",
+        "public_html/crm.css": "c435ecb98a9df9a55782423917296d144e40d5b3c754e107bb2b6a8675163b99",
+        "public_html/crm.html": "a32469d09091aef658de8d054868dc76d0c6773587af5a02ab2c0c575fd152e7",
+        "public_html/crm.js": "acd59a3f180a71d0395970d36ec7f78fa70c132c8d45b0864f8cec73fa998d70",
+        "public_html/favicon.ico": "4ca8234f48266b2e1efc708a7bbfe87b2f5adaa0cbb8f68d54a5a1b8cbccf19e",
+        "public_html/favicon.svg": "d51ef61e2e56597ca0036305ff509c6398bc16564c9b1f7885305ee44fc469d3",
+        "public_html/index.html": "495d4e79e5341b7f15935bce6ce8be42fa911fdc0d26c51c5c758adc27ffab21",
+        "public_html/index.php": "e9ad59ce28e4abf3d3b6f4072f1f88cb6b8ec75a653d3fea33d22b9170c514f8",
+        "public_html/max-settings.js": "7915d93718253a56636bde4b469a18eb0dbed337e447f3c579ceb77811580512",
+        "public_html/max-webhook.php": "940169b2c288340d2c987e1d49311b0c6772dd6604982a6a270fe9e12821ddaf",
+        "public_html/owner-setup.js": "472fe72c011992f81400ba83961f48fc51792abc465cd36df496c3feda848652",
+        "public_html/owner-setup.php": "0b630d60daafb2b0c7395d374c584ea68c10eeac93789c2d3c2afee95586f2ab",
+        "public_html/privacy.php": "6703806ae647387b7890db7e55d9b26cbb2c3ac5cfb06572781b08a0b30e0c34",
+        "public_html/robots.txt": "325850551f3a50acf9ecfa8687bee1e8b99715540824d323ff24b21f4ae06ad0",
+        "public_html/script.js": "971c5c8ef75a742c277dfe94609c2e0f27e609b5b1ef415fc533d25e877d6ebf",
+        "public_html/services.php": "e660976117f9c7f19f1961f31eafec3332d3cb30c08c3447a11d43705dc39a92",
+        "public_html/services/guide.css": "e7ad599b75536bfcb815dee3cc9a5143792bd04a66b7d1a63a410d264ca97fc1",
+        "public_html/services/guide.js": "8ef4f40579a6ec609373ca269c7c7c38d636e8c348c33126c6e3a116b653b9c1",
+        "public_html/sitemap.php": "6ec1ca11e77e8f9eea38b0681916b7a8fd70e5eeef27777947f0d56975a7b50a",
+        "public_html/sitemap.xml": "9aede7ee36635f74febb5e575e188b52408b60153843d15c5d82c55540db9573",
+        "public_html/studio.php": "18491b2b3dab70a24592998422d3ed93f5601fbc8f3133428fb6dc8a72eeedfc",
+        "public_html/styles.css": "c5d2d25aad3233ee809c4f4b6ff8dc37c7650dee82c4ccd4912df41b043725b7",
+        "private/.htaccess": "fa28d421a28ed9b6f4b997d5119c2b8adbacff6e2dd119a179b71230f9664934",
+        "private/app.php": "01c60182a59260aa1c3e7786903c64af6e42657717f7ee06bebee1f303ecc7e8",
+        "private/legal/privacy-2026-10-26-v1.json": "43d439d8235d4aaeba04c658edc84237bb210eb9758961e073c2af44fcc51fc6",
+        "private/legal/privacy-2026-10-27-v2.json": "7b624624e6803843ab14e73e4620d7e60335c686dae51057dc7ff9b267cfe737",
+        "private/notifications/max.php": "be54e5d875058442e9350ad2c34af621edddf14d4b020a24ab71ac4ed81c3a32",
+        "private/notifications/worker.php": "08821a1fc591a722d8bf070bb53957c1f720650401c0c2ab9a98707bf867be02",
+        "private/owner-bootstrap.json": "ab3e8a16526ce5e18c2fc9345e2aa8debe5f846ada35d7dd5704ffa5f56a3ca0",
+        "private/owner-bootstrap.php": "9ba39070713357b1ce99617bd01789ac33c02dd9e339a4654e69f69f0ccd61cb",
+        "private/services/catalog.php": "000584002d78cae483af20dd9e4e65504157693be353500771ca06bddef65405"
+      },
+      "ok": true,
+      "applied": true,
+      "revision": "5b0653b158e180b61292f471695c141fafa3e977",
+      "migrations": [],
+      "baseline_healthy": true
+    },
+    "finalize": {
+      "ok": true,
+      "revision": "5b0653b158e180b61292f471695c141fafa3e977",
+      "files_verified": true
+    }
+  }
 }
