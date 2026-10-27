@@ -16,6 +16,7 @@ try {
     $pdo->exec("SET time_zone='+00:00'");
     // ENUM/unsigned validation requires strict mode; do not change a host-wide setting.
     $mode=$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();
+    if (!preg_match('/\bSTRICT_(TRANS_TABLES|ALL_TABLES)\b/',$mode)){$pdo->exec('SET SESSION sql_mode='.$pdo->quote(($mode!==''?$mode.',':'').'STRICT_TRANS_TABLES'));$mode=$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();}
     if (!preg_match('/\bSTRICT_(TRANS_TABLES|ALL_TABLES)\b/',$mode)) throw new RuntimeException('strict_sql_mode_required');
     $version='004_crm_foundation';$directory=dirname(__DIR__).'/database/migrations/'.$version;
     $up=file_get_contents($directory.'/up.sql');$down=file_get_contents($directory.'/down.sql');
