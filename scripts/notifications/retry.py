@@ -13,7 +13,7 @@ if __name__=='__main__':
         result=remote.command(command,json_output=True)
         # Explicit safe output allowlist: never print remote arbitrary payloads.
         import json
-        print(json.dumps({k:result[k] for k in ['ok','sent','configured','deferred','busy','error_code','not_installed'] if k in result}))
+        print(json.dumps({k:result[k] for k in ['ok','sent','configured','deferred','busy','error_code','not_installed','email_jobs_processed','email_evidence'] if k in result}))
     except Exception:
         print('{"ok":false,"error":"notification_retry_failed"}');sys.exit(1)
     finally:

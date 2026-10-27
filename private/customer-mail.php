@@ -19,9 +19,9 @@ function customer_mail(string $recipient, string $purpose, string $token): bool 
     return customer_smtp_send($recipient,$message);
 }
 /** Shared SMTP transport. DATA acceptance is not inbox delivery. */
-function customer_smtp_send(string $recipient,string $message):bool {
+function customer_smtp_send(string $recipient,string $message,?array $override=null):bool {
     if (!filter_var($recipient,FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/',$recipient)) return false;
-    $c=config();$m=$c['customer_mail'] ?? [];
+    $c=config();$m=$override??($c['customer_mail'] ?? []);
     $test=($m['transport'] ?? '')==='test-smtp';
     $host=$m['host'] ?? '';$port=(int)($m['port'] ?? 0);$from=$m['from'] ?? '';
     $loopback=in_array(parse_url($c['app_url'],PHP_URL_HOST),['127.0.0.1','localhost','::1'],true);
