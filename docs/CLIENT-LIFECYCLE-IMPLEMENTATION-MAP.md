@@ -281,3 +281,15 @@ Owner one-time production setup remains real business input: approve scoped
 policy/templates, enter authentic requisites, provide an actual SpaceWeb mailbox
 in the protected form, confirm its received code, then choose/open channels.
 Code deployment does not fabricate those decisions or credentials.
+
+### Retry integrity / non-strict runtime compatibility
+
+The expanded order read model can exceed the legacy006 request journal TEXT
+capacity. On non-strict MySQL this previously truncated the cached JSON, breaking
+a later retry. New lifecycle mutations keep a small typed identity/version in the
+existing journal and return/reload an explicitly current authorized projection;
+replay never repeats the side effect. No duplicate journal/model or destructive
+schema change. Corrupt historical cached results fail409 instead of re-executing.
+Runtime connections now use UTC and a strict session, without changing global
+host configuration. Ten targeted document/payment/runtime tests pass against
+NO_ENGINE_SUBSTITUTION, including cached-document retries and corrupt-cache refusal.
