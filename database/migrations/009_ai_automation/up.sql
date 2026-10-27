@@ -1,0 +1,161 @@
+-- Additive, default-off AI foundation. No seed business data or credentials.
+CREATE TABLE nd_ai_agents (
+ agent_id VARCHAR(32) PRIMARY KEY,
+ enabled TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_visitors (
+ token_hash CHAR(64) PRIMARY KEY,
+ csrf CHAR(64) NOT NULL,
+ expires DATETIME NOT NULL,
+ consent_at DATETIME NULL,
+ policy_version VARCHAR(190) NULL,
+ policy_hash CHAR(64) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_tasks (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ agent_id VARCHAR(32) NOT NULL,
+ actor_type ENUM('owner','customer','visitor') NOT NULL,
+ actor_id VARCHAR(64) NOT NULL,
+ customer_id BIGINT UNSIGNED NULL,
+ project_id BIGINT UNSIGNED NULL,
+ lead_id INT UNSIGNED NULL,
+ revision_id BIGINT UNSIGNED NULL,
+ input_json TEXT NULL,
+ consent_at DATETIME NULL,
+ policy_version VARCHAR(190) NULL,
+ policy_hash CHAR(64) NULL,
+ state ENUM('CREATED','VALIDATING','QUEUED','RUNNING','COMPLETED','AWAITING_APPROVAL','APPROVED','REJECTED','APPLYING','APPLIED','FAILED','CANCELLED','NEEDS_HUMAN') NOT NULL,
+ request_key CHAR(64) NOT NULL UNIQUE,
+ request_hash CHAR(64) NOT NULL,
+ attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ max_attempts TINYINT UNSIGNED NOT NULL DEFAULT 3,
+ next_attempt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ lease_token CHAR(64) NULL,
+ lease_until DATETIME NULL,
+ last_error VARCHAR(64) NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ expires_at DATETIME NOT NULL,
+ KEY nd_ai_task_queue(state,next_attempt,id),
+ KEY nd_ai_task_actor(actor_type,actor_id,id),
+ KEY nd_ai_task_project(project_id,id),
+ FOREIGN KEY (customer_id) REFERENCES nd_customers(id) ON DELETE RESTRICT,
+ FOREIGN KEY (project_id) REFERENCES nd_projects(id) ON DELETE RESTRICT,
+ FOREIGN KEY (lead_id) REFERENCES nd_leads(id) ON DELETE RESTRICT,
+ FOREIGN KEY (revision_id) REFERENCES nd_cc_revisions(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_events (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ task_id BIGINT UNSIGNED NOT NULL,
+ from_state VARCHAR(32) NULL,
+ to_state VARCHAR(32) NOT NULL,
+ category VARCHAR(64) NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ KEY nd_ai_event_task(task_id,id),
+ FOREIGN KEY (task_id) REFERENCES nd_ai_tasks(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_attempts (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ task_id BIGINT UNSIGNED NOT NULL,
+ attempt_number TINYINT UNSIGNED NOT NULL,
+ correlation_id CHAR(64) NOT NULL UNIQUE,
+ provider VARCHAR(32) NOT NULL,
+ state ENUM('running','completed','failed','unknown') NOT NULL,
+ error_category VARCHAR(64) NULL,
+ started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ finished_at DATETIME NULL,
+ UNIQUE KEY nd_ai_attempt_number(task_id,attempt_number),
+ FOREIGN KEY (task_id) REFERENCES nd_ai_tasks(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_context_refs (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ task_id BIGINT UNSIGNED NOT NULL,
+ context_json MEDIUMTEXT NULL,
+ context_hash CHAR(64) NOT NULL,
+ versions_json TEXT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (task_id) REFERENCES nd_ai_tasks(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_artifacts (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ task_id BIGINT UNSIGNED NOT NULL,
+ revision_number INT UNSIGNED NOT NULL,
+ body MEDIUMTEXT NULL,
+ checksum CHAR(64) NOT NULL,
+ provenance ENUM('ai','owner') NOT NULL,
+ effect_entity VARCHAR(32) NULL,
+ effect_id BIGINT UNSIGNED NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY nd_ai_artifact_revision(task_id,revision_number),
+ FOREIGN KEY (task_id) REFERENCES nd_ai_tasks(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_approvals (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ task_id BIGINT UNSIGNED NOT NULL,
+ artifact_id BIGINT UNSIGNED NOT NULL UNIQUE,
+ action ENUM('send_message','create_tasks') NOT NULL,
+ proposal_json MEDIUMTEXT NOT NULL,
+ proposal_hash CHAR(64) NOT NULL,
+ versions_json TEXT NOT NULL,
+ state ENUM('pending','approved','rejected','applied','expired','superseded') NOT NULL DEFAULT 'pending',
+ owner_id TINYINT UNSIGNED NULL,
+ decided_at DATETIME NULL,
+ expires_at DATETIME NOT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ FOREIGN KEY (task_id) REFERENCES nd_ai_tasks(id) ON DELETE RESTRICT,
+ FOREIGN KEY (artifact_id) REFERENCES nd_ai_artifacts(id) ON DELETE RESTRICT,
+ FOREIGN KEY (owner_id) REFERENCES nd_admin(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_rules (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(190) NOT NULL,
+ trigger_type ENUM('new_lead','project_deadline','manual') NOT NULL,
+ agent_id VARCHAR(32) NOT NULL,
+ mode ENUM('advisory','draft','internal_alert') NOT NULL,
+ enabled TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ max_runs SMALLINT UNSIGNED NOT NULL,
+ runs INT UNSIGNED NOT NULL DEFAULT 0,
+ last_error VARCHAR(64) NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_rule_runs (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ rule_id BIGINT UNSIGNED NOT NULL,
+ event_key VARCHAR(128) NOT NULL,
+ task_id BIGINT UNSIGNED NULL,
+ outcome VARCHAR(32) NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY nd_ai_rule_event(rule_id,event_key),
+ FOREIGN KEY (rule_id) REFERENCES nd_ai_rules(id) ON DELETE RESTRICT,
+ FOREIGN KEY (task_id) REFERENCES nd_ai_tasks(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_usage (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ attempt_id BIGINT UNSIGNED NOT NULL UNIQUE,
+ agent_id VARCHAR(32) NOT NULL,
+ reserved_tokens INT UNSIGNED NOT NULL,
+ estimated_micro BIGINT UNSIGNED NOT NULL,
+ currency CHAR(3) NOT NULL,
+ input_tokens INT UNSIGNED NULL,
+ output_tokens INT UNSIGNED NULL,
+ actual_micro BIGINT UNSIGNED NULL,
+ model VARCHAR(64) NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (attempt_id) REFERENCES nd_ai_attempts(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_budgets (
+ bucket VARCHAR(128) PRIMARY KEY,
+ calls INT UNSIGNED NOT NULL DEFAULT 0,
+ tokens BIGINT UNSIGNED NOT NULL DEFAULT 0,
+ estimated_micro BIGINT UNSIGNED NOT NULL DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_ai_provider_state (
+ provider_id TINYINT UNSIGNED PRIMARY KEY,
+ failures TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ blocked_until DATETIME NULL,
+ last_error VARCHAR(64) NULL,
+ updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

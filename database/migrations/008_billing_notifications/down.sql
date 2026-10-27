@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS nd_notification_preferences;
+DROP TABLE IF EXISTS nd_notification_outbox;
+DROP TABLE IF EXISTS nd_invoice_adjustments;
+DROP TABLE IF EXISTS nd_refunds;
+DROP TABLE IF EXISTS nd_payment_events;
+DROP TABLE IF EXISTS nd_payment_transactions;
+DROP TABLE IF EXISTS nd_payment_attempts;
+DROP TABLE IF EXISTS nd_invoice_lines;
+DROP TABLE IF EXISTS nd_invoices;
+DROP TABLE IF EXISTS nd_billing_sequences;

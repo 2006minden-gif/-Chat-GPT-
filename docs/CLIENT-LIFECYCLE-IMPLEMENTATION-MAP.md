@@ -84,4 +84,32 @@ unsupported tables/schema objects rather than claiming incomplete recovery.
 Original tables are never restore targets. On failure code publication stops;
 private backup/plan remain for diagnosis. Source values and secrets never enter
 reports/artifacts. Five new real MySQL cases plus17 file/release recovery cases
-passed locally on PHP8.4.27/MySQL5.7.44; production verification is still pending.
+passed locally on PHP8.4.27/MySQL5.7.44; production verification passed in PR38, main
+`f7653f197e7c36b1de20cb46124816741997e92e`, deployment40481721385,
+evidence40482158935. Actual4 tables/5 rows restored into private shadow tables;
+original tables never written, shadow tables removed. Safe proof hashes:
+backup `df6de08442b554f1a6179e88b2168ff3425a89a596ea3160caa835d2661246e3`,
+schema `1dffaec5e35656f422f64ccc65828bb56caf1f7c302bdbf60c0d15f7e821c4d0`.
+
+### Foundation slice A1 (release candidate)
+
+Reuses exact004–013 SQL and existing customer/order/cost/document modules from
+candidate e07375f. Exact SQL/operator pins are independently checked by the
+builder and remote agent. Reviewed batch requires a previous healthy delivery,
+previous and current real host data-recovery proofs, private dump and matching
+migration journal. Only up, no down/restore. Partial DDL stops for reviewed
+forward recovery. Loopback real MySQL5.7 test verifies complete batch and a
+subsequent legitimate delivery, preserved owner row and all expanded FK checks.
+
+Owner can qualify/link inquiries, manage customers/deals/draft orders/projects,
+prepare scope, enter manual estimate packages, version Cost Registry and approve
+an exact price. Production works in single-owner mode; employee routes,
+assignments and controls disabled. Public design/MAX/owner account preserved.
+
+This is A1 foundation, not completed slice A: client registration/invitations
+remain inactive until scoped privacy and real SMTP configuration; customer
+proposals/documents cannot be presented as agreed legal instruments. Order
+confirmation/production transitions remain blocked pending real agreement and
+payment schedule gates in subsequent slices. Paid AI/provider payments stay
+inactive. No local PDF is an official receipt. All initial templates in the
+next slice require explicit owner review and approval.
