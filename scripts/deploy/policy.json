@@ -37,12 +37,15 @@
     "documents.php",
     "favicon.ico",
     "favicon.svg",
+    "finance.js",
+    "finance.php",
     "handoff.js",
     "handoff.php",
     "index.html",
     "index.php",
     "invoice-document.php",
     "lifecycle-api.php",
+    "manual-invoice.php",
     "max-settings.js",
     "max-webhook.php",
     "operations.css",
@@ -117,7 +120,9 @@
     "legal/privacy-2026-10-26-v1.json",
     "legal/privacy-2026-10-27-v2.json",
     "lifecycle/documents.php",
+    "lifecycle/payments.php",
     "lifecycle/routes.php",
+    "lifecycle/schedule.php",
     "lifecycle/templates.php",
     "manual/actions.php",
     "manual/core.php",
@@ -258,6 +263,16 @@
       "depends_on": "013_service_ordering",
       "up_sha256": "9810977b514e933d7b61fd38bef0d0afc56865fffc055d4fb487a07adab3d228",
       "down_sha256": "7d330c87a84cdf3414aae7debb4f6992d237b4d9131ad3688bf2117868506ba5"
+    },
+    {
+      "version": "015_lifecycle_payments",
+      "kind": "reviewed_additive",
+      "automatic": true,
+      "required": true,
+      "operator": "scripts/migrate-finance.php",
+      "depends_on": "014_lifecycle_documents",
+      "up_sha256": "e8cfe57a955849b840d19f6d207c1a9f1cbf8cb7ef8ac5f504c55c8878c4113f",
+      "down_sha256": "e0fa321d3e1d3eb5cddd3ade1f1ce7c9a634effee1f1413e17057a9d854a2867"
     }
   ],
   "database_recovery_required": true

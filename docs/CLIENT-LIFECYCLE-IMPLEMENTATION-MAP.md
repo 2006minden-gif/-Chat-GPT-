@@ -139,3 +139,28 @@ including forbidden unapproved prices/templates, missing fields, client isolatio
 XSS escaping, immutable document history, signed-copy roles, retry idempotency,
 body tamper refusal, mobile375px, existing collaboration regression and actual
 014 migration plus a subsequent expanded-schema recovery delivery.
+
+### Payment slice C (release candidate)
+
+015 extends existing invoices/attempts/transactions/refunds with immutable signed
+schedule bindings, client claims, manual bank evidence and per-transaction NPD
+receipt tasks. Two independent approvals are needed: actual signed agreement and
+owner-approved invoice template. Agreed installments sum exactly to price;
+deposits never become another final-balance income. Partial/overpayments are
+visible. Client claim never creates income. Unique bank-operation hashes plus
+request idempotency and order/invoice locks protect retries and concurrent edits.
+Manual refunds record actual external bank operations; application initiates none.
+
+Receipt tasks cover every verified installment, preserve payment method/FNS rule,
+amount/date/buyer INN/service description and method-specific deadline. Real
+MyTax issuance/correction/transmission evidence is owner-attested, explicitly not
+independently verified. No fiscal receipt/QR is generated and no fake official
+receipt is created in the tests. Refunds create correction-review tasks. Client
+receipt access is independent from payment disputes. Protected evidence files
+cannot be hidden by ordinary upload controls.
+
+Validation: real MySQL payment/document/recovery tests pass; client claim vs
+verification, partial payments, duplicate claims/bank IDs, deposit+balance sum,
+overpayment/refund idempotency, receipt deadlines, forbidden local/foreign-host
+fiscal evidence, role separation and invoice isolation. Mobile375px owner forms
+and package closure pass. Live acquiring, bank and MyTax integrations remain off.
