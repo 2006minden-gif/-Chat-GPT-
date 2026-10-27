@@ -57,5 +57,8 @@ class LifecycleDocuments(catalog.Catalog):
    page.goto(self.base+'/studio.php');page.locator('#password').fill(self.f.password);page.locator('#login-form button').click();page.locator('#dashboard').wait_for(state='visible')
    page.goto(self.base+'/documents.php?mode=owner#template/'+str(t['id']));page.get_by_role('button',name='Сохранить как новую версию-черновик').wait_for();self.assertEqual(errors,[]);self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'));browser.close()
 
+ def test_lc_05_corrupt_historical_retry_never_repeats_mutation(self):
+  k=secrets.token_hex(32);self.assertEqual(self.lp('templates/initial',request_key=k).status_code,200);before=self.f.sql('SELECT COUNT(*) n FROM nd_lc_templates')[0]['n'];self.f.sql('UPDATE nd_crm_requests SET result=? WHERE request_key=?',params=['{',k]);r=self.lp('templates/initial',request_key=k);self.assertEqual(r.status_code,409,r.text);self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_lc_templates')[0]['n'],before)
+
 for name in dir(catalog.Catalog):
  if name.startswith('test_'):setattr(LifecycleDocuments,name,None)
