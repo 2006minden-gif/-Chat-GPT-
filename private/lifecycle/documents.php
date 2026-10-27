@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__).'/customer-auth.php';require_once dirname(__DIR__).'/collab/core.php';require_once dirname(__DIR__).'/collab/documents.php';require_once dirname(__DIR__).'/collab/files.php';require_once dirname(__DIR__).'/ai/routes.php';require_once dirname(__DIR__).'/pricing/routes.php';require_once __DIR__.'/templates.php';require_once __DIR__.'/schedule.php';
+/** Keep the existing idempotency journal compact; large read models are fetched on replay.
+ * Returning a current projection never repeats the original side effect. */
+function lc_mutation(array $a,string $route,array $d,callable $fn):array{
+ $fresh=null;$saved=cc_mutation($a,$route,$d,function()use(&$fresh,$fn){$fresh=$fn();$compact=$fresh;if(isset($compact['record'])){$r=$compact['record'];$kind=isset($r['commercial_state'])?'flow':(isset($r['template_snapshot'])?'document':(isset($r['clauses'])?'template':null));if($kind===null)throw new LogicException('unknown_lifecycle_projection');$compact['_projection']=['kind'=>$kind,'id'=>(int)($kind==='flow'?$r['order_id']:$r['id']),'action_version'=>(int)($r['version']??0)];unset($compact['record']);}if(strlen(json_encode($compact,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE))>60000)crm_fail(422,'Ответ слишком велик для безопасного повтора. Уточните состав операции.');return $compact;});
+ if($fresh!==null)return $fresh;if(isset($saved['_projection'])){$p=$saved['_projection'];$saved['action_record_version']=$p['action_version'];$saved['record']=match($p['kind']){'flow'=>lc_flow_detail($a,(int)$p['id']),'document'=>lc_binding($a,(int)$p['id']),'template'=>lc_template((int)$p['id'])};unset($saved['_projection']);$saved['record_is_current_projection']=true;}$saved['action_replayed']=true;return $saved;
+}
 function lc_json(mixed $v):string{return json_encode($v,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR);}
 function lc_inn_valid(string $inn):bool{
  if(!preg_match('/^(?:[0-9]{10}|[0-9]{12})$/D',$inn)||preg_match('/^0+$/D',$inn))return false;
