@@ -24,7 +24,7 @@ class OrderLifecycle(pay.LifecyclePayments):
  def respond(self,oid,id,kind):
   v=self.f.sql('SELECT version,checksum FROM nd_lc_milestone_versions WHERE id=?',params=[id])[0];return self.fp(oid,'milestones/'+str(id)+'/respond',self.customer,version=int(v['version']),checksum=v['checksum'],kind=kind,feedback='SYNTHETIC consolidated feedback')
  def test_flow_01_mandatory_commercial_payment_materials_and_roles(self):
-  oid,items=self.flow_ready();self.assertEqual(self.fg(oid,self.stranger).status_code,404);self.assertEqual(self.fp(oid,'qualify',self.customer).status_code,403);self.assertEqual(self.fp(oid,'start-production').status_code,409)
+  oid,items=self.flow_ready();version=int(self.f.sql('SELECT version FROM nd_orders WHERE id=?',params=[oid])[0]['version']);self.assertEqual(self.owner.patch(self.base+'/api.php?r=crm/orders/'+str(oid),json={'version':version,'total_amount':'999.00'}).status_code,409);self.assertEqual(self.fg(oid,self.stranger).status_code,404);self.assertEqual(self.fp(oid,'qualify',self.customer).status_code,403);self.assertEqual(self.fp(oid,'start-production').status_code,409)
   self.material_ready(oid);self.assertEqual(self.fp(oid,'start-production').status_code,409);deposit=items[0];n=int(deposit['total_minor']);self.must(self.bank(deposit,amount=f'{n//100}.{n%100:02}'));self.must(self.fp(oid,'start-production'));f=self.fg(oid,self.customer).json()['record'];self.assertEqual(f['delivery_state'],'IN_PRODUCTION');self.assertNotIn('notes',f['order'])
   stage=self.stage();self.assertEqual(self.fp(oid,'milestones',**self.evidence(stage,deployment_url='https://neurodelo.pro/')).status_code,422);self.assertEqual(self.fp(oid,'milestones',**self.evidence(stage,confirm_actual_deployment=False)).status_code,422)
   self.must(self.fp(oid,'pause'));self.assertEqual(self.fp(oid,'milestones',**self.evidence(stage)).status_code,409);self.assertEqual(self.lg('finance',self.customer).status_code,200);self.must(self.fp(oid,'resume'))
@@ -39,6 +39,11 @@ class OrderLifecycle(pay.LifecyclePayments):
   from playwright.sync_api import sync_playwright
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);page=browser.new_page(viewport={'width':375,'height':812});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(self.base+'/studio.php');page.locator('#password').fill(self.f.password);page.locator('#login-form button').click();page.locator('#dashboard').wait_for(state='visible');page.goto(self.base+'/orders.php?mode=owner#'+str(oid));page.get_by_text('Материалы и передача',exact=True).wait_for();self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'));self.assertEqual(errors,[]);browser.close()
+
+ def test_flow_04_unapproved_draft_price_hidden_in_both_portals(self):
+  self.prepare();f=self.must(self.lp('flow/orders',project_id=self.project_id))['record'];oid=int(f['order_id']);client=self.must(self.fg(oid,self.customer))['record'];self.assertNotIn('total_amount',client['order'])
+  legacy=self.customer.get(self.base+'/customer-api.php?r=portal/orders/'+str(oid));self.assertEqual(legacy.status_code,200,legacy.text);self.assertIsNone(legacy.json()['record']['total_amount']);self.assertTrue(legacy.json()['record']['price_pending_approval'])
+  self.must(self.fp(oid,'decline'));self.assertEqual(self.fp(oid,'start-production').status_code,409);self.assertEqual(self.lg('finance',self.customer).status_code,200)
 
 for name in dir(pay.LifecyclePayments):
  if name.startswith('test_'):setattr(OrderLifecycle,name,None)

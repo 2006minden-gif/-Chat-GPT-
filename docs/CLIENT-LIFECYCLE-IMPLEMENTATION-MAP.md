@@ -191,3 +191,32 @@ CI executes every unique discovered test ID once. Only identical imported
 TestCase IDs are deduplicated; distinct tests and import-failure cases remain.
 The required Validate check, Apache/security/business/migration tests and
 production gates remain in force.
+
+### Delivery/review slice D (release candidate)
+
+016 links an explicit order flow to existing projects, brief revisions, approved
+quotations, sent proposal and verified signed agreement. Commercial, document,
+payment, delivery, acceptance and exceptional-case facets remain separate.
+Qualification, exact brief/cost binding, explicit client commercial decision and
+actual signed agreement precede production. Actual schedule gates and verified
+materials are checked server-side; drafts cannot leak unapproved prices through
+either portal and ordinary CRM edits cannot replace agreed price/dates.
+
+Milestones use existing project stages plus immutable evidence versions. Owner
+must record actual tests, CI, isolated client preview/deployment, published
+revision and verification; green CI alone does not publish. Evidence is clearly
+owner-attested, not an implemented external deployment integration. Client sends
+one consolidated decision per version: acceptance, defect, included revision or
+extra scope. Resolving a defect requires a newer accepted version. Extra scope
+never auto-charges or silently changes the accepted agreement.
+
+Final review binds the exact accepted milestone manifest. Handover requires its
+actual contractual payment gate, verified checklist and explicit owner preparation
+before client acknowledgment. Attached handover files remain internal until that
+step. Support can be recorded before handover; pause/dispute/cancel/decline keep
+financial history/receipt access. English Codex task is copyable text only.
+
+Validation:14 focused MySQL/HTTP/recovery/package checks plus2 price/role guards
+pass against non-strict MySQL5.7 with session hardening; mobile375px workflow
+works without horizontal overflow. Closure, signed final act, applied scope-change
+accounting, owner SMTP/purpose-scoped privacy and complete E2E remain for slice E.

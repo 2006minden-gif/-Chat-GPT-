@@ -80,6 +80,7 @@ function crm_values(string $kind,array $d,?array $old=null):array{
   if(in_array($field,['due_on','starts_on','due_at'],true)){$format=$field==='due_at'?'Y-m-d H:i:s':'Y-m-d';$dt=DateTimeImmutable::createFromFormat('!'.$format,$v,new DateTimeZone('UTC'));if(!$dt||$dt->format($format)!==$v)crm_fail(422,'Дата: укажите существующую дату (UTC).');}
   $values[$field]=$v;
  }
+ if($old&&$kind==='orders'&&array_intersect(array_keys($values),['total_amount','currency','due_on'])&&crm_query("SELECT state FROM nd_schema_migrations WHERE version='016_order_lifecycle'")->fetchColumn()==='applied'){$stage=crm_query('SELECT commercial_state FROM nd_lc_order_flow WHERE order_id=?',[$old['id']])->fetchColumn();if($stage&&!in_array($stage,['INQUIRY','QUALIFIED','BRIEF_READY'],true))crm_fail(409,'Цена и сроки зафиксированы в рабочем цикле. Используйте отдельное согласование изменения.');}
  $row=array_replace($old??[],$values);
  if(!$old){foreach($kind==='customers'||$kind==='employees'?['name']:($kind==='stages'?['title','project_id','position']:['title']) as $required)if(empty($row[$required]))crm_fail(422,crm_field_label($required).': обязательно.');}
  if($kind==='customers'&&empty($row['email'])&&empty($row['phone'])&&empty($row['telegram']))crm_fail(422,'Укажите email, телефон или Telegram клиента.');
