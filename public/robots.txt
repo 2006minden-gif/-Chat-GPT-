@@ -1,4 +1,5 @@
 User-agent: *
+Disallow: /owner-setup.php
 Disallow: /api.php
 Disallow: /studio.php
 Disallow: /crm.html
