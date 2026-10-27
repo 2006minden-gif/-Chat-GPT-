@@ -293,3 +293,11 @@ schema change. Corrupt historical cached results fail409 instead of re-executing
 Runtime connections now use UTC and a strict session, without changing global
 host configuration. Ten targeted document/payment/runtime tests pass against
 NO_ENGINE_SUBSTITUTION, including cached-document retries and corrupt-cache refusal.
+
+The existing owner CRM overview now includes authoritative lifecycle counts:
+qualification/brief/estimate, document review, missing materials, bank claims,
+unissued/untransmitted/correction receipts with overdue flags, production,
+acceptance, open feedback/scope changes, handover, active support on closed orders
+and exceptional cases. Its bounded next-action list reuses the same order rules;
+no second task/status model is introduced. Counts include unresolved tax/payment
+obligations after stopped work. Owner/session isolation and375px overview verified.

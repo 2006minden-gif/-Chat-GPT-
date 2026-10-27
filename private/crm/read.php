@@ -62,5 +62,6 @@ function crm_dashboard(array $filter):array {
  'overdue'=>"SELECT COUNT(*) FROM nd_tasks WHERE archived_at IS NULL AND due_at<UTC_TIMESTAMP() AND status NOT IN ('done','cancelled')",
  'completed'=>"SELECT COUNT(*) FROM nd_projects WHERE status='completed'"
  ];$kpi=[];foreach($counts as $k=>$sql)$kpi[$k]=(int)crm_query($sql)->fetchColumn();
- return ['ok'=>true,'kpi'=>$kpi,'recent_leads'=>crm_list('leads')['items'],'projects'=>crm_list('projects')['items'],'deadlines'=>crm_list('tasks',['due_soon'=>'true'])['items'],'activity'=>crm_list('activity')['items']];
+ $result=['ok'=>true,'kpi'=>$kpi,'recent_leads'=>crm_list('leads')['items'],'projects'=>crm_list('projects')['items'],'deadlines'=>crm_list('tasks',['due_soon'=>'true'])['items'],'activity'=>crm_list('activity')['items']];
+ if((config()['order_lifecycle_enabled']??false)===true&&crm_query("SELECT state FROM nd_schema_migrations WHERE version='016_order_lifecycle'")->fetchColumn()==='applied'){require_once dirname(__DIR__).'/lifecycle/dashboard.php';$result['lifecycle']=lc_owner_dashboard();}return $result;
 }

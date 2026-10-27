@@ -127,6 +127,7 @@
     "legal/privacy-2026-10-26-v1.json",
     "legal/privacy-2026-10-27-v2.json",
     "lifecycle/closure.php",
+    "lifecycle/dashboard.php",
     "lifecycle/documents.php",
     "lifecycle/flow.php",
     "lifecycle/payments.php",
