@@ -48,5 +48,10 @@
     "operator": "scripts/migrate-catalog.php",
     "up_sha256": "f4abe1a279eade319c146005b5906dee76693238760aabd1068c770b193cbce3",
     "down_sha256": "5e07ce0792b4f9a580484384ae18d54747451b42b08be1ec93a3f68aea509fc2"
+  },
+  "014_lifecycle_documents": {
+    "operator": "scripts/migrate-documents.php",
+    "up_sha256": "9810977b514e933d7b61fd38bef0d0afc56865fffc055d4fb487a07adab3d228",
+    "down_sha256": "7d330c87a84cdf3414aae7debb4f6992d237b4d9131ad3688bf2117868506ba5"
   }
 }

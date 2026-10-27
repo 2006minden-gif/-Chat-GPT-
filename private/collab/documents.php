@@ -1,14 +1,18 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__).'/catalog/bindings.php';
+function cc_lifecycle_installed():bool{return crm_query("SELECT state FROM nd_schema_migrations WHERE version='014_lifecycle_documents'")->fetchColumn()==='applied';}
 function cc_document(array $a,int $id,bool $lock=false):array{
+ if(cc_lifecycle_installed()){$binding=crm_query('SELECT b.state FROM nd_lc_document_bindings b JOIN nd_cc_revisions r ON r.id=b.revision_id WHERE r.document_id=?',[$id])->fetch();if($binding){if($lock)crm_fail(409,'Версия договорного документа неизменяема. Используйте отдельный документ и согласование.');if($a['type']==='customer'&&$binding['state']==='OWNER_REVIEW')crm_fail(404,'Запись не найдена.');}}
  $d=crm_query('SELECT * FROM nd_cc_documents WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$d)crm_fail(404,'Запись не найдена.');cc_project($a,(int)$d['project_id']);
  if($a['type']==='customer'&&!crm_query("SELECT id FROM nd_cc_revisions WHERE document_id=? AND status IN ('sent','approved','changes_requested','finalized') LIMIT 1",[$id])->fetchColumn())crm_fail(404,'Запись не найдена.');return $d;
 }
 function cc_revision(array $a,int $id,bool $lock=false):array{
  $r=crm_query('SELECT * FROM nd_cc_revisions WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$r)crm_fail(404,'Запись не найдена.');$doc=cc_document($a,(int)$r['document_id']);
  if($a['type']==='customer'&&in_array($r['status'],['draft','ready'],true))crm_fail(404,'Запись не найдена.');
- $r['fields']=json_decode($r['body'],true,512,JSON_THROW_ON_ERROR);unset($r['body']);$r['document']=$doc;$r['catalog_request_id']=cat_revision_request($id);
+ $r['fields']=json_decode($r['body'],true,512,JSON_THROW_ON_ERROR);
+ if(cc_lifecycle_installed()){$b=crm_query('SELECT template_snapshot,input_snapshot,generated_hash FROM nd_lc_document_bindings WHERE revision_id=?',[$id])->fetch();if($b){$t=json_decode($b['template_snapshot'],true,512,JSON_THROW_ON_ERROR);$in=json_decode($b['input_snapshot'],true,512,JSON_THROW_ON_ERROR);$actual=hash('sha256',json_encode([$t,$in],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR));if(!hash_equals($b['generated_hash'],$actual)||!hash_equals($b['generated_hash'],$r['checksum']))crm_fail(503,'Целостность документа не подтверждена.');foreach($in['rendered'] as $key=>$value)if(($r['fields'][$key]??null)!==$value)crm_fail(503,'Целостность текста документа не подтверждена.');}}
+ unset($r['body']);$r['document']=$doc;$r['catalog_request_id']=cat_revision_request($id);
  $files=crm_query('SELECT f.* FROM nd_cc_files f JOIN nd_cc_revision_files rf ON rf.file_id=f.id WHERE rf.revision_id=?'.($a['type']==='customer'?" AND f.visibility='customer' AND f.archived_at IS NULL":'').' ORDER BY f.id',[$id])->fetchAll();$r['files']=array_map('cc_public_file',$files);
  $r['approval']=crm_query('SELECT id,status,version,checksum,due_on,created_at FROM nd_cc_approvals WHERE revision_id=?',[$id])->fetch()?:null;
  if($r['approval'])$r['decision']=crm_query('SELECT decision,feedback,checksum,created_at FROM nd_cc_decisions WHERE approval_id=?',[$r['approval']['id']])->fetch()?:null;

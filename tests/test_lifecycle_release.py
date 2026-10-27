@@ -24,7 +24,7 @@ class LifecycleRelease(pipeline.unittest.TestCase):
   result=self.agent('apply');self.assertEqual(result['migrations'],[x['version'] for x in m['migrations']]);self.finish();self.assert_protected()
   self.assertEqual(self.f.sql('SELECT * FROM nd_admin'),before)
   rows=self.f.sql('SELECT version,state,up_checksum,down_checksum FROM nd_schema_migrations ORDER BY version')
-  self.assertEqual(len(rows),10);self.assertTrue(all(x['state']=='applied' for x in rows))
+  self.assertEqual(len(rows),len(m['migrations']));self.assertTrue(all(x['state']=='applied' for x in rows))
   # Second legitimate delivery skips every applied migration and rehearses the expanded schema.
   self.id='lifecycle-followup';self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id;pipeline.release.build(self.candidate,'c'*40);(self.candidate/'baseline.json').write_text(json.dumps(pipeline.good()))
   follow=self.agent('apply');self.assertEqual(follow['migrations'],[]);self.assertTrue(follow['database_recovery']['verified']);self.assertTrue(follow['database_recovery']['shadow_tables_removed']);self.assertGreater(follow['database_recovery']['foreign_keys_verified'],20);self.finish()
