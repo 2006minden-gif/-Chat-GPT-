@@ -1,20 +1,20 @@
 {
   "schema_version": 1,
   "source_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
-  "nonce": "workflow-40546922517",
-  "run_id": "40547563263",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40547563263",
-  "time": "2026-10-27T17:09:15.575102+00:00",
+  "nonce": "workflow-40547019113",
+  "run_id": "40547819171",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40547819171",
+  "time": "2026-10-27T17:09:36.995158+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40546922517,
+    "id": 40547019113,
     "name": "Enable approved auto-merge",
-    "head_sha": "50d44c4a09ae105af4d2687de6c34447a98b1d4f",
+    "head_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
     "head_branch": "main",
     "event": "workflow_run",
     "status": "completed",
     "conclusion": "failure",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40546922517",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40547019113",
     "path": ".github/workflows/auto-merge.yml"
   },
   "inspection": {
@@ -255,33 +255,13 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
-          "status": "pending",
+          "status": "in_progress",
           "conclusion": null,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40547819171",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
               "id": 122343095048,
-              "name": "record",
-              "status": "pending",
-              "conclusion": null,
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40547563263,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
-          "status": "in_progress",
-          "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40547563263",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 122342164759,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -305,6 +285,52 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40547563263,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40547563263",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 122342164759,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -859,18 +885,18 @@
                 },
                 {
                   "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": null,
-                  "status": "in_progress"
+                  "conclusion": "success",
+                  "status": "completed"
                 },
                 {
                   "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": null,
-                  "status": "pending"
+                  "conclusion": "success",
+                  "status": "completed"
                 },
                 {
                   "name": "Install isolated test dependencies",
                   "conclusion": null,
-                  "status": "pending"
+                  "status": "in_progress"
                 },
                 {
                   "name": "Syntax and workflow validation",
@@ -889,6 +915,11 @@
                 },
                 {
                   "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
                   "conclusion": null,
                   "status": "pending"
                 },
@@ -1069,13 +1100,13 @@
                 },
                 {
                   "name": "Syntax and workflow validation",
-                  "conclusion": null,
-                  "status": "in_progress"
+                  "conclusion": "success",
+                  "status": "completed"
                 },
                 {
                   "name": "Unit, integration, Apache, security and migration tests",
                   "conclusion": null,
-                  "status": "pending"
+                  "status": "in_progress"
                 },
                 {
                   "name": "Build checked release",
