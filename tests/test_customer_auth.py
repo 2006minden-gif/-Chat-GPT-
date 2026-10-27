@@ -230,7 +230,7 @@ class CustomerAuth(unittest.TestCase):
   self.assertEqual(self.post('verify',self.payload(token=token,policy_version='test-policy-v2')).status_code,200)
   self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_customer_consents')[0]['n'],2)
  def test_secure_cookie_flags_and_https_only_outside_test(self):
-  original=self.f.config['app_url'];self.f.config['app_url']='https://neurodelo.pro';self.f.write_config()
+  original=self.f.config['app_url'];self.f.config['app_url']='https://secure.example.invalid';self.f.write_config()
   try:
    r=requests.get(self.url('session'));self.assertEqual(r.status_code,200);cookie=r.headers['Set-Cookie'];self.assertIn('__Host-nd_customer=',cookie);self.assertIn('secure',cookie.lower());self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie);self.assertIn('path=/',cookie.lower());self.assertNotIn('domain=',cookie.lower())
   finally:self.f.config['app_url']=original;self.f.config['customer_auth_test_mode']=False;self.f.write_config()

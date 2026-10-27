@@ -76,7 +76,7 @@ class SystemIntegration(Collaboration):
   pages=['/workspace.php','/portal.php','/collaboration.php?mode=owner','/handoff.php']
   for path in pages:
    r=self.owner.get(self.base+path);self.assertEqual(r.status_code,200,r.text);self.assertIn('product-navigation',r.text)
-  html=self.owner.get(self.base+'/handoff.php').text;self.assertIn('Каталог услуг и интерактивный бриф пока недоступны',html);self.assertNotIn('href="/ai.php',html);self.assertNotIn('href="/production.php',html);self.assertIn('href="/handoff.php',html)
+  html=self.owner.get(self.base+'/handoff.php').text;self.assertIn('Каталог услуг пока не опубликован.',html);self.assertNotIn('href="/ai.php',html);self.assertNotIn('href="/production.php',html);self.assertIn('href="/handoff.php',html)
 
 for name in dir(Collaboration):
  if name.startswith('test_'):setattr(SystemIntegration,name,None)
