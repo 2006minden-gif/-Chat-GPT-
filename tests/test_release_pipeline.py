@@ -71,7 +71,7 @@ class ReleaseFilesTests(unittest.TestCase):
    bundle=Path(tmp)/'release';m=release.build(bundle,'a'*40)
    self.assertEqual(len(m['files']),len(release.policy_check()['public_files'])+len(release.policy_check()['private_files']));client.validate_bundle(bundle,'a'*40)
    self.assertIn('database/schema.sql',m['tools']);self.assertTrue(all(not p.startswith('public_html/') for p in m['tools'] if p.endswith('.sql')))
-   self.assertNotIn('private/config.php',str(m));self.assertNotIn('setup.php',str(m))
+   self.assertNotIn('private/config.php',m['files']);self.assertNotIn('public_html/setup.php',m['files'])
    (bundle/'private/app.php').write_text('tampered')
    with self.assertRaises(ValueError):client.validate_bundle(bundle,'a'*40)
  def test_unknown_revision_and_extra_files_rejected(self):

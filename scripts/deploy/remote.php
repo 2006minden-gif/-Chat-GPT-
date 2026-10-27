@@ -29,6 +29,8 @@ function paths():array {
         'public_html/favicon.svg',
         'public_html/index.html',
         'public_html/index.php',
+        'public_html/owner-setup.js',
+        'public_html/owner-setup.php',
         'public_html/privacy.php',
         'public_html/robots.txt',
         'public_html/script.js',
@@ -42,6 +44,8 @@ function paths():array {
         'private/.htaccess',
         'private/app.php',
         'private/legal/privacy-2026-10-26-v1.json',
+        'private/owner-bootstrap.json',
+        'private/owner-bootstrap.php',
         'private/services/catalog.php',
     ];
 }

@@ -12,6 +12,8 @@
     "favicon.svg",
     "index.html",
     "index.php",
+    "owner-setup.js",
+    "owner-setup.php",
     "privacy.php",
     "robots.txt",
     "script.js",
@@ -27,6 +29,8 @@
     ".htaccess",
     "app.php",
     "legal/privacy-2026-10-26-v1.json",
+    "owner-bootstrap.json",
+    "owner-bootstrap.php",
     "services/catalog.php"
   ],
   "keep_backups": 3,
