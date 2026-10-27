@@ -18,3 +18,18 @@ execution. Generated snapshots bind exact owner-approved template, validated
 fields, project/order and approved quotation. Old drafts are not legal agreements.
 Client data collection and registration remain gated by purpose-scoped approved
 privacy and real mail transport; publishing this code alone does not enable them.
+
+## Payment/receipt implementation checkpoint
+
+FNS FAQ rechecked before implementation: payment/receipt timing sections and
+Art14 references, plus correction/refund explanation under Art8(4). Each actual
+owner-verified transaction, including each deposit/partial payment, creates one
+receipt task with a unique transaction FK. Cash/electronic methods use the actual
+payment instant; other bank settlement uses9th of the following month,23:59:59
+Europe/Kaliningrad, stored in UTC. Immediate issuance is encouraged for all.
+Issuance and transmission have distinct owner-recorded timestamps/evidence.
+A signed act, invoice or local PDF is never labelled an independently verified
+FNS receipt. Official-link host is restricted to lknpd.nalog.ru; files require
+owner confirmation of actual MyTax issuance. The application never creates a
+fiscal number/QR, annuls a receipt, transfers money or connects a bank. Refund
+recording creates an explicit MyTax review/correction task and preserves history.

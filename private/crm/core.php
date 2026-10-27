@@ -111,8 +111,8 @@ function crm_idempotent(string $route,array $d,callable $fn):array{
  return crm_atomic(function()use($key,$hash,$fn){
   crm_query('INSERT INTO nd_crm_requests(request_key,request_hash) VALUES (?,?) ON DUPLICATE KEY UPDATE request_key=VALUES(request_key)',[$key,$hash]);
   $r=crm_query('SELECT * FROM nd_crm_requests WHERE request_key=? FOR UPDATE',[$key])->fetch();if(!hash_equals($hash,$r['request_hash']))crm_fail(409,'Этот запрос уже использован с другими данными.');
-  if($r['result']!==null)return json_decode($r['result'],true,512,JSON_THROW_ON_ERROR);
-  $result=$fn();crm_query('UPDATE nd_crm_requests SET result=? WHERE request_key=?',[json_encode($result,JSON_THROW_ON_ERROR),$key]);return $result;
+  if($r['result']!==null){try{return json_decode($r['result'],true,512,JSON_THROW_ON_ERROR);}catch(JsonException $e){crm_fail(409,'Повтор заблокирован: сохранённый ответ некорректен. Обновите карточку и проверьте историю, прежде чем создавать новую операцию.');}}
+  $result=$fn();crm_query('UPDATE nd_crm_requests SET result=? WHERE request_key=?',[json_encode($result,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE),$key]);return $result;
  });
 }
 function crm_insert(string $kind,array $data,?array $actor=null):array{
