@@ -33,6 +33,8 @@
     "customer.css",
     "customer.js",
     "customer.php",
+    "documents.js",
+    "documents.php",
     "favicon.ico",
     "favicon.svg",
     "handoff.js",
@@ -40,6 +42,7 @@
     "index.html",
     "index.php",
     "invoice-document.php",
+    "lifecycle-api.php",
     "max-settings.js",
     "max-webhook.php",
     "operations.css",
@@ -113,6 +116,9 @@
     "customer-mail.php",
     "legal/privacy-2026-10-26-v1.json",
     "legal/privacy-2026-10-27-v2.json",
+    "lifecycle/documents.php",
+    "lifecycle/routes.php",
+    "lifecycle/templates.php",
     "manual/actions.php",
     "manual/core.php",
     "manual/routes.php",
@@ -252,6 +258,17 @@
       "up_sha256": "f4abe1a279eade319c146005b5906dee76693238760aabd1068c770b193cbce3",
       "down_sha256": "5e07ce0792b4f9a580484384ae18d54747451b42b08be1ec93a3f68aea509fc2",
       "operator_sha256": "fd2e0dd0b0b48927b01c14d03347838554e30ab79e4148a74fbac12001ea3236"
+    },
+    {
+      "version": "014_lifecycle_documents",
+      "kind": "reviewed_additive",
+      "automatic": true,
+      "required": true,
+      "operator": "scripts/migrate-documents.php",
+      "depends_on": "013_service_ordering",
+      "up_sha256": "9810977b514e933d7b61fd38bef0d0afc56865fffc055d4fb487a07adab3d228",
+      "down_sha256": "7d330c87a84cdf3414aae7debb4f6992d237b4d9131ad3688bf2117868506ba5",
+      "operator_sha256": "ed81a19004ae57dc4da6952fa893147ea156c3b3e08c084a493e6c4354c4f7ae"
     }
   ],
   "database_recovery_required": true

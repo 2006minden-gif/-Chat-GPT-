@@ -115,6 +115,32 @@ inactive. No local PDF is an official receipt. All initial templates in the
 next slice require explicit owner review and approval.
 
 
+### Document slice B (release candidate)
+
+014 adds versioned template/evidence metadata linked to existing orders, projects,
+collaboration revisions and private files. No duplicate document contents or
+customer/order model. Eight initial Russian templates are legal-review drafts;
+only explicit owner approval of an exact checksum permits structured generation.
+Required fields, INN control digits, bank-field format, actual approved quotation
+and order total are checked on the server. Complete template/input/rendered-text
+snapshots and SHA256 are immutable; ordinary collaboration editing cannot bypass
+that rule. Private printable UTF8 output supports browser Save as PDF; no server
+PDF library or fiscal document is claimed.
+
+Client can see only sent own documents, provide comments and upload an existing
+scoped private signed-copy file. Only owner verification of that actual file can
+record agreement. Receipt of a click/comment/upload alone is not a signature.
+Signed evidence cannot be hidden by ordinary file controls. Sending is unavailable
+until client access/privacy configuration is actually enabled. Source checkpoints
+and limitations are in LIFECYCLE-LEGAL-SOURCES.md.
+
+Validation: 18 targeted real MySQL/HTTP/security/mobile/recovery tests pass,
+including forbidden unapproved prices/templates, missing fields, client isolation,
+XSS escaping, immutable document history, signed-copy roles, retry idempotency,
+body tamper refusal, mobile375px, existing collaboration regression and actual
+014 migration plus a subsequent expanded-schema recovery delivery.
+
+
 ### Host delivery repair after PR39
 
 PR39 integrated as09ad114, required checks passed. Main delivery40494989490

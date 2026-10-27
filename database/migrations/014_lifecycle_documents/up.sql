@@ -1,0 +1,51 @@
+-- Extends existing collaboration documents; no duplicate order/customer model.
+CREATE TABLE nd_lc_templates (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ kind VARCHAR(40) NOT NULL,
+ revision_number INT UNSIGNED NOT NULL,
+ title VARCHAR(190) NOT NULL,
+ clauses_json MEDIUMTEXT NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ state ENUM('DRAFT','NEEDS_LEGAL_REVIEW','APPROVED','RETIRED') NOT NULL DEFAULT 'DRAFT',
+ approval_reason TEXT NULL,
+ approved_by TINYINT UNSIGNED NULL,
+ approved_at DATETIME NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY nd_lc_template_revision(kind,revision_number),
+ FOREIGN KEY (approved_by) REFERENCES nd_admin(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_document_bindings (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ order_id BIGINT UNSIGNED NOT NULL,
+ revision_id BIGINT UNSIGNED NOT NULL UNIQUE,
+ template_id BIGINT UNSIGNED NOT NULL,
+ template_snapshot MEDIUMTEXT NOT NULL,
+ input_snapshot MEDIUMTEXT NOT NULL,
+ generated_hash CHAR(64) NOT NULL,
+ state ENUM('OWNER_REVIEW','SENT','CLIENT_RESPONSE','SIGNED_COPY_SUBMITTED','AGREED','REJECTED') NOT NULL DEFAULT 'OWNER_REVIEW',
+ response TEXT NULL,
+ signed_file_id BIGINT UNSIGNED NULL,
+ verification_reason TEXT NULL,
+ verified_by TINYINT UNSIGNED NULL,
+ verified_at DATETIME NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (order_id) REFERENCES nd_orders(id) ON DELETE RESTRICT,
+ FOREIGN KEY (revision_id) REFERENCES nd_cc_revisions(id) ON DELETE RESTRICT,
+ FOREIGN KEY (template_id) REFERENCES nd_lc_templates(id) ON DELETE RESTRICT,
+ FOREIGN KEY (signed_file_id) REFERENCES nd_cc_files(id) ON DELETE RESTRICT,
+ FOREIGN KEY (verified_by) REFERENCES nd_admin(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_audit (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ actor_type ENUM('owner','customer') NOT NULL,
+ actor_id BIGINT UNSIGNED NOT NULL,
+ entity VARCHAR(40) NOT NULL,
+ record_id BIGINT UNSIGNED NOT NULL,
+ action VARCHAR(64) NOT NULL,
+ prior_version INT UNSIGNED NULL,
+ evidence_json MEDIUMTEXT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ KEY nd_lc_audit_record(entity,record_id,id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

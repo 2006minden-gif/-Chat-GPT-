@@ -2,3 +2,5 @@
 @media print{body{background:white;color:black}main.portal{padding:0;max-width:none}button,nav,.threads{display:none!important}.print-document section{break-inside:avoid}.print-document h1{font-size:24px}.print-document p{overflow-wrap:anywhere}}
 #cc-close{position:sticky;bottom:0;background:#fff;margin-top:12px}.collab-form fieldset{min-inline-size:0}.collab-form fieldset label{overflow-wrap:anywhere}
 #cc-modal-body,.print-document{overflow-wrap:anywhere}
+
+.lifecycle-documents main.portal{overflow-wrap:anywhere;min-width:0}.lifecycle-documents form{display:grid;gap:14px}.lifecycle-documents label{min-width:0}.lifecycle-documents input,.lifecycle-documents textarea{width:100%;min-width:0}.lifecycle-documents input[type=checkbox]{width:auto;align-self:start}
