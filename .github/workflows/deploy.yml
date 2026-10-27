@@ -106,7 +106,7 @@ jobs:
           set -euo pipefail
           python scripts/deploy/release.py --check
           node --test tests/api-client.test.cjs
-          python -m unittest discover -s tests -p 'test_*.py' -v
+          python scripts/run-tests.py -v
       - name: Build checked release
         env:
           REVISION: ${{ github.sha }}

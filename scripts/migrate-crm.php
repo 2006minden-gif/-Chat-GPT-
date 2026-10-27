@@ -6,6 +6,7 @@ ini_set('display_errors','0');$pdo=null;$locked=false;
 try {
  $op=$argv[1]??'status';if(count($argv)>2||!in_array($op,['up','down','status'],true))throw new RuntimeException();
  require dirname(__DIR__).'/private/app.php';$pdo=db();$pdo->exec("SET time_zone='+00:00'");
+ $mode=$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn();if(!preg_match('/\bSTRICT_(TRANS_TABLES|ALL_TABLES)\b/',$mode))$pdo->exec('SET SESSION sql_mode='.$pdo->quote(($mode!==''?$mode.',':'').'STRICT_TRANS_TABLES'));
  if(!preg_match('/\bSTRICT_(TRANS_TABLES|ALL_TABLES)\b/',$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn()))throw new RuntimeException();
  $q=$pdo->prepare('SELECT GET_LOCK(?,0)');$q->execute(['nd_migrate_'.substr(hash('sha256',config()['db_name']),0,40)]);
  if((int)$q->fetchColumn()!==1)throw new RuntimeException();$locked=true;

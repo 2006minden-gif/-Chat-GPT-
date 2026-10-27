@@ -53,6 +53,7 @@ def policy_check(root=ROOT):
             reviewed = json.loads((root / 'scripts/deploy/reviewed-migrations.json').read_text()) if (root / 'scripts/deploy/reviewed-migrations.json').exists() else {}
             if entry.get('kind') == 'reviewed_additive':
                 pin=reviewed.get(version)
+                if pin and digest(root / pin['operator'])!=pin.get('operator_sha256'):raise ValueError('unreviewed_migration_operator')
                 if not pin or any(entry.get(k)!=v for k,v in pin.items()) or not entry['required']:
                     raise ValueError('automatic_migration_not_supported')
                 continue

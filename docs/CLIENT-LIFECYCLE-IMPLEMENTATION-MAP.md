@@ -164,3 +164,30 @@ verification, partial payments, duplicate claims/bank IDs, deposit+balance sum,
 overpayment/refund idempotency, receipt deadlines, forbidden local/foreign-host
 fiscal evidence, role separation and invoice isolation. Mobile375px owner forms
 and package closure pass. Live acquiring, bank and MyTax integrations remain off.
+
+
+### Host delivery repair after PR39
+
+PR39 integrated as09ad114, required checks passed. Main delivery40494989490
+failed with generic private_subprocess_failed and verified file rollback; no
+business release is claimed. Read-only preflight now exports only static safe
+operator/dump error codes from prior private logs and current strict-mode flag,
+never log text/config values. First cause must be confirmed from that evidence.
+
+Reviewed batches already require and actually verify both prior/current host
+JSONL+schema backups via shadow restore. That proven private backup is now the
+canonical recovery artifact, removing a redundant dependency on a separately
+configured mysqldump CLI. The legacy Stage3 additive contract still requires its
+SQL dump. No backup/restore proof is bypassed, and restore remains manual only.
+
+Migration operators establish STRICT_TRANS_TABLES for their own session if the
+host default is non-strict, then verify it; global/server mode is untouched. SQL
+004–013 bytes remain unchanged, and operator contents now have independent SHA256
+pins as well as pinned SQL. Actual full-batch test passes against an isolated
+MySQL5.7 host started with NO_ENGINE_SUBSTITUTION and proves its global mode is
+unchanged.55 recovery/release/diagnostic checks pass in that environment.
+
+CI executes every unique discovered test ID once. Only identical imported
+TestCase IDs are deduplicated; distinct tests and import-failure cases remain.
+The required Validate check, Apache/security/business/migration tests and
+production gates remain in force.

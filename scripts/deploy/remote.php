@@ -43,6 +43,19 @@ function database_inventory(PDO $pdo):array {
     $columns=$pdo->query("SELECT table_name,column_name,column_type,is_nullable,column_key FROM information_schema.columns WHERE table_schema=DATABASE() AND LEFT(table_name,3)='nd_' ORDER BY table_name,ordinal_position")->fetchAll(PDO::FETCH_ASSOC);
     return ['mysql_version'=>(string)$pdo->query('SELECT VERSION()')->fetchColumn(),'tables'=>$tables,'journal'=>$journal,'schema_sha256'=>hash('sha256',json_encode($columns))];
 }
+function safe_subprocess_diagnostic(string $path):array {
+    $stage=basename($path)==='database.sql.error'?'database_dump':'migration_operator';$out=['stage'=>$stage,'code'=>'unclassified_private_subprocess_failure'];
+    if(is_link($path)||!is_file($path)||filesize($path)>65536)return $out;
+    $text=(string)file_get_contents($path);$j=json_decode(trim($text),true);
+    $allowed=['invalid_configuration','strict_sql_mode_required','migration_files_missing','invalid_migration_manifest','migration_busy','migration_checksum_mismatch','partial_migration_requires_empty_rollback','unmanaged_table_collision','innodb_baseline_required','rollback_refused_nonempty_auth','newer_migration_applied','migration_failed','migration_004_required','migration_005_required','migration_006_required','migration_007_required','migration_008_required','migration_009_required','migration_010_required','migration_011_required','migration_012_required'];
+    if(is_array($j)&&in_array($j['error']??'',$allowed,true))$out['code']=$j['error'];
+    elseif(preg_match('/(?:Error|error|Got error|ERROR)[ :]+(?:\(([0-9]{3,4})\)|([0-9]{3,4}))/',$text,$m)){$out['code']='mysql_error_'.($m[1]!==''?$m[1]:$m[2]);}
+    return $out;
+}
+function migration_diagnostics(string $root):array {
+    $dirs=glob($root.'/.neurodelo-deploy/backups/*',GLOB_ONLYDIR)?:[];usort($dirs,fn($a,$b)=>filemtime($b)<=>filemtime($a));$out=[];
+    foreach($dirs as $dir){if(is_link($dir))continue;foreach(array_merge(glob($dir.'/migration-*.log.error')?:[],glob($dir.'/database.sql.error')?:[]) as $path){if(is_link($path)||!is_file($path)||filesize($path)===0)continue;$row=safe_subprocess_diagnostic($path);$row['release_id']=basename($dir);if(preg_match('/^migration-([0-9]{3}_[a-z_]+)\.log\.error$/D',basename($path),$m))$row['migration']=$m[1];$out[]=$row;}if(count($out)>=3)break;}return array_slice($out,0,3);
+}
 function preflight(string $root):array {
     insist(PHP_VERSION_ID>=80400,'php_84_required');
     insist(extension_loaded('pdo_mysql')&&extension_loaded('mbstring')&&function_exists('proc_open'),'php_capability_missing');
@@ -59,7 +72,7 @@ function preflight(string $root):array {
     $pdo->query('SELECT id,version,request_key,request_hash,consent,consent_at,policy_version,policy_hash FROM nd_leads LIMIT 0');
     $pdo->query('SELECT token,csrf,expires FROM nd_sessions LIMIT 0');$pdo->query('SELECT bucket,attempts,expires FROM nd_limits LIMIT 0');
     return ['ok'=>true,'php'=>PHP_VERSION,'database_connected'=>true,'admin_exists'=>(bool)$pdo->query('SELECT id FROM nd_admin WHERE id=1')->fetchColumn(),
-            'privacy_approved'=>($c['privacy_policy_approved']??false)===true,'database_inventory'=>database_inventory($pdo)];
+            'privacy_approved'=>($c['privacy_policy_approved']??false)===true,'database_inventory'=>database_inventory($pdo),'prior_private_failures'=>migration_diagnostics($root),'strict_sql_mode'=>(bool)preg_match('/\bSTRICT_(TRANS_TABLES|ALL_TABLES)\b/',(string)$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn())];
 }
 function remove_tree(string $path):void {
     // Only managed backup/staging trees call this; unlink a leftover link, never follow it.
@@ -108,7 +121,7 @@ function prune(string $stateRoot,array $state,int $keep):void {
 function execute_private(array $command,string $stdoutPath):void {
     $error=$stdoutPath.'.error';$p=proc_open($command,[0=>['file','/dev/null','r'],1=>['file',$stdoutPath,'w'],2=>['file',$error,'w']],$pipes);
     insist(is_resource($p),'subprocess_start_failed');$code=proc_close($p);chmod($stdoutPath,0600);if(is_file($error))chmod($error,0600);
-    insist($code===0,'private_subprocess_failed');
+    if($code!==0){$diagnostic=safe_subprocess_diagnostic($error);throw new DeployFailure($diagnostic['stage'].'_failed:'.$diagnostic['code']);}
 }
 function migrate_approved(string $root,string $candidate,array $m,string $backup):array {
     $entries=$m['migrations']??[];if(!$entries)return [];
@@ -145,6 +158,8 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
         reviewed_recovery_proof($backup.'/database-recovery');
         foreach(['fileinfo','zip','openssl','tokenizer','mbstring','pdo_mysql'] as $extension)insist(extension_loaded($extension),'lifecycle_extension_missing_'.$extension);
     }
+    if($reviewed){$proof=read_json($backup.'/database-recovery/verified.json');save_json($backup.'/database.json',['format'=>'verified-private-jsonl-schema-v1','directory'=>'database-recovery','sha256'=>$proof['backup_sha256'],'schema_sha256'=>$proof['schema_sha256'],'restore'=>'operator-approved only; never auto-import']);}
+    else {
     // credentials are read from the existing protected config, never from GitHub or command arguments.
     $defaults=$backup.'/.mysql-client.cnf';
     $quote=static fn($v)=>'"'.str_replace(["\\","\"","\n","\r"],["\\\\","\\\"","\\n","\\r"],(string)$v).'"';
@@ -164,6 +179,7 @@ function migrate_approved(string $root,string $candidate,array $m,string $backup
         save_json($backup.'/database.json',['sha256'=>hash_file('sha256',$backup.'/database.sql'),'restore'=>'operator-approved only; never auto-import']);
         $statePath=dirname(dirname($backup)).'/state.json';$state=read_json($statePath);$state['database_recovery_backup']=basename($backup);save_json($statePath,$state);
     } finally {if(is_file($defaults))unlink($defaults);}
+    }
     $configLink=$candidate.'/private/config.php';insist(!file_exists($configLink)&&!is_link($configLink),'candidate_config_collision');
     insist(symlink($root.'/private/config.php',$configLink),'candidate_config_link_failed');
     try {

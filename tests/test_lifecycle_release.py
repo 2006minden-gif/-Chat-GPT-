@@ -12,7 +12,7 @@ class LifecycleRelease(pipeline.unittest.TestCase):
  finish=pipeline.RemoteFilesystemTests.finish
  assert_protected=pipeline.RemoteFilesystemTests.assert_protected
  def test_exact_batch_preserves_accounts_is_retry_safe_and_recoverable(self):
-  before=self.f.sql('SELECT * FROM nd_admin');self.agent('apply');self.finish()
+  before=self.f.sql('SELECT * FROM nd_admin');global_mode=self.f.sql('SELECT @@GLOBAL.sql_mode AS value')[0]['value'];self.agent('apply');self.finish()
   self.id='lifecycle';self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id
   m=pipeline.release.build(self.candidate,'b'*40);(self.candidate/'baseline.json').write_text(json.dumps(pipeline.good()))
   # Previously successful database recovery is mandatory, even with green CI.
@@ -27,5 +27,6 @@ class LifecycleRelease(pipeline.unittest.TestCase):
   self.assertEqual(len(rows),len(m['migrations']));self.assertTrue(all(x['state']=='applied' for x in rows))
   # Second legitimate delivery skips every applied migration and rehearses the expanded schema.
   self.id='lifecycle-followup';self.candidate=self.root/'.neurodelo-deploy/incoming'/self.id;pipeline.release.build(self.candidate,'c'*40);(self.candidate/'baseline.json').write_text(json.dumps(pipeline.good()))
+  backup=self.root/'.neurodelo-deploy/backups/lifecycle-retry';self.assertEqual(json.loads((backup/'database.json').read_text())['format'],'verified-private-jsonl-schema-v1');self.assertFalse((backup/'database.sql').exists());self.assertEqual(self.f.sql('SELECT @@GLOBAL.sql_mode AS value')[0]['value'],global_mode)
   follow=self.agent('apply');self.assertEqual(follow['migrations'],[]);self.assertTrue(follow['database_recovery']['verified']);self.assertTrue(follow['database_recovery']['shadow_tables_removed']);self.assertGreater(follow['database_recovery']['foreign_keys_verified'],20);self.finish()
   self.assertEqual(self.f.sql('SELECT version,state,up_checksum,down_checksum FROM nd_schema_migrations ORDER BY version'),rows);self.assertEqual(self.f.sql('SELECT * FROM nd_admin'),before)
