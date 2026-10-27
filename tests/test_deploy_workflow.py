@@ -29,7 +29,7 @@ class DeploymentSafety(unittest.TestCase):
  def test_reproducible_required_tests(self):
   job=self.w['jobs']['validate'];self.assertEqual(job['services']['mysql']['image'],'mysql:5.7.44')
   code='\n'.join(s.get('run','') for s in job['steps'])
-  for marker in ['php -l','node --check','unittest discover','api-client.test.cjs','release.py --check','sha256sum -c']:
+  for marker in ['php -l','node --check','python scripts/run-tests.py -v','api-client.test.cjs','release.py --check','sha256sum -c']:
    self.assertIn(marker,code)
   self.assertNotIn('continue-on-error',str(job));self.assertNotIn('|| true',code)
   php=[s for s in job['steps'] if s.get('uses','').startswith('shivammathur/')][0]
