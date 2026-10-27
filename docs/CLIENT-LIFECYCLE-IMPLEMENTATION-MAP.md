@@ -252,3 +252,15 @@ Other tests verify signed scope-change deposit credit/retry, unchanged prior
 agreements and closure blocking/explicit override with remaining receipt tasks.
 All data/accounts/signature copies in these tests are labelled synthetic and
 exist only in disposable loopback DBs; no production legal decision is fabricated.
+
+### Retry integrity / non-strict runtime compatibility
+
+The expanded order read model can exceed the legacy006 request journal TEXT
+capacity. On non-strict MySQL this previously truncated the cached JSON, breaking
+a later retry. New lifecycle mutations keep a small typed identity/version in the
+existing journal and return/reload an explicitly current authorized projection;
+replay never repeats the side effect. No duplicate journal/model or destructive
+schema change. Corrupt historical cached results fail409 instead of re-executing.
+Runtime connections now use UTC and a strict session, without changing global
+host configuration. Ten targeted document/payment/runtime tests pass against
+NO_ENGINE_SUBSTITUTION, including cached-document retries and corrupt-cache refusal.
