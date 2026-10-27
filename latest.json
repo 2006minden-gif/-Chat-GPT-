@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "source_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
-  "nonce": "workflow-40547198486",
-  "run_id": "40549326107",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40549326107",
-  "time": "2026-10-27T17:18:42.376894+00:00",
+  "nonce": "workflow-40549327774",
+  "run_id": "40549365239",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40549365239",
+  "time": "2026-10-27T17:19:04.466083+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40547198486,
-    "name": "Validate 42b8ba712254d616accc54749eb1e70335079f3b",
-    "head_sha": "42b8ba712254d616accc54749eb1e70335079f3b",
-    "head_branch": "feature/client-activation",
-    "event": "push",
+    "id": 40549327774,
+    "name": "Enable approved auto-merge",
+    "head_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
+    "head_branch": "main",
+    "event": "workflow_run",
     "status": "completed",
-    "conclusion": "success",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40547198486",
-    "path": ".github/workflows/deploy.yml"
+    "conclusion": "failure",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40549327774",
+    "path": ".github/workflows/auto-merge.yml"
   },
   "inspection": {
     "repository": {
@@ -255,7 +255,7 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
-          "status": "pending",
+          "status": "in_progress",
           "conclusion": null,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40549365239",
           "path": ".github/workflows/evidence.yml",
@@ -263,9 +263,30 @@
             {
               "id": 122348593806,
               "name": "record",
-              "status": "pending",
+              "status": "in_progress",
               "conclusion": null,
-              "steps": []
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
             }
           ]
         },
@@ -385,16 +406,16 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "374e8b88fe3fafa01b840c7280c5e6c13c47e6ec",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40549326107",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
               "id": 122348453757,
               "name": "record",
-              "status": "in_progress",
-              "conclusion": null,
+              "status": "completed",
+              "conclusion": "success",
               "steps": [
                 {
                   "name": "Set up job",
@@ -408,13 +429,18 @@
                 },
                 {
                   "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": null,
-                  "status": "in_progress"
+                  "conclusion": "success",
+                  "status": "completed"
                 },
                 {
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": null,
-                  "status": "pending"
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
