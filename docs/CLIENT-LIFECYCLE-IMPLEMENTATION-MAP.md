@@ -1,0 +1,87 @@
+# Client-order lifecycle — implementation map, 27 October 2026
+
+## Verified starting point
+
+Production/main: `984ea3dfa5818817a40350836cccc346666699e8`, PR37,
+Actions40475190178, evidence40475598393. Published application:34 explicit files,
+owner account exists, legacy inquiry CRM, approved privacyv2 and configured MAX.
+Production metadata: MySQL5.7.27, nd_admin/nd_leads/nd_sessions/nd_limits;
+no004–013 migration journal. Do not infer deployment from a feature branch.
+Ordinary connected-user PR → required checks → native protected integration →
+SpaceWeb works. Missing unattended bot App credentials remain a separate issue;
+no branch protection or held workflow run needs bypassing for these releases.
+
+Reusable integrated candidate:
+`origin/draft/integrated-release-package` at
+`e07375f4cc564f7ce9d7c84211fb3fe0c42b2b79`. This is NOT production.
+Preserve current public design, MAX runtime configuration, owner credentials,
+consent records and existing files when extracting reviewed components.
+
+| Requested capability | Existing source to reuse | Remaining work |
+|---|---|---|
+| Roles/invitations/self-registration | private/customer-auth.php, customer-mail.php; customer.php | deploy005, secure owner SMTP setup, invitation delivery evidence, scoped privacy approval |
+| Customers/deals/orders/projects/tasks | private/crm/, workspace.php, portal.php;004–006 | safe live migration/recovery; hide historical employee UI in single-owner mode |
+| Structured briefs/approved offers | private/catalog/;013 | preserve exact brief/spec/quote/package binding; owner lifecycle overview and next actions |
+| Shared costs/estimates/price approval | private/pricing/, private/ai/;009–010 | preserve NEEDS_COST_REVIEW; manual drafting without paid provider; agreed payment schedules |
+| Files/messages/document revisions/decisions | private/collab/;007 | reviewed template lifecycle, structured generation, signed-copy evidence, immutable agreement binding |
+| Invoices/provider transactions | private/billing/;008 | add manual payment claims/bank verification, partial allocation/refunds; no live provider activation |
+| Official NPD receipts | missing | separate owner issuance task/evidence for each verified payment; method-specific due dates; no fake fiscal output |
+| Milestones/manual implementation/handover | private/production/, private/manual/;011–012 | actual deployment evidence, acceptance categories, agreement-based final settlement/handover gates |
+| Cross-domain lifecycle/audit | existing scoped project/order history + request idempotency | explicit separate commercial/document/payment/delivery/acceptance states, transitions and overrides |
+| Notifications | existing in-portal outbox; production MAX | use configured channels only, idempotent events/retries, honest delivery status |
+
+## Release sequence
+
+0. Repair the real data-delivery prerequisite: private DB snapshot plus actual
+   isolated MySQL restore verification on the host, metadata-only evidence,
+   exact reviewed additive migration plan, no restoration over client data.
+A. Integrate reusable foundations and inquiry→brief→cost review→owner-approved
+   proposal as a useful owner/client slice. Registration/invitations depend on
+   explicit privacy/transport setup, not fabricated email verification.
+B. Reviewed templates→private generated version→signed-copy agreement evidence.
+C. Agreed payment schedule→client payment claim→owner bank verification→official
+   NPD receipt task and authorized client access. No acquiring/banking access.
+D. Materials/milestones→review→defect/revision/extra-scope decisions→acceptance.
+E. Actual final settlement→handover→closure/support, then one marked synthetic
+   end-to-end order, no real charges/fiscal documents or private-data exposure.
+
+Each slice must pass real business/security tests, a legitimate PR, exact-main
+production delivery and live verification. Gate only genuinely unavailable
+features; never label the whole lifecycle complete after a partial release.
+No duplicate customer/order/finance/cost registry models. New tables may extend
+missing lifecycle/template/receipt semantics, referencing authoritative models.
+Existing004–013 SQL/checksums remain immutable. Never auto-execute down or SQL
+restore against production. Interrupted DDL must stop with exact evidence and a
+reviewed forward recovery plan; existing runners do not safely resume partial
+states automatically.
+
+## Legal source checkpoints (reviewed before drafting)
+
+- FNS NPD FAQ: https://npd.nalog.ru/faq/ — receipt timing differs for cash/electronic
+  payment and other bank settlement; receipt tasks must not use one universal
+  next-month deadline. Deposits are separate receipts, not counted again later.
+- 422-FZ Art14 referenced by FNS; final implementation stores the applicable rule
+  version, payment method, source and deadline, and encourages immediate issuance.
+- Civil Code Arts160/434: written/electronic form requires the applicable content,
+  identification and agreement basis. A checkbox/login is not automatically a
+  legally sufficient signature. Default agreement evidence is uploaded signed
+  copies plus recorded owner verification; electronic signing stays inactive.
+- Owner-approved reviewed templates only. Drafts remain NEEDS_LEGAL_REVIEW until
+  an explicit decision; no invented non-refundable deposits, silence acceptance,
+  addresses, bank details, INN or signatory authority.
+
+Current source references and owner-visible dependencies must be updated with
+implementation evidence before calling a release DEPLOYED_AND_VERIFIED.
+
+### Recovery prerequisite implementation
+
+`scripts/deploy/recovery.php` snapshots actual InnoDB application rows in a
+consistent read-only transaction into private base64/JSONL backup files. It
+recreates schema/data in collision-checked random shadow tables in the same DB
+(no CREATE DATABASE privilege or external data copy required), checks every row
+hash and FK, and drops only the exact shadow tables it created. It rejects
+unsupported tables/schema objects rather than claiming incomplete recovery.
+Original tables are never restore targets. On failure code publication stops;
+private backup/plan remain for diagnosis. Source values and secrets never enter
+reports/artifacts. Five new real MySQL cases plus17 file/release recovery cases
+passed locally on PHP8.4.27/MySQL5.7.44; production verification is still pending.

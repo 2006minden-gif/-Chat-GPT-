@@ -27,6 +27,7 @@ def policy_check(root=ROOT):
     policy = json.loads((root / 'scripts/deploy/policy.json').read_text())
     if policy.get('schema_version') != 1 or policy.get('keep_backups', 0) < 2:
         raise ValueError('invalid_release_policy')
+    if not isinstance(policy.get('database_recovery_required',False),bool):raise ValueError('invalid_database_recovery_policy')
     entries = policy.get('migrations', [])
     seen = set()
     previous = None
@@ -90,6 +91,7 @@ def build(output, revision, root=ROOT):
                 raise ValueError('forbidden_release_path')
             copy(root / source_dir / name, prefix + '/' + name, files)
     copy(root / 'scripts/deploy/remote.php', 'remote.php', tools)
+    copy(root / 'scripts/deploy/recovery.php', 'recovery.php', tools)
     # Delivery is independent from execution approval. All versioned SQL/CLI stays private.
     for source in sorted((root / 'database').rglob('*.sql')):
         path=source.relative_to(root).as_posix()
@@ -100,6 +102,7 @@ def build(output, revision, root=ROOT):
         copy(source, 'scripts/' + source.name, tools)
     manifest = {'schema_version':1,'revision':revision,'files':files,'tools':tools,
                 'keep_backups':policy['keep_backups'],'migrations':policy['migrations'],
+                'database_recovery_required':policy.get('database_recovery_required',False),
                 'verification_contract':'ci-mysql57-backup-restore-v1'}
     (output / 'manifest.json').write_text(json.dumps(manifest, sort_keys=True, indent=2))
     return manifest

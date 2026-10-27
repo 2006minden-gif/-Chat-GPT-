@@ -39,5 +39,6 @@
     "services/catalog.php"
   ],
   "keep_backups": 3,
-  "migrations": []
+  "migrations": [],
+  "database_recovery_required": true
 }
