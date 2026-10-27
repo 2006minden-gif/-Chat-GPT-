@@ -110,7 +110,7 @@ function verify_bundle(string $candidate,string $id):array {
     foreach(array_keys($m['tools']) as $path)insist(!str_starts_with($path,'private/')&&!str_starts_with($path,'public_html/'),'unsafe_tool_path');
     foreach(array_merge($m['files'],$m['tools']) as $path=>$hash) {
         insist(!in_array('..',explode('/',$path),true)&&!in_array('.',explode('/',$path),true)&&!str_contains($path,'//'),'unsafe_release_path');
-        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^remote\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
+        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^(remote|recovery)\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
     $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
@@ -299,13 +299,15 @@ try {
         $meta=['revision'=>$m['revision'],'files'=>$entries,'protected'=>$protected,'baseline'=>$baseline,'keep_backups'=>$m['keep_backups']];
         save_json($backup.'/backup.json',$meta);
         $state['active']=$id;if(($baseline['ok']??false)===true)$state['known_good_backup']=$id;save_json($stateRoot.'/state.json',$state);
+        $databaseRecovery=null;
+        if(($m['database_recovery_required']??false)===true){require_once $candidate.'/recovery.php';$databaseRecovery=nr_rehearse(require $root.'/private/config.php',$backup.'/database-recovery');$state['database_recovery_backup']=$id;save_json($stateRoot.'/state.json',$state);}
         $migrated=migrate_approved($root,$candidate,$m,$backup);
         foreach(paths() as $path)atomic_copy($candidate.'/'.$path,$root.'/'.$path,$id);
         assert_protected($root,$protected);
         $actual=[];foreach(paths() as $path){$actual[$path]=hash_file_safe($root.'/'.$path);insist($actual[$path]===$m['files'][$path],'deployed_hash_mismatch');}
-        $result=['backup_verified'=>true,'recovery_verified'=>true,'files_sha256'=>$actual,'ok'=>true,'applied'=>true,'revision'=>$m['revision'],'migrations'=>$migrated,'baseline_healthy'=>$baseline['ok']??false];
+        $result=['database_recovery'=>$databaseRecovery,'backup_verified'=>true,'recovery_verified'=>true,'files_sha256'=>$actual,'ok'=>true,'applied'=>true,'revision'=>$m['revision'],'migrations'=>$migrated,'baseline_healthy'=>$baseline['ok']??false];
     }
     echo json_encode($result,JSON_UNESCAPED_SLASHES),PHP_EOL;
 } catch(Throwable $e) {
-    echo json_encode(['ok'=>false,'error'=>$e instanceof DeployFailure?$e->getMessage():'private_operation_failed','type'=>get_class($e),'file'=>basename($e->getFile()),'line'=>$e->getLine(),'writes_started'=>isset($state)&&(($state['active']??null)===$id||($state['last_release']??null)===$id)],JSON_UNESCAPED_SLASHES),PHP_EOL;exit(1);
+    echo json_encode(['ok'=>false,'error'=>($e instanceof DeployFailure||$e instanceof RecoveryFailure)?$e->getMessage():'private_operation_failed','type'=>get_class($e),'file'=>basename($e->getFile()),'line'=>$e->getLine(),'writes_started'=>isset($state)&&(($state['active']??null)===$id||($state['last_release']??null)===$id)],JSON_UNESCAPED_SLASHES),PHP_EOL;exit(1);
 } finally {if(is_resource($lock)){flock($lock,LOCK_UN);fclose($lock);}}
