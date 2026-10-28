@@ -10,6 +10,14 @@ function ca_enabled(): bool {
     $safeOrigin=parse_url($c['app_url'],PHP_URL_SCHEME)==='https' || (($c['customer_auth_test_mode']??false)===true && in_array($host,['127.0.0.1','localhost','::1'],true));
     return ($c['customer_auth_enabled']??false)===true && ($c['customer_auth_privacy_approved']??false)===true && $safeOrigin && ca_privacy_settings()['enabled'];
 }
+function ca_registration_enabled():bool{return ca_enabled()&&(config()['customer_registration_enabled']??true)===true;}
+function ca_mail_ready():bool{return (config()['customer_mail_verified']??true)===true;}
+function ca_mail_gate():void{if(!ca_mail_ready())ca_fail(503,'email_unavailable','Почта не подтверждена владельцем. Приглашения и восстановление пока недоступны.');}
+/** Existing verified accounts remain usable when outgoing mail is unavailable. */
+function ca_paid_order(int $customer,?int $order=null):bool{
+ $args=[$customer];$where='';if($order!==null){$where=' AND o.id=?';$args[]=$order;}
+ $q=db()->prepare("SELECT o.id FROM nd_orders o WHERE o.customer_id=?".$where." AND EXISTS(SELECT 1 FROM nd_lc_document_bindings b JOIN nd_lc_templates t ON t.id=b.template_id WHERE b.order_id=o.id AND t.kind IN ('agreement','change_order') AND b.state='AGREED') AND (SELECT COALESCE(SUM(t.amount_minor),0) FROM nd_invoices i JOIN nd_payment_attempts p ON p.invoice_id=i.id JOIN nd_payment_transactions t ON t.attempt_id=p.id JOIN nd_lc_bank_records v ON v.transaction_id=t.id WHERE i.order_id=o.id AND p.provider='manual_bank' AND v.verified_by=1) > (SELECT COALESCE(SUM(r.amount_minor),0) FROM nd_invoices i JOIN nd_payment_attempts p ON p.invoice_id=i.id JOIN nd_refunds r ON r.attempt_id=p.id WHERE i.order_id=o.id AND p.provider='manual_bank' AND r.state='succeeded') LIMIT 1");$q->execute($args);return (bool)$q->fetchColumn();
+}
 function ca_gate(): void {
     if (!ca_enabled()) ca_fail(503,'registration_unavailable','Кабинет временно недоступен. Регистрация пока закрыта.');
     $q=db()->query("SELECT version,state FROM nd_schema_migrations WHERE version IN ('004_crm_foundation','005_customer_auth')");
@@ -86,10 +94,10 @@ function ca_issue(int $id,string $purpose,?int $admin=null):string {
     db()->prepare('UPDATE nd_customer_tokens SET used_at=? WHERE account_id=? AND purpose=? AND used_at IS NULL')->execute([$now,$id,$purpose]);
     db()->prepare('INSERT INTO nd_customer_tokens(token_hash,account_id,purpose,created_at,expires_at,issuer_admin_id) VALUES (?,?,?,?,?,?)')->execute([hash('sha256',$raw),$id,$purpose,$now,$now+$ttl,$admin]);return $raw;
 }
-function ca_send(int $id,string $email,string $purpose,string $raw):void {
+function ca_send(int $id,string $email,string $purpose,string $raw):bool {
     $accepted=customer_mail($email,$purpose,$raw);
     ca_event($accepted?'mail_accepted':'mail_failed',$id);
-    if (!$accepted)error_log('NeuroDelo {"event":"customer_mail_failed"}');
+    if (!$accepted)error_log('NeuroDelo {"event":"customer_mail_failed"}');return $accepted;
 }
 function ca_neutral():never {json_response(['ok'=>true,'message'=>'Если действие доступно для этого адреса, письмо будет отправлено. Проверьте почту и папку «Спам». При отсутствии письма повторите запрос позже.'],202);}
 function ca_transaction(callable $action):mixed {
@@ -110,6 +118,7 @@ function ca_consume(array $data,string $purpose,?string $newPassword=null,?array
         $a=ca_account((int)$id,true);
         $q=db()->prepare('SELECT * FROM nd_customer_tokens WHERE token_hash=? AND purpose=? FOR UPDATE');$q->execute([$hash,$purpose]);$t=$q->fetch();
         if (!$t||$t['used_at']!==null||(int)$t['expires_at']<=time()||!$a||$a['status']==='disabled'||$a['customer_status']!=='active')ca_fail(422,'invalid_token','Ссылка недействительна или срок её действия истёк.');
+        if($purpose==='invite'&&(config()['paid_client_invitation_required']??false)===true&&!ca_paid_order((int)$a['customer_id']))ca_fail(409,'payment_required','Доступ активируется после подтверждения поступления владельцем.');
         if (($purpose==='reset'&&!ca_account_allowed($a))||($purpose==='invite'&&($a['registration_method']!=='invitation'||$a['email_verified_at']!==null))||($purpose==='verify'&&($a['registration_method']!=='self'||$a['email_verified_at']!==null)))ca_fail(422,'invalid_token','Ссылка недействительна или уже использована.');
         db()->prepare('UPDATE nd_customer_tokens SET used_at=? WHERE token_hash=?')->execute([time(),$hash]);
         if($purpose==='verify') {
@@ -130,7 +139,7 @@ function ca_consume(array $data,string $purpose,?string $newPassword=null,?array
 }
 function ca_dispatch(string $route,string $method):never {
     if($route==='settings'&&$method==='GET'){
-        $p=ca_privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'policy'=>$p]);
+        $p=ca_privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'registration_enabled'=>ca_registration_enabled(),'invitations_enabled'=>ca_enabled()&&ca_mail_ready(),'policy'=>$p]);
     }
     ca_gate();
     ca_rate('ip',120,$_SERVER['REMOTE_ADDR']??'unknown');
@@ -155,6 +164,7 @@ function ca_dispatch(string $route,string $method):never {
     }
     if(in_array($route,['register','login','forgot','resend'],true)){$email=ca_email($d);ca_rate('identity:'.$route,8,$email);}
     if($route==='register'){
+        if(!ca_registration_enabled())ca_fail(403,'registration_disabled','Публичная регистрация закрыта. После подтверждения оплаты владелец пришлёт приглашение.');ca_mail_gate();
         $name=field($d,'name',190);$password=ca_password($d);$p=ca_consent($d);$hash=password_hash($password,PASSWORD_DEFAULT);
         try{
             $pending=ca_transaction(function()use($name,$email,$hash,$p){
@@ -185,7 +195,7 @@ function ca_dispatch(string $route,string $method):never {
         });
         ca_cookie($new['raw'],$new['expiry']);json_response(['ok'=>true,'csrf'=>$new['csrf']]);
     }
-    if($route==='forgot'||$route==='resend'){
+    if($route==='forgot'||$route==='resend'){ca_mail_gate();
         $q=db()->prepare('SELECT id FROM nd_customer_accounts WHERE email=?');$q->execute([$email]);$id=$q->fetchColumn();
         $purpose=$route==='forgot'?'reset':'verify';
         $raw=$id?ca_transaction(function()use($id,$purpose){
@@ -210,7 +220,8 @@ function ca_owner(string $route,string $method):never {
         json_response(['ok'=>true,'accounts'=>$rows]);
     }
     if($method!=='POST')ca_fail(404,'not_found','Не найдено.');$d=input();
-    if($route==='owner/invite'){
+    if($route==='owner/invite'){ca_mail_gate();
+        if((config()['paid_client_invitation_required']??false)===true){$order=$d['order_id']??null;$cid=$d['customer_id']??null;if(!is_int($order)||$order<1||!is_int($cid)||$cid<1||!ca_paid_order($cid,$order))ca_fail(409,'payment_required','Выберите заказ этого клиента с проверенной подписанной копией и подтверждённым владельцем поступлением.');}
         $email=ca_email($d);ca_rate('invitation_identity',5,$email);$customer=$d['customer_id']??null;
         if($customer!==null&&(!is_int($customer)||$customer<1))ca_fail(422,'invalid_customer','Выберите корректного клиента.');
         $name=$customer===null?field($d,'name',190):'';
@@ -223,6 +234,12 @@ function ca_owner(string $route,string $method):never {
             db()->prepare("INSERT INTO nd_customer_auth(account_id,registration_method,consent_at,policy_version,policy_hash) VALUES (?,'invitation',0,'','')")->execute([$id]);
             ca_event('invited',$id,1);return [$id,ca_issue($id,'invite',1)];
         });
+        if((config()['paid_client_invitation_required']??false)===true){
+            if(!$pending)ca_fail(409,'invitation_unavailable','Этот email уже связан с аккаунтом или приглашение недоступно. Проверьте существующий аккаунт.');
+            ca_event('paid_invitation_issued',$pending[0],1);$accepted=ca_send($pending[0],$email,'invite',$pending[1]);
+            if(!$accepted)db()->prepare('UPDATE nd_customer_tokens SET used_at=? WHERE token_hash=? AND used_at IS NULL')->execute([time(),hash('sha256',$pending[1])]);
+            json_response(['ok'=>true,'account_id'=>$pending[0],'smtp_accepted'=>$accepted,'delivery_confirmed'=>false,'retry_needed'=>!$accepted,'message'=>$accepted?'SMTP принял письмо. Получение ещё не подтверждено; оно подтвердится при использовании приглашения.':'SMTP не подтвердил приём. Ссылка отозвана; исправьте почту и повторите приглашение.']);
+        }
         if($pending)ca_send($pending[0],$email,'invite',$pending[1]);ca_neutral();
     }
     if($route==='owner/lifecycle'){

@@ -31,6 +31,7 @@
   async function init(){
     try{
       const settings=await api('settings');policyVersion=settings.policy.version;
+      if(view==='register'&&settings.registration_enabled===false){$('#availability').textContent='Публичная регистрация закрыта. Доступ выдаётся приглашением после подтверждения оплаты.';return;}
       if(!settings.enabled){$('#availability').textContent=errors.registration_unavailable;return;}
       let session;try{session=await api('session');}catch(e){if(e.status===401||e.status===403){$('#availability').textContent=e.message;return;}throw e;}
       csrf=session.csrf;
