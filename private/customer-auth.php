@@ -139,7 +139,7 @@ function ca_consume(array $data,string $purpose,?string $newPassword=null,?array
 }
 function ca_dispatch(string $route,string $method):never {
     if($route==='settings'&&$method==='GET'){
-        $p=ca_privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'registration_enabled'=>ca_registration_enabled(),'invitations_enabled'=>ca_enabled()&&ca_mail_ready(),'policy'=>$p]);
+        $p=ca_privacy_settings();unset($p['hash']);json_response(['enabled'=>ca_enabled(),'registration_enabled'=>ca_registration_enabled(),'paid_invitation_required'=>(config()['paid_client_invitation_required']??false)===true,'invitations_enabled'=>ca_enabled()&&ca_mail_ready(),'policy'=>$p]);
     }
     ca_gate();
     ca_rate('ip',120,$_SERVER['REMOTE_ADDR']??'unknown');
