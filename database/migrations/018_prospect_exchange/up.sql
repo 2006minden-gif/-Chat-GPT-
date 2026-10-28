@@ -1,0 +1,50 @@
+CREATE TABLE nd_lc_prospect_links (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ order_id BIGINT UNSIGNED NOT NULL,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ token_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,
+ request_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,
+ request_hash CHAR(64) NOT NULL,
+ scope_json TEXT NOT NULL,
+ policy_version VARCHAR(64) NOT NULL,
+ policy_hash CHAR(64) NOT NULL,
+ expires_at BIGINT UNSIGNED NOT NULL,
+ revoked_at BIGINT UNSIGNED NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (order_id) REFERENCES nd_orders(id) ON DELETE RESTRICT,
+ FOREIGN KEY (customer_id) REFERENCES nd_customers(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_prospect_sessions (
+ token_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin PRIMARY KEY,
+ link_id BIGINT UNSIGNED NOT NULL,
+ csrf_hash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ expires_at BIGINT UNSIGNED NOT NULL,
+ consent_at DATETIME NULL,
+ FOREIGN KEY (link_id) REFERENCES nd_lc_prospect_links(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_prospect_uploads (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ link_id BIGINT UNSIGNED NOT NULL,
+ binding_id BIGINT UNSIGNED NOT NULL,
+ storage_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL UNIQUE,
+ display_name VARCHAR(190) NOT NULL,
+ mime VARCHAR(100) NOT NULL,
+ size_bytes INT UNSIGNED NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ request_key CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+ imported_file_id BIGINT UNSIGNED NULL UNIQUE,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY nd_ps_request (link_id,request_key),
+ FOREIGN KEY (link_id) REFERENCES nd_lc_prospect_links(id) ON DELETE RESTRICT,
+ FOREIGN KEY (binding_id) REFERENCES nd_lc_document_bindings(id) ON DELETE RESTRICT,
+ FOREIGN KEY (imported_file_id) REFERENCES nd_cc_files(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_prospect_events (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ link_id BIGINT UNSIGNED NOT NULL,
+ actor_type ENUM('owner','prospect') NOT NULL,
+ action VARCHAR(64) NOT NULL,
+ evidence_json TEXT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (link_id) REFERENCES nd_lc_prospect_links(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -37,3 +37,46 @@ account activation only; it is not a contractual signature. NPD receipt tasks
 remain separate and manual in MyTax. Synthetic tests create no real payment and
 no official tax receipt. Owner one-time production settings still require real
 reviewed texts and actual mailbox verification via protected UI.
+
+## Scoped paper documents (second correction)
+
+018 is additive: hashed expiring/revocable links, hashed short-lived sessions,
+quarantined private paper copies, and owner/prospect provenance events. It reuses
+existing customer/order/document/template versions and validated private file
+storage. No prospect account or false client/owner identity is created.
+
+Owner explicitly enables document exchange only after approved purpose-scoped
+privacy and preparation. Link creation requires selected exact proposal/agreement/
+TZ binding IDs of one order and explicit owner confirmation. TLS or isolated
+loopback test origin is required. Policy changes invalidate old grants. Each
+session needs an unchecked separate consent before any document content.
+Bearer secrets travel in a URL fragment, are removed from browser history, never
+persist in plaintext in DB/request journals, and are displayed to the owner only
+once for manual secure handover. Optional email uses only verified mail and the
+customer's validated CRM email. Failed SMTP revokes the link. A duplicate create
+request cannot regenerate/recover a bearer secret; it returns stable metadata and
+requires explicit reissue, with request fingerprint conflicts rejected.
+
+Guests can view only the exact rendered snapshots and submit PDF/JPG/PNG paper
+copies for their scoped agreement/TZ. Shared validator, MIME/size/quota guards and
+private storage are reused. Private quarantine metadata truthfully records the
+prospect source. Owner downloads the private original and explicitly imports it
+into the existing document file model; this import is not signature verification.
+Only the separate owner verification action can set AGREED. Expiration/revocation
+blocks future access; stored evidence remains available to its authorized owner.
+
+No SMS/electronic signing provider is configured. Email tokens activate accounts
+only and are never contractual signatures. NPD receipts remain manual MyTax
+attachments; test payment attestations/unsigned synthetic paper fixtures occur
+only in isolated test DBs, never as real production payment/receipt evidence.
+
+Developer rehearsal covers the complete new journey with synthetic owner policy,
+real loopback SMTP inbox reception and token redemption. It is not the requested
+post-settings production acceptance: real owner-reviewed texts/requisites and
+verified actual mailbox are still necessary. Do not mark completion on settings
+flags, HTTP202, SMTP acceptance or queued/sent states alone.
+
+Release/recovery:018 follows verified017 and uses the existing actual snapshot,
+shadow-restore/hash/FK proof, exact SQL/operator pins and main-only deployment.
+Automatic destructive/nonempty rollback remains forbidden; expired/revoked grants
+and original paper copies remain evidence, not cleanup targets.
