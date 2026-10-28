@@ -87,7 +87,7 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
-          sudo apt-get install -y apache2 mysql-client
+          sudo apt-get install -y apache2 mysql-client poppler-utils
           python -m pip install -r tests/requirements.txt
           python -m playwright install --with-deps chromium
           python -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print('CHROMIUM_BIN='+p.chromium.executable_path); p.stop()" >> "$GITHUB_ENV"

@@ -1,0 +1,48 @@
+-- Additive versioned details and immutable PDF evidence. Existing models remain authoritative.
+CREATE TABLE nd_lc_owner_profiles (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ data_json MEDIUMTEXT NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ reviewed TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_customer_details (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ order_id BIGINT UNSIGNED NOT NULL,
+ link_id BIGINT UNSIGNED NOT NULL,
+ data_json MEDIUMTEXT NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ state ENUM('DRAFT','SUBMITTED','APPROVED','CORRECTION') NOT NULL DEFAULT 'DRAFT',
+ review_reason TEXT NULL,
+ authority_review TEXT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (order_id) REFERENCES nd_orders(id) ON DELETE RESTRICT,
+ FOREIGN KEY (link_id) REFERENCES nd_lc_prospect_links(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_contract_terms (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ order_id BIGINT UNSIGNED NOT NULL,
+ quotation_id BIGINT UNSIGNED NOT NULL,
+ data_json MEDIUMTEXT NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ approved TINYINT UNSIGNED NOT NULL DEFAULT 0,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (order_id) REFERENCES nd_orders(id) ON DELETE RESTRICT,
+ FOREIGN KEY (quotation_id) REFERENCES nd_quotations(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_lc_pdf_assets (
+ binding_id BIGINT UNSIGNED PRIMARY KEY,
+ storage_key CHAR(64) NOT NULL UNIQUE,
+ checksum CHAR(64) NOT NULL,
+ size_bytes BIGINT UNSIGNED NOT NULL,
+ source_hash CHAR(64) NOT NULL,
+ owner_reviewed_at DATETIME NULL,
+ countersigned_file_id BIGINT UNSIGNED NULL,
+ copy_review_reason TEXT NULL,
+ copy_released_at DATETIME NULL,
+ payment_released_at DATETIME NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (binding_id) REFERENCES nd_lc_document_bindings(id) ON DELETE RESTRICT,
+ FOREIGN KEY (countersigned_file_id) REFERENCES nd_cc_files(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

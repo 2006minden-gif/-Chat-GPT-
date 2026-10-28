@@ -1,0 +1,20 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/contract-details.php';
+function ct_dispatch(array $a,string $route,string $method):never{
+ cc_owner($a);ct_gate();
+ if($method==='GET'){
+  if($route==='settings'){$owner=crm_query('SELECT * FROM nd_lc_owner_profiles ORDER BY id DESC LIMIT 1')->fetch();$details=crm_query('SELECT * FROM nd_lc_customer_details ORDER BY id DESC LIMIT 100')->fetchAll();$terms=crm_query('SELECT * FROM nd_lc_contract_terms ORDER BY id DESC LIMIT 100')->fetchAll();json_response(['ok'=>true,'owner'=>$owner,'owner_labels'=>ct_owner_labels(),'details'=>$details,'terms'=>$terms,'template_fields'=>array_column(ct_catalog(),'fields','kind')]);}
+  if(preg_match('~^source/([1-9][0-9]*)$~D',$route,$m)){$t=lc_template((int)$m[1]);$item=$t['clauses']['_package']??null;if(!$item)crm_fail(404,'Нет отдельного исходника.');foreach(ct_catalog() as $source)if($source['sha256']===$item['sha256']){$path=__DIR__.'/package/'.$source['file'];if(hash_file('sha256',$path)!==$source['sha256'])crm_fail(503,'Исходник повреждён.');header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');header('Content-Disposition: attachment; filename="'.$source['file'].'"');header('Cache-Control: private, no-store');readfile($path);exit;}crm_fail(404,'Исходник не найден.');}
+  if(preg_match('~^sample/([1-9][0-9]*)$~D',$route,$m)){$t=lc_template((int)$m[1]);$item=$t['clauses']['_package']??null;if(!$item)crm_fail(404,'Нет отдельного шаблона.');$v=array_fill_keys($item['fields'],'ВЫМЫШЛЕННЫЙ ОБРАЗЕЦ');$v['owner.postal_address_line']='';$bytes=ct_pdf_bytes($t['title'],ct_fill($item,$v),true);header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="sample-'.$t['kind'].'.pdf"');header('Cache-Control: private, no-store');echo $bytes;exit;}
+ }
+ if($method==='POST'){$d=input();$r=lc_mutation($a,'contracts/'.$route,$d,function()use($a,$route,$d){
+  if($route==='import')return ct_import($a);if($route==='owner')return ct_owner_save($d);if($route==='review')return ct_review_details($d);if($route==='terms')return ct_terms_save($d);if($route==='generate')return ct_generate($a,$d);
+  if(in_array($route,['review-pdf','completed-copy','release-payment'],true)){$b=lc_binding($a,cc_id($d['binding_id']??null),true);$asset=ct_asset($b);cc_file_path($asset);if(($d['confirm']??false)!==true)crm_fail(422,'Подтвердите просмотр точной версии.');$reason=cc_text($d,'reason',3000);
+   if($route==='review-pdf'){if(($d['pdf_checksum']??'')!==$asset['checksum']||$b['state']!=='OWNER_REVIEW')crm_fail(409,'Проверьте точный PDF перед выдачей.');crm_query('UPDATE nd_lc_pdf_assets SET owner_reviewed_at=UTC_TIMESTAMP() WHERE binding_id=?',[$b['id']]);}
+   if($route==='completed-copy'){if($b['state']!=='AGREED')crm_fail(409,'Сначала отдельно проверьте подписи заказчика.');$f=cc_file($a,cc_id($d['file_id']??null));if((int)$f['project_id']!==(int)$b['project_id']||$f['actor_type']!=='owner'||$f['visibility']!=='customer'||!in_array($f['mime'],['application/pdf','image/jpeg','image/png'],true))crm_fail(422,'Нужна частная копия этого проекта, загруженная владельцем.');cc_file_path($f);if($asset['copy_released_at']!==null)crm_fail(409,'Завершённая копия уже выпущена. Создайте новую редакцию, сохранив историю.');crm_query('UPDATE nd_lc_pdf_assets SET countersigned_file_id=?,copy_review_reason=?,copy_released_at=UTC_TIMESTAMP() WHERE binding_id=?',[$f['id'],$reason,$b['id']]);}
+   if($route==='release-payment'){if($b['kind']!=='agreement'||$b['state']!=='AGREED'||!$asset['copy_released_at'])crm_fail(409,'Сначала проверьте и передайте завершённую копию договора.');lc_schedule_activate($a,(int)$b['id'],$d);crm_query('UPDATE nd_lc_pdf_assets SET payment_released_at=COALESCE(payment_released_at,UTC_TIMESTAMP()) WHERE binding_id=?',[$b['id']]);}
+   lc_audit($a,'document',(int)$b['id'],$route,(int)$b['version'],['reason'=>$reason,'pdf_sha256'=>$asset['checksum']]);return ['ok'=>true,'id'=>(int)$b['id']];
+  }crm_fail(404,'Действие не найдено.');});json_response($r);
+ }crm_fail(404,'Раздел не найден.');
+}
