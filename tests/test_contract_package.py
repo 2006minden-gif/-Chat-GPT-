@@ -83,6 +83,12 @@ for name in dir(prospect.PaperAgreementFlow):
 
 import unittest,os
 class PdfRendering(unittest.TestCase):
+ def test_docx_choices_retain_source_line_breaks(self):
+  data=json.loads((ROOT/'private/lifecycle/package/catalog.json').read_text())
+  for t in data['templates']:
+   for p in t['paragraphs']:
+    if p.count('□')>1:self.assertEqual(sum(line.startswith('□') for line in p.splitlines()),p.count('□'))
+
  def test_all_six_standalone_cyrillic_pdfs_and_no_internal_content(self):
   with tempfile.TemporaryDirectory() as tmp:
    code='require '+json.dumps(str(ROOT/'private/lifecycle/contract-package.php'))+';foreach(ct_catalog() as $t){$v=array_fill_keys($t["fields"],"ТЕСТОВЫЕ ПРОВЕРЕННЫЕ ДАННЫЕ");$v["owner.postal_address_line"]="";$v["review.rating"]="";$v["review.company"]="";$v["review.photo_reference"]="";file_put_contents('+json.dumps(tmp)+' . "/".$t["kind"].".pdf",ct_pdf_bytes($t["title"],ct_fill($t,$v)));}'
