@@ -82,5 +82,11 @@
     "operator_sha256": "793300419242f13d83ecea189843628786ef4430720d365bce38203e1eb20b95",
     "up_sha256": "9835e8cbe304b2c1c84a9ee2ac26af70a834697235bdb245a90651c2aca2b7bd",
     "down_sha256": "241e770d9b54746b9cc4610abfddb4180c17d52265910773c96810f27eba7eaf"
+  },
+  "018_prospect_exchange": {
+    "operator": "scripts/migrate-prospects.php",
+    "operator_sha256": "626afdf3e881475b5bfba2e9a0e87f959b8c724283e695bc169515d5f2bfb111",
+    "up_sha256": "3f8d38452e2100297e6aee3837da279d87a90a9fb92c883fae17b2f21073922c",
+    "down_sha256": "b28cca5b42129b9c7cffdd8079d415b494155239e434ac282c5341ec0f251e50"
   }
 }
