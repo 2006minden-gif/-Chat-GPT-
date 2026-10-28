@@ -80,3 +80,17 @@ Release/recovery:018 follows verified017 and uses the existing actual snapshot,
 shadow-restore/hash/FK proof, exact SQL/operator pins and main-only deployment.
 Automatic destructive/nonempty rollback remains forbidden; expired/revoked grants
 and original paper copies remain evidence, not cleanup targets.
+
+## Binding paper agreement to the commercial flow
+
+An additional owner-only `paper-agreement` action closes the remaining account
+cycle: a verified paper contract can establish the commercial agreement while
+there is no client account to submit an online proposal response. Qualification,
+ready brief, exact approved quote and sent proposal remain mandatory. It requires
+AGREED contract of this order, actual intact private signed file, owner verifier
+and matching scope/price/schedule/revision/handover/support fields. Owner must
+explicitly confirm paper acceptance and record a reason. No customer business
+decision or online signature is created; the owner audit identifies the paper
+source. Existing online-response workflow remains unchanged. Idempotent retries
+bind once. The client subsequently sees AGREED/PARTIAL etc from actual records,
+not an obsolete inquiry state. Existing production/material/payment gates remain.
