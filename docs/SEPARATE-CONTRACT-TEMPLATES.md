@@ -83,3 +83,10 @@ production inbox delivery. Final real-settings acceptance remains separate until
 the owner completes the protected policy/requisites/template gates and actual
 controlled test-message receipt is observed. Never label a queued/sent flag as
 successful delivery or create fictitious actual bank records in production.
+
+Production defaults require the new package for newly generated agreement/TZ/act/
+change/publication-permission documents. This does not retire or rewrite a sent
+or signed historical version. No postal address is universally required for a
+proposal or the new package; if the owner has a transaction-specific need it must
+be reviewed explicitly. Customer optional fields irrelevant to the selected type
+are cleared server-side to avoid needless retention.
