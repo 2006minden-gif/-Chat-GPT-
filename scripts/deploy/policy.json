@@ -137,6 +137,7 @@
     "customer-settings.php",
     "legal/privacy-2026-10-26-v1.json",
     "legal/privacy-2026-10-27-v2.json",
+    "lifecycle/access.php",
     "lifecycle/closure.php",
     "lifecycle/contract-details.php",
     "lifecycle/contract-package.php",
@@ -383,6 +384,17 @@
       "up_sha256": "04644f824840e69d894a5b80ecac2b5369e98bf8c66dc3e37096555d22d19814",
       "down_sha256": "f8f219b6f48f827b667d66061b0d6529e3d4363fe75d3f0e37d423dd090346cc",
       "operator_sha256": "56608b8f20ad074eb08cb5c1dc0917e71f1e9a846b1a4c7fb53c84be5fec6d1d"
+    },
+    {
+      "version": "021_paid_access_jobs",
+      "kind": "reviewed_additive",
+      "automatic": true,
+      "required": true,
+      "operator": "scripts/migrate-access.php",
+      "depends_on": "020_inquiry_workflow",
+      "up_sha256": "1d3b8c73f4e03ec980144f07a62994bc19ab1fb0522ae7acfcb39f9079b11204",
+      "down_sha256": "5e73e526396e81dd34d29c974fe038b69fe86a4b140616aaf3a4310dbf439778",
+      "operator_sha256": "62f1bb1094e845d13dc9159d40fc8ee94d68f069da67c119c570c7dd6acdc1b9"
     }
   ],
   "database_recovery_required": true

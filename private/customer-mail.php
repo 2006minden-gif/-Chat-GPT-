@@ -2,6 +2,7 @@
 declare(strict_types=1);
 /** Synchronous SMTP acceptance, not a claim of delivery to the inbox. No message/token spool. */
 function customer_mail(string $recipient, string $purpose, string $token): bool {
+    $GLOBALS['customer_smtp_outcome']='not_accepted';
     $c=config();$m=$c['customer_mail'] ?? [];
     $test=($m['transport'] ?? '')==='test-smtp';
     $host=$m['host'] ?? '';$port=(int)($m['port'] ?? 0);$from=$m['from'] ?? '';
@@ -20,6 +21,7 @@ function customer_mail(string $recipient, string $purpose, string $token): bool 
 }
 /** Shared SMTP transport. DATA acceptance is not inbox delivery. */
 function customer_smtp_send(string $recipient,string $message,?array $override=null):bool {
+    $GLOBALS['customer_smtp_outcome']='not_accepted';
     if (!filter_var($recipient,FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/',$recipient)) return false;
     $c=config();$m=$override??($c['customer_mail'] ?? []);
     $test=($m['transport'] ?? '')==='test-smtp';
@@ -31,7 +33,7 @@ function customer_smtp_send(string $recipient,string $message,?array $override=n
     $tls=$m['encryption'] ?? 'starttls';
     if (!$test && !in_array($tls,['starttls','ssl'],true)) return false;
     for ($attempt=0;$attempt<2;$attempt++) {
-        $stream=null;
+        $stream=null;$dataStarted=false;
         try {
             $context=stream_context_create(['ssl'=>['verify_peer'=>true,'verify_peer_name'=>true,'peer_name'=>$host,'allow_self_signed'=>false,'crypto_method'=>STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT|STREAM_CRYPTO_METHOD_TLSv1_3_CLIENT]]);
             $stream=@stream_socket_client(($tls==='ssl'&&!$test?'ssl://':'tcp://').$host.':'.$port,$errno,$error,5,STREAM_CLIENT_CONNECT,$context);
@@ -61,11 +63,13 @@ function customer_smtp_send(string $recipient,string $message,?array $override=n
                 $command('AUTH PLAIN '.base64_encode("\0".$user."\0".$password),[235]);
             }
             $command('MAIL FROM:<'.$from.'>',[250]);$command('RCPT TO:<'.$recipient.'>',[250,251]);$command('DATA',[354]);
-            $write($message."\r\n.\r\n");$reply([250]);
+            $dataStarted=true;$write($message."\r\n.\r\n");$reply([250]);
+            $GLOBALS['customer_smtp_outcome']='accepted';
             // DATA acceptance is the only success criterion. QUIT failures cannot undo it.
             @fwrite($stream,"QUIT\r\n");fclose($stream);return true;
         } catch (Throwable $e) {
             if (is_resource($stream)) fclose($stream);
+            if($dataStarted && $e->getMessage()!=='smtp_rejected'){$GLOBALS['customer_smtp_outcome']='uncertain';return false;}
             // Never log server replies, addresses, passwords, URLs or message bodies.
         }
     }

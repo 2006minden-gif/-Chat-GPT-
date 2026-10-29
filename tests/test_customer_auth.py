@@ -33,7 +33,9 @@ class SMTPHandler(socketserver.StreamRequestHandler):
       chunk=self.rfile.readline(8192)
       if chunk in [b'.\r\n',b'']:break
       data+=chunk
-     self.server.messages.append((recipient,data));reply=b'250 accepted\r\n'
+     self.server.messages.append((recipient,data))
+     if getattr(self.server,'drop_after_data',False):return
+     reply=b'250 accepted\r\n'
    elif line.startswith(b'QUIT'):self.wfile.write(b'221 bye\r\n');return
    else:reply=b'500 unsupported\r\n'
    self.wfile.write(reply);self.wfile.flush()

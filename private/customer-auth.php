@@ -221,6 +221,9 @@ function ca_owner(string $route,string $method):never {
     }
     if($method!=='POST')ca_fail(404,'not_found','Не найдено.');$d=input();
     if($route==='owner/invite'){ca_mail_gate();
+        require_once __DIR__.'/lifecycle/access.php';
+        if(la_installed()&&(config()['paid_client_invitation_required']??false)===true){$order=$d['order_id']??null;$cid=$d['customer_id']??null;if(!is_int($order)||!is_int($cid)||!ca_paid_order($cid,$order))ca_fail(409,'payment_required','Нужен подтверждённый первый платёж этого клиента и заказа.');$customer=crm_record('customers',$cid);if(ca_email($d)!==mb_strtolower($customer['email']??''))ca_fail(409,'recipient_review_required','Email отличается от реквизитов CRM. Сначала отдельно проверьте и исправьте адрес клиента.');crm_atomic(fn()=>la_queue($order));$job=la_run($order);json_response(['ok'=>true,'account_id'=>(int)($job['account_id']??0),'smtp_accepted'=>$job['state']==='SMTP_ACCEPTED','delivery_confirmed'=>$job['delivery_confirmed'],'retry_needed'=>in_array($job['state'],['FAILED','UNCERTAIN','EXPIRED','BLOCKED'],true),'access'=>$job]);}
+
         if((config()['paid_client_invitation_required']??false)===true){$order=$d['order_id']??null;$cid=$d['customer_id']??null;if(!is_int($order)||$order<1||!is_int($cid)||$cid<1||!ca_paid_order($cid,$order))ca_fail(409,'payment_required','Выберите заказ этого клиента с проверенной подписанной копией и подтверждённым владельцем поступлением.');}
         $email=ca_email($d);ca_rate('invitation_identity',5,$email);$customer=$d['customer_id']??null;
         if($customer!==null&&(!is_int($customer)||$customer<1))ca_fail(422,'invalid_customer','Выберите корректного клиента.');
