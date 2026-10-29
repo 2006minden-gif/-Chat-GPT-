@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
-  "source_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
-  "nonce": "workflow-40865414960",
-  "run_id": "40865439829",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40865439829",
-  "time": "2026-10-29T11:26:48.534611+00:00",
+  "source_sha": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+  "nonce": "workflow-40869132410",
+  "run_id": "40870661365",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40870661365",
+  "time": "2026-10-29T12:07:13.584458+00:00",
   "production_touched": false,
   "producer": {
-    "id": 40865414960,
-    "name": "Enable approved auto-merge",
-    "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
+    "id": 40869132410,
+    "name": "Validate d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+    "head_sha": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
     "head_branch": "main",
-    "event": "schedule",
+    "event": "push",
     "status": "completed",
-    "conclusion": "failure",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40865414960",
-    "path": ".github/workflows/auto-merge.yml"
+    "conclusion": "success",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40869132410",
+    "path": ".github/workflows/deploy.yml"
   },
   "inspection": {
     "repository": {
@@ -103,22 +103,6 @@
     "open_prs": {
       "status": 200,
       "pulls": [
-        {
-          "number": 49,
-          "title": "Separate private DOCX templates, scoped customer details and downloadable Cyrillic PDFs",
-          "state": "open",
-          "draft": false,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/pull/49",
-          "merge_commit_sha": "c24220aa39e754de759e078d4e3154c72b127611",
-          "head": {
-            "ref": "feature/separate-contract-templates",
-            "sha": "6500b8fc18a70f3d53b482bd303dc19ca7233873"
-          },
-          "base": {
-            "ref": "main",
-            "sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0"
-          }
-        },
         {
           "number": 22,
           "title": "Stage 6: private client collaboration files documents and approvals",
@@ -210,8 +194,8 @@
           "state": "open",
           "draft": true,
           "merged": false,
-          "mergeable": false,
-          "mergeable_state": "dirty",
+          "mergeable": null,
+          "mergeable_state": "unknown",
           "auto_merge": null,
           "merge_commit_sha": null,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/pull/4",
@@ -234,18 +218,18 @@
       "status": 200,
       "runs": [
         {
-          "id": 40865439829,
+          "id": 40870661365,
           "name": "Record Git-readable automation evidence",
           "event": "workflow_run",
           "head_branch": "main",
-          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
+          "head_sha": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40865439829",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40870661365",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
-              "id": 123418915804,
+              "id": 123436549399,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -269,6 +253,394 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40870661319,
+          "name": "Enable approved auto-merge",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40870661319",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 123436550424,
+              "name": "Verify and enable protected integration",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Preserve actual review rules and enable verified merge path",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "in_progress"
+                }
+              ]
+            },
+            {
+              "id": 123436550596,
+              "name": "Configure CI/CD after validated main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 123436551340,
+              "name": "Enable routine deployment only after verified bootstrap",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 123436551984,
+              "name": "approved",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 123436622391,
+              "name": "Create PR after trusted branch validation",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40869132449,
+          "name": "Retry MAX notifications",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40869132449",
+          "path": ".github/workflows/notifications.yml",
+          "jobs": [
+            {
+              "id": 123431372091,
+              "name": "retry",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Verify current main before SSH",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Retry pending delivery on SpaceWeb",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40869132410,
+          "name": "Validate d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+          "event": "push",
+          "head_branch": "main",
+          "head_sha": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40869132410",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 123431372041,
+              "name": "Validate",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Validate dispatched revision",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Unit, integration, Apache, security and migration tests",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 123435564082,
+              "name": "Publish approved main",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Require one-time protection bootstrap",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Skip obsolete commits",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Recheck production environment before secret use",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Publish or maintain checked release",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Record deployment evidence",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 123436527611,
+              "name": "Enable verified routine publication",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 40867277726,
+          "name": "Retry MAX notifications",
+          "event": "schedule",
+          "head_branch": "main",
+          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40867277726",
+          "path": ".github/workflows/notifications.yml",
+          "jobs": [
+            {
+              "id": 123425107076,
+              "name": "retry",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Verify current main before SSH",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Retry pending delivery on SpaceWeb",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 40865439829,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40865439829",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 123418915804,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -796,277 +1168,1076 @@
               ]
             }
           ]
-        },
-        {
-          "id": 40849135180,
-          "name": "Enable approved auto-merge",
-          "event": "schedule",
-          "head_branch": "main",
-          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
-          "status": "completed",
-          "conclusion": "failure",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40849135180",
-          "path": ".github/workflows/auto-merge.yml",
-          "jobs": [
-            {
-              "id": 123363929589,
-              "name": "approved",
-              "status": "completed",
-              "conclusion": "failure",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Enable only independently reviewed passing PRs",
-                  "conclusion": "failure",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 123363930054,
-              "name": "Verify and enable protected integration",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 123363930952,
-              "name": "Create PR after trusted branch validation",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 123363977384,
-              "name": "Enable routine deployment only after verified bootstrap",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 123363991221,
-              "name": "Configure CI/CD after validated main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 40848556173,
-          "name": "Retry MAX notifications",
-          "event": "schedule",
-          "head_branch": "main",
-          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40848556173",
-          "path": ".github/workflows/notifications.yml",
-          "jobs": [
-            {
-              "id": 123362005402,
-              "name": "retry",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Verify current main before SSH",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Retry pending delivery on SpaceWeb",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40843823214,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40843823214",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 123346369808,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40843692213,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40843692213",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 123345948053,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 40842794444,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "579d3b707924828749e06f8cbfb43bf4f5f5a8c0",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/40842794444",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 123342976513,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
         }
       ]
     }
   },
-  "deployment_evidence": null
+  "deployment_evidence": {
+    "mode": "deploy",
+    "result": "deployed_and_verified",
+    "rollback_verified": false,
+    "revision": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+    "release_id": "20261029T120510Z-r40869132410-a1-d0f8437b4114",
+    "before": {
+      "ok": true,
+      "complete": true,
+      "checks": {
+        "/": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/studio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=privacy": {
+          "status": 200,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "enabled": true,
+          "version": "privacy-2026-10-27-v2"
+        },
+        "/privacy.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=session": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=leads": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/~.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index~.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/private/config.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/crm.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/styles.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "4b1963e3b67add4244e60eac355e1643ff991207c8641346831162d5185cb6a3"
+        },
+        "/crm.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "c435ecb98a9df9a55782423917296d144e40d5b3c754e107bb2b6a8675163b99"
+        },
+        "/script.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "971c5c8ef75a742c277dfe94609c2e0f27e609b5b1ef415fc533d25e877d6ebf"
+        },
+        "/crm.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "32a4e6959476ddb58a0afbc02111ff202a2e7d24df624caa2eeeab8979ba5016"
+        },
+        "/api-client.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20"
+        }
+      }
+    },
+    "after": {
+      "ok": true,
+      "complete": true,
+      "checks": {
+        "/": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/studio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=privacy": {
+          "status": 200,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "enabled": true,
+          "version": "privacy-2026-10-27-v2"
+        },
+        "/privacy.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=session": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=leads": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/~.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index~.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/private/config.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/crm.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/styles.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "4b1963e3b67add4244e60eac355e1643ff991207c8641346831162d5185cb6a3"
+        },
+        "/crm.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "c435ecb98a9df9a55782423917296d144e40d5b3c754e107bb2b6a8675163b99"
+        },
+        "/script.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "971c5c8ef75a742c277dfe94609c2e0f27e609b5b1ef415fc533d25e877d6ebf"
+        },
+        "/crm.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "32a4e6959476ddb58a0afbc02111ff202a2e7d24df624caa2eeeab8979ba5016"
+        },
+        "/api-client.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20"
+        },
+        "/ai-widget.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "14dae2e90e7d9b30dce88133c7b5bc57237895614eeab80165ad7132dc65ebb9"
+        },
+        "/ai.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "cd4005381d943703771ee3535635cc49eeafdad67c86f7c21e30e2bca9724ef2"
+        },
+        "/ai.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "8e67f703e0fb16aaab3fef8def25354579187b5c4bcf30faa4968f216e0be822"
+        },
+        "/billing.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "11e0ef2789f65ed2d939f2e2cce287dd6a143d45a1a5d44800e81d9b3df321c1"
+        },
+        "/billing.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "af59c50e89af3558771af4033223cdbdeab219f1ff6c5c93d31dd20a628f142a"
+        },
+        "/catalog-owner.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "1a5212a5007357f849c95f6c1f774a0fb4ad9972ac0fb828975ca9daed235acd"
+        },
+        "/catalog.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "a816faecb1b8216db8b672eb27c92671b1ecd4d6ef1715e5711b9fe9a9d4fddf"
+        },
+        "/catalog.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "3fbbbe5516762ed48d246b650352924293ecd0b553852181929f5def5c86c52d"
+        },
+        "/client-settings.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "ea97c90aca3112333e5c48714ddff327147e780958954999698fe702be4f9355"
+        },
+        "/collab-print.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "5cc1c1c66366f7679c39dea809141deb200c2e43b5ce1811b4de2f5d8ba20592"
+        },
+        "/collaboration.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "0cc06f4fca5af37ee4c70c6f7f08ab453a5a7693d389fdc722846a92202387f8"
+        },
+        "/collaboration.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "a8b2ba46837b2fcc023cbcd1ff68e4cd3459d433c34e2bc1441e0dd18942f238"
+        },
+        "/contract-settings.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "7489876a89efd6af67b5bb981808df9d0a5aed0e2343bdc8a737d13eae115e57"
+        },
+        "/customer-owner.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "22723b70f3dd762c5812234720c389ae34971f7b5833d6769c07f6532e4b6b3d"
+        },
+        "/customer.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "6aa6463bfb89236db3e367d620dcd1268c12d34918cc7aa0bfa2e7abe46b12fc"
+        },
+        "/customer.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "ddb26604419e2369aa5e1a026e2d9b773252326ac68468b258ff453a461753c1"
+        },
+        "/documents.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "defb012d017145e9d16493f9a8ed32e3cd5a4316cc540538e035cf31b61bf84b"
+        },
+        "/favicon.ico": {
+          "status": 200,
+          "content_type": "image/x-icon",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "4ca8234f48266b2e1efc708a7bbfe87b2f5adaa0cbb8f68d54a5a1b8cbccf19e"
+        },
+        "/favicon.svg": {
+          "status": 200,
+          "content_type": "image/svg+xml",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "d51ef61e2e56597ca0036305ff509c6398bc16564c9b1f7885305ee44fc469d3"
+        },
+        "/finance.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "6a9be677fc5cee01f47e630bbfb7ab2ac6078bb8b74b562f40c0c200d4f03950"
+        },
+        "/handoff.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "2327cc5b10e5cc6ce88fe5fa9760e1b3a1e1f0d2b2d115c9373001bd91108a9d"
+        },
+        "/max-settings.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "7915d93718253a56636bde4b469a18eb0dbed337e447f3c579ceb77811580512"
+        },
+        "/operations.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "2e44371c1f67137339f502bcc37058ee7615f598c63d636e44744ff4135594d7"
+        },
+        "/operations.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "f37b1a8725af681ec86f0156eda4792403e32aba5aceacd9d9d1c2b1b083fd8d"
+        },
+        "/ordering.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "0675730f21a246f060c142250d5736ca8565bbf92de766191b9ee89b5dd8e007"
+        },
+        "/orders.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "4a59c6a4d5debffafd743bb2d4773991c06d07d3e06f3dad2999aa5cf9c57caa"
+        },
+        "/owner-setup.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "472fe72c011992f81400ba83961f48fc51792abc465cd36df496c3feda848652"
+        },
+        "/portal.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "33b2e89b9fc9615183508655f11eb6e8e4be46309ee6e58567f046008de89e13"
+        },
+        "/pricing.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "f9f28a7d596f7f67011cc8976a3949e1ccf510558cdae0bdfea56896cf245b31"
+        },
+        "/production.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "89704b69b5f68bc1128e009b9eb99a885e32365c3500318d2697dd9e470fa916"
+        },
+        "/production.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "3ea833bb37843729f7c516aa7c52e5f6c21077fd582709fa632e835240ff96d4"
+        },
+        "/prospect-owner.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "3008459687a65a519d3df7cfdc7e566384f686647251a0f9cfe1af4b7191a9c9"
+        },
+        "/prospect.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "63c2802cbce824d9cecdb056789c5d123d83a8922334ad50ac2ff94dcf82d310"
+        },
+        "/robots.txt": {
+          "status": 200,
+          "content_type": "text/plain",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "325850551f3a50acf9ecfa8687bee1e8b99715540824d323ff24b21f4ae06ad0"
+        },
+        "/services/guide.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "92f3c981ffb935868a1a32fccc66ff5e4f4ea51d7b6982cd8a0f114c237ac3dd"
+        },
+        "/services/guide.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "8ef4f40579a6ec609373ca269c7c7c38d636e8c348c33126c6e3a116b653b9c1"
+        },
+        "/sitemap.xml": {
+          "status": 200,
+          "content_type": "application/xml",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "9aede7ee36635f74febb5e575e188b52408b60153843d15c5d82c55540db9573"
+        }
+      }
+    },
+    "preflight": {
+      "ok": true,
+      "php": "8.4.27",
+      "database_connected": true,
+      "admin_exists": true,
+      "privacy_approved": false,
+      "database_inventory": {
+        "mysql_version": "5.7.27-30-log",
+        "tables": [
+          "nd_activity_history",
+          "nd_admin",
+          "nd_ai_agents",
+          "nd_ai_approvals",
+          "nd_ai_artifacts",
+          "nd_ai_attempts",
+          "nd_ai_budgets",
+          "nd_ai_context_refs",
+          "nd_ai_events",
+          "nd_ai_provider_state",
+          "nd_ai_rules",
+          "nd_ai_rule_runs",
+          "nd_ai_tasks",
+          "nd_ai_usage",
+          "nd_ai_visitors",
+          "nd_billing_sequences",
+          "nd_catalog_briefs",
+          "nd_catalog_offers",
+          "nd_catalog_requests",
+          "nd_catalog_scope_transitions",
+          "nd_catalog_services",
+          "nd_catalog_service_versions",
+          "nd_catalog_templates",
+          "nd_catalog_template_versions",
+          "nd_cc_approvals",
+          "nd_cc_decisions",
+          "nd_cc_documents",
+          "nd_cc_files",
+          "nd_cc_messages",
+          "nd_cc_message_files",
+          "nd_cc_reads",
+          "nd_cc_revisions",
+          "nd_cc_revision_files",
+          "nd_cost_rates",
+          "nd_cost_registry_keys",
+          "nd_crm_conversions",
+          "nd_crm_notifications",
+          "nd_crm_requests",
+          "nd_customers",
+          "nd_customer_accounts",
+          "nd_customer_auth",
+          "nd_customer_auth_events",
+          "nd_customer_consents",
+          "nd_customer_sessions",
+          "nd_customer_tokens",
+          "nd_deals",
+          "nd_employees",
+          "nd_invoices",
+          "nd_invoice_adjustments",
+          "nd_invoice_lines",
+          "nd_lc_audit",
+          "nd_lc_bank_records",
+          "nd_lc_business_decisions",
+          "nd_lc_change_applications",
+          "nd_lc_closure_records",
+          "nd_lc_document_bindings",
+          "nd_lc_feedback",
+          "nd_lc_milestone_versions",
+          "nd_lc_obligations",
+          "nd_lc_order_flow",
+          "nd_lc_payment_claims",
+          "nd_lc_prospect_events",
+          "nd_lc_prospect_links",
+          "nd_lc_prospect_sessions",
+          "nd_lc_prospect_uploads",
+          "nd_lc_receipt_evidence",
+          "nd_lc_receipt_tasks",
+          "nd_lc_schedule_entries",
+          "nd_lc_scope_changes",
+          "nd_lc_templates",
+          "nd_leads",
+          "nd_lead_customers",
+          "nd_limits",
+          "nd_manual_jobs",
+          "nd_manual_results",
+          "nd_notification_outbox",
+          "nd_notification_preferences",
+          "nd_orders",
+          "nd_payment_attempts",
+          "nd_payment_events",
+          "nd_payment_transactions",
+          "nd_pricing_decisions",
+          "nd_pricing_policies",
+          "nd_pricing_scan_state",
+          "nd_prod_artifacts",
+          "nd_prod_decisions",
+          "nd_prod_dependencies",
+          "nd_prod_events",
+          "nd_prod_expenses",
+          "nd_prod_findings",
+          "nd_prod_packages",
+          "nd_prod_plans",
+          "nd_prod_profitability",
+          "nd_prod_qa_reports",
+          "nd_prod_rate_scopes",
+          "nd_prod_revisions",
+          "nd_prod_runs",
+          "nd_prod_steps",
+          "nd_prod_step_attempts",
+          "nd_projects",
+          "nd_project_actuals",
+          "nd_project_estimates",
+          "nd_project_members",
+          "nd_project_stages",
+          "nd_quotations",
+          "nd_refunds",
+          "nd_schema_migrations",
+          "nd_sessions",
+          "nd_tasks",
+          "nd_task_projects"
+        ],
+        "journal": [
+          {
+            "version": "004_crm_foundation",
+            "state": "applied",
+            "up_checksum": "93350e4b176cb624af35c41f84c6082e37f339c778c739ec464afa8837bd2d75",
+            "down_checksum": "b8938b981b6231c728b9927a8d5d6552ec376ae938b604f0dbaa124f9ea05462"
+          },
+          {
+            "version": "005_customer_auth",
+            "state": "applied",
+            "up_checksum": "66ec8e4ce06759df5c6ed91c7f1e5ae55872a49c885f7d820eeecb97c452d32a",
+            "down_checksum": "dc0ce90b90b0b9a853ff8834c1cfbdc6a10bc77cca0465e11673eabaaff17a11"
+          },
+          {
+            "version": "006_crm_operations",
+            "state": "applied",
+            "up_checksum": "90b11fbbf29b97444c9e0d1667475f708b71007ff2fbf11a4fa063ef85aead04",
+            "down_checksum": "c92bb374e06c746939c557d8854150b01d6545eb04deb537055b4c56ca250d1d"
+          },
+          {
+            "version": "007_client_collaboration",
+            "state": "applied",
+            "up_checksum": "3de0b68a709db88af990ab143f613419c55673dd944611234fece210a070d1c5",
+            "down_checksum": "2c1fb39b4378c5c0dc03fcdc26d3260a8890decdca93a3ff41d7e13460f4b00b"
+          },
+          {
+            "version": "008_billing_notifications",
+            "state": "applied",
+            "up_checksum": "135bb5bd822a0bf6f349b101048f8c0e9a2c8dd8e03481a99b3dc388b9fe7043",
+            "down_checksum": "98db7035edfc27792f93518f57e014e7cd1742846eab4fd82b275c67b2405c4e"
+          },
+          {
+            "version": "009_ai_automation",
+            "state": "applied",
+            "up_checksum": "d477ce86b95f943f317a45e5e8f9a43d459ce800c9c9a188401ce74029f9dfdd",
+            "down_checksum": "4481aa269394c94e4b53313dfedad20ceaedc9b78b3ed0476d1835d721bbc281"
+          },
+          {
+            "version": "010_project_pricing",
+            "state": "applied",
+            "up_checksum": "4ddc87b7cddb98d375afe1d93f94e73113456012a0a06f147ae9d580fcc2d502",
+            "down_checksum": "6ace00761fd70dc3fc12ca28451a34600e1a11db4acc2814e3dcd1a296dd88dc"
+          },
+          {
+            "version": "011_ai_production",
+            "state": "applied",
+            "up_checksum": "b1e93ab7a007a4c262ce2661a0d8ff6aecff9d299aee97aa8e1cdb01b4728671",
+            "down_checksum": "19a6dcbbe3bf1973e3749e5c7bf24ef19d853319c05b26acbbf15da5f5c2e77e"
+          },
+          {
+            "version": "012_manual_handoff",
+            "state": "applied",
+            "up_checksum": "63424dd67194e8b109e827a4af77e6cb3788fa6de0c7358a3a528209898174cd",
+            "down_checksum": "3b1692d41c9e2062903d8edb35ffff3218ec8fcbffaf88f63aa82c2ef4fec5e9"
+          },
+          {
+            "version": "013_service_ordering",
+            "state": "applied",
+            "up_checksum": "f4abe1a279eade319c146005b5906dee76693238760aabd1068c770b193cbce3",
+            "down_checksum": "5e07ce0792b4f9a580484384ae18d54747451b42b08be1ec93a3f68aea509fc2"
+          },
+          {
+            "version": "014_lifecycle_documents",
+            "state": "applied",
+            "up_checksum": "9810977b514e933d7b61fd38bef0d0afc56865fffc055d4fb487a07adab3d228",
+            "down_checksum": "7d330c87a84cdf3414aae7debb4f6992d237b4d9131ad3688bf2117868506ba5"
+          },
+          {
+            "version": "015_lifecycle_payments",
+            "state": "applied",
+            "up_checksum": "e8cfe57a955849b840d19f6d207c1a9f1cbf8cb7ef8ac5f504c55c8878c4113f",
+            "down_checksum": "e0fa321d3e1d3eb5cddd3ade1f1ce7c9a634effee1f1413e17057a9d854a2867"
+          },
+          {
+            "version": "016_order_lifecycle",
+            "state": "applied",
+            "up_checksum": "5dadf929b21da95d610f3f866f70134722d2048a2c08654fa9e3474887fc2ab8",
+            "down_checksum": "de31bc077731cbc92b0310d51e9635bf436a55717d2a071903bf2f22c7c5d8c4"
+          },
+          {
+            "version": "017_lifecycle_closure",
+            "state": "applied",
+            "up_checksum": "9835e8cbe304b2c1c84a9ee2ac26af70a834697235bdb245a90651c2aca2b7bd",
+            "down_checksum": "241e770d9b54746b9cc4610abfddb4180c17d52265910773c96810f27eba7eaf"
+          },
+          {
+            "version": "018_prospect_exchange",
+            "state": "applied",
+            "up_checksum": "3f8d38452e2100297e6aee3837da279d87a90a9fb92c883fae17b2f21073922c",
+            "down_checksum": "b28cca5b42129b9c7cffdd8079d415b494155239e434ac282c5341ec0f251e50"
+          }
+        ],
+        "schema_sha256": "cef4836495b089db28eaaa8b53798d7df3e59448c1e1a32f4ca380cc9fc54925"
+      },
+      "prior_private_failures": [],
+      "strict_sql_mode": false
+    },
+    "apply": {
+      "database_recovery": {
+        "verified": true,
+        "backup_sha256": "8f41b0266cac97a5ce9c13ee7eb7b49e8678123c322d72d9de53bfb6b3ed5765",
+        "schema_sha256": "2acb8bc70e3b356861074d4d56cf4551cf8f70770e27990b5d9f3de909257e6f",
+        "tables_verified": 110,
+        "rows_verified": 28,
+        "foreign_keys_verified": 204,
+        "source_data_written": false,
+        "shadow_tables_removed": true
+      },
+      "backup_verified": true,
+      "recovery_verified": true,
+      "files_sha256": {
+        "public_html/.htaccess": "6337cdefd79dfa4cf7334405350b6fa9a779d5c879162fdf831bbcfbf4e2cdf5",
+        "public_html/ai-public-api.php": "672fba266d303a39a6189c35becf7cce8028d3ef572f6401837edc3635591097",
+        "public_html/ai-widget.js": "14dae2e90e7d9b30dce88133c7b5bc57237895614eeab80165ad7132dc65ebb9",
+        "public_html/ai.css": "cd4005381d943703771ee3535635cc49eeafdad67c86f7c21e30e2bca9724ef2",
+        "public_html/ai.js": "8e67f703e0fb16aaab3fef8def25354579187b5c4bcf30faa4968f216e0be822",
+        "public_html/ai.php": "12b3d502c9c7eb9c65c3ee3489f4b7be6597e0b5ecb46c810bd623080945379b",
+        "public_html/api-client.js": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20",
+        "public_html/api.php": "65c82f5e04815b2ae83db2f514a4a114a49d8595d4e1e7c21f027ffe0a1fa3d8",
+        "public_html/billing.css": "11e0ef2789f65ed2d939f2e2cce287dd6a143d45a1a5d44800e81d9b3df321c1",
+        "public_html/billing.js": "af59c50e89af3558771af4033223cdbdeab219f1ff6c5c93d31dd20a628f142a",
+        "public_html/billing.php": "94578ba153d806043c9eadfc9bfa5d33994381202285d26556cea68772ac6ef9",
+        "public_html/catalog-api.php": "23a448c525b724635b5f84f5d6080a37e62293e3541c4996291c112dfc63166e",
+        "public_html/catalog-owner.js": "1a5212a5007357f849c95f6c1f774a0fb4ad9972ac0fb828975ca9daed235acd",
+        "public_html/catalog-owner.php": "efe86bf136b3de9b538cef00954bd57983e8d0d14618bc518b9efca38df67e19",
+        "public_html/catalog.css": "a816faecb1b8216db8b672eb27c92671b1ecd4d6ef1715e5711b9fe9a9d4fddf",
+        "public_html/catalog.js": "3fbbbe5516762ed48d246b650352924293ecd0b553852181929f5def5c86c52d",
+        "public_html/catalog.php": "de831ff9e47173a08cc636614a7f111210d274a43033876532eb23f35f2592b5",
+        "public_html/client-settings.js": "ea97c90aca3112333e5c48714ddff327147e780958954999698fe702be4f9355",
+        "public_html/client-settings.php": "fb53ecdeeb2d36f80c2aaf461a9126791dad66fc3465239beb224d14272b4b06",
+        "public_html/collab-download.php": "3b508dde80ccc6fa0c57bd26bb8167cd41fea1f93ee1b56400afb6daf86c194f",
+        "public_html/collab-print.js": "5cc1c1c66366f7679c39dea809141deb200c2e43b5ce1811b4de2f5d8ba20592",
+        "public_html/collab-print.php": "f448c69a0344f6bf08d96a3020c6c88e06000da6d145b87af2dc8e57d78af4d2",
+        "public_html/collaboration.css": "0cc06f4fca5af37ee4c70c6f7f08ab453a5a7693d389fdc722846a92202387f8",
+        "public_html/collaboration.js": "a8b2ba46837b2fcc023cbcd1ff68e4cd3459d433c34e2bc1441e0dd18942f238",
+        "public_html/collaboration.php": "b7241bb912f79a8050d10fb584532fc84c66c6e0954ae36f95104970dbce2232",
+        "public_html/consent.php": "3ac0a40a853b6ac63895d224839bd8033ab570f665bcd8f19f516ddcbf90d41d",
+        "public_html/contract-settings.js": "7489876a89efd6af67b5bb981808df9d0a5aed0e2343bdc8a737d13eae115e57",
+        "public_html/contract-settings.php": "833f65b6564c9ff84560f5c3d3b9bcef5f58963af56a6b446c3231696ba8f771",
+        "public_html/crm.css": "c435ecb98a9df9a55782423917296d144e40d5b3c754e107bb2b6a8675163b99",
+        "public_html/crm.html": "8da23009839e286123c0a51ce069591b5efb6a5e0823f96a4c63440cdee439fa",
+        "public_html/crm.js": "32a4e6959476ddb58a0afbc02111ff202a2e7d24df624caa2eeeab8979ba5016",
+        "public_html/customer-api.php": "fb8d13a28a3948cb5598d438ad2e63638dd3676de81a5918aa36afb5a72ec93a",
+        "public_html/customer-owner.js": "22723b70f3dd762c5812234720c389ae34971f7b5833d6769c07f6532e4b6b3d",
+        "public_html/customer-privacy.php": "220a8e0bd6f14da4f8248cca0d0b5fb1fb8bdb120c008c96be3b5a475505b3fc",
+        "public_html/customer.css": "6aa6463bfb89236db3e367d620dcd1268c12d34918cc7aa0bfa2e7abe46b12fc",
+        "public_html/customer.js": "ddb26604419e2369aa5e1a026e2d9b773252326ac68468b258ff453a461753c1",
+        "public_html/customer.php": "83a8eb36c75f545ebf4dcfb1d01518a28bb969e916dadc7c379b574974b37e4f",
+        "public_html/documents.js": "defb012d017145e9d16493f9a8ed32e3cd5a4316cc540538e035cf31b61bf84b",
+        "public_html/documents.php": "410b1e4798a379a742186d2518937f43d96dca3bb8ef52f2b83f4376f037c5db",
+        "public_html/favicon.ico": "4ca8234f48266b2e1efc708a7bbfe87b2f5adaa0cbb8f68d54a5a1b8cbccf19e",
+        "public_html/favicon.svg": "d51ef61e2e56597ca0036305ff509c6398bc16564c9b1f7885305ee44fc469d3",
+        "public_html/finance.js": "6a9be677fc5cee01f47e630bbfb7ab2ac6078bb8b74b562f40c0c200d4f03950",
+        "public_html/finance.php": "2b48c3b1b54c46d9d8f15ccb6d7befaa89ec26977fca44d5b24fd620955d1c53",
+        "public_html/handoff.js": "2327cc5b10e5cc6ce88fe5fa9760e1b3a1e1f0d2b2d115c9373001bd91108a9d",
+        "public_html/handoff.php": "a10c806bf94ee20f364d120c4ff30a215400b0011de06232f7cc02eded746456",
+        "public_html/index.html": "72ad35e194e4c11eed51c053e6eb6700b02c465a73d1215e189fb503e6fd573f",
+        "public_html/index.php": "e9ad59ce28e4abf3d3b6f4072f1f88cb6b8ec75a653d3fea33d22b9170c514f8",
+        "public_html/invoice-document.php": "0647e9c895b54484a2cc0d13b52722c384848355962f8c82046e648d155a916a",
+        "public_html/lifecycle-api.php": "6efc30fe4d81c134b72446d222fea369ce0a983841dfdc40d0bd03727d6c5d70",
+        "public_html/manual-invoice.php": "a0b541560b8d5d5fa12164401eaa20a4d6e651120a6353a8b1d957c337e3a578",
+        "public_html/max-settings.js": "7915d93718253a56636bde4b469a18eb0dbed337e447f3c579ceb77811580512",
+        "public_html/max-webhook.php": "940169b2c288340d2c987e1d49311b0c6772dd6604982a6a270fe9e12821ddaf",
+        "public_html/operations.css": "2e44371c1f67137339f502bcc37058ee7615f598c63d636e44744ff4135594d7",
+        "public_html/operations.js": "f37b1a8725af681ec86f0156eda4792403e32aba5aceacd9d9d1c2b1b083fd8d",
+        "public_html/ordering.js": "0675730f21a246f060c142250d5736ca8565bbf92de766191b9ee89b5dd8e007",
+        "public_html/ordering.php": "a317198e84c994a0862e5fca58d46bc7a16b88a53b892b46abee2c33dcd94304",
+        "public_html/orders.js": "4a59c6a4d5debffafd743bb2d4773991c06d07d3e06f3dad2999aa5cf9c57caa",
+        "public_html/orders.php": "afe2144ac15de7ffedf67b3270d473043a65e62061ea040186ea54613b790993",
+        "public_html/owner-setup.js": "472fe72c011992f81400ba83961f48fc51792abc465cd36df496c3feda848652",
+        "public_html/owner-setup.php": "0b630d60daafb2b0c7395d374c584ea68c10eeac93789c2d3c2afee95586f2ab",
+        "public_html/payment-webhook.php": "45e4e5b642ea8402a98cf5659b661202c1183080c931d738a8f062900d4adf8c",
+        "public_html/portal.js": "33b2e89b9fc9615183508655f11eb6e8e4be46309ee6e58567f046008de89e13",
+        "public_html/portal.php": "17488d1b4c7e40692f5eeaf4ca18802d633a527da31894a5299ab84d8832b687",
+        "public_html/pricing.js": "f9f28a7d596f7f67011cc8976a3949e1ccf510558cdae0bdfea56896cf245b31",
+        "public_html/privacy.php": "6703806ae647387b7890db7e55d9b26cbb2c3ac5cfb06572781b08a0b30e0c34",
+        "public_html/production.css": "89704b69b5f68bc1128e009b9eb99a885e32365c3500318d2697dd9e470fa916",
+        "public_html/production.js": "3ea833bb37843729f7c516aa7c52e5f6c21077fd582709fa632e835240ff96d4",
+        "public_html/production.php": "561916acc5cd5aa2849642cc84db8980576d0fb84c7e25f19c3976dd71c7ec9a",
+        "public_html/prospect-api.php": "9f9495a953c8d3d6df2abe51e75c555d3c9c6ed24f7e4e8a52959af0966597c7",
+        "public_html/prospect-owner.js": "3008459687a65a519d3df7cfdc7e566384f686647251a0f9cfe1af4b7191a9c9",
+        "public_html/prospect-owner.php": "071963edeefe7022fdafa27e8a9b974b3e6e0d2f801c386ac115fe1097fef953",
+        "public_html/prospect.js": "63c2802cbce824d9cecdb056789c5d123d83a8922334ad50ac2ff94dcf82d310",
+        "public_html/prospect.php": "67cfd2f4ae82ae5d50df3b6b3a428867061fe9223729c707f6adcd32a8d39808",
+        "public_html/robots.txt": "325850551f3a50acf9ecfa8687bee1e8b99715540824d323ff24b21f4ae06ad0",
+        "public_html/script.js": "971c5c8ef75a742c277dfe94609c2e0f27e609b5b1ef415fc533d25e877d6ebf",
+        "public_html/services.php": "d9a6d6e836fb15abd7561c14673070bc11e11ad97cc022a3959fe4cf5b603c5e",
+        "public_html/services/guide.css": "92f3c981ffb935868a1a32fccc66ff5e4f4ea51d7b6982cd8a0f114c237ac3dd",
+        "public_html/services/guide.js": "8ef4f40579a6ec609373ca269c7c7c38d636e8c348c33126c6e3a116b653b9c1",
+        "public_html/sitemap.php": "6ec1ca11e77e8f9eea38b0681916b7a8fd70e5eeef27777947f0d56975a7b50a",
+        "public_html/sitemap.xml": "9aede7ee36635f74febb5e575e188b52408b60153843d15c5d82c55540db9573",
+        "public_html/studio.php": "18491b2b3dab70a24592998422d3ed93f5601fbc8f3133428fb6dc8a72eeedfc",
+        "public_html/styles.css": "4b1963e3b67add4244e60eac355e1643ff991207c8641346831162d5185cb6a3",
+        "public_html/workspace.php": "7bbecc4523ddae06bd4ccb6bacd767c0415501d91040c526758607f379697678",
+        "private/.htaccess": "fa28d421a28ed9b6f4b997d5119c2b8adbacff6e2dd119a179b71230f9664934",
+        "private/ai/approvals.php": "ba5b8894b9db93e88a15bdf105703aec3a91e4dff98d11d806f7d43d5117abc8",
+        "private/ai/context.php": "325c0b37c517eb5245fe723f1a469730af7c9ea0a1e178261029358f7bc9e930",
+        "private/ai/core.php": "d7b4eb5f4983d63edd0a5978883d7dfc9bad0293c45746ff5487368f75f9dc86",
+        "private/ai/engine.php": "74916ec9eebac2e309219417e0492a743146bb2f113c30de1fd7fca69f076047",
+        "private/ai/provider.php": "5aefc6e11a37f64ab6d6d14d05e56de240c0038601f4d657edb5b56f06ec75b3",
+        "private/ai/public.php": "cedfc78fbf3c9b2fb1af9f5f36e9d467151f84fbee1b9a8109143bc474f2aa15",
+        "private/ai/read.php": "931d6f56e8b3d93a124087c0623e465277e7c84ed56922de8d17d2c20b02d183",
+        "private/ai/registry.php": "cb70ce76c0aeeaa0018ba6fc7b03cb757d77d02622a0dd0dc112d01842a6d98a",
+        "private/ai/routes.php": "52480f8f2924f024a8003e908296e070a6eed48d88b0076ed1f0a51e1bbf079f",
+        "private/ai/rules.php": "c8a87336b0ce52ba1bc4335c699c33407518d4076e860b376ceaa9f582490fdf",
+        "private/ai/schema.php": "1508dc9b7ca9a765fd3a59118dda2572458a20a4db95d66ed3beef6fe2417b57",
+        "private/ai/tasks.php": "5a39156b8bb5a20482f7a100edfadc12d65d2d771f39868ac183766170f9e6c2",
+        "private/app.php": "7902e99b96dcc524b209b1ef81b67fd8e2081064fbcd9b3d4991e97ea8944c44",
+        "private/billing/core.php": "3e5fd98660da20633ac3c4cc5f7ffae595c99d19e28f481e067279a31323813f",
+        "private/billing/hooks.php": "66bc87ff27cb890e7dcd9ff64394398e2181b17e143ccf262fd97a47d90b35c2",
+        "private/billing/invoices.php": "64d9061d15ca17ca9d79740c0716e18cb9312b1a7ea83728ac8485ec6b115ff6",
+        "private/billing/notifications.php": "d70c854bdfaaf904e50aa3b0683d89014b6be0b2a4e3cc199e28aaf7a8b1c9dd",
+        "private/billing/payments.php": "183a866d0a7a56ca998f08ae3fca6d1551d53ff5004622ea3df24acb98d8991c",
+        "private/billing/provider.php": "24977ed957e6af316119b07e9a8e3d8893a3904043eeb4d5ef2c5efb2b7e52e5",
+        "private/billing/read.php": "8088a8b066d0b39dacf59edc1d4ff3d0bf8cf04af000e78e05ef1f2eb77b2bc7",
+        "private/billing/routes.php": "66f108965d8a33748c18d2b74801a879e433b76aa4000fb59f931e61faa8727c",
+        "private/catalog/bindings.php": "2d8d15f078d86b18ed5ebd1b78091ce5714417e00c343d4a062ad40b329a1c7b",
+        "private/catalog/contracts.php": "3c5826c09b21e1641c0970e244dfdf77231e046fd77f34d2ddd22fb712a6d50d",
+        "private/catalog/core.php": "9708d7553396d497a11dec8cd6aaf056c4203f6fe986124e7679fc7b7fbc61d6",
+        "private/catalog/manage.php": "12dfcfeee04f718a1d1ff72c4ed6c75c6848eb57496a6968cbe3b5c034ccc80e",
+        "private/catalog/offers.php": "e8977be1639929eaddf4f13d80e093b546e411144cf60f1c24484a0e270f5da4",
+        "private/catalog/read.php": "5ddca8b92c86aa9da3cefbedf859b7db0699c5d1bd14af7861934d61e1bd54cd",
+        "private/catalog/requests.php": "edf4909a95a64b259222418d4c875fe9b4394f4a04493972be27708a17692351",
+        "private/catalog/routes.php": "d8c72ad4d759acf6ee157b4d4e7d1ba61881526df43152c6737df80a9c77604f",
+        "private/collab/approvals.php": "cad734d3b18afba2b572b1df326835a57313d6b87d72e3c30e10e0cad7b003ac",
+        "private/collab/core.php": "a7d28edab9fbfc36b4377f4e258e2d552dc996566f370c1e57fd3614c938f67a",
+        "private/collab/documents.php": "240757b81744b02f60cb0ff7b0466df6cef30b198cd147ab0825fafc36657566",
+        "private/collab/files.php": "64574af4c4095956035326a4067b93de91201443fddb4536cf2b77f32d3ff493",
+        "private/collab/messages.php": "d3d7ce4c650619d4bca71c82ac755cb908cbe43c6f1819150f622cda55f84c6a",
+        "private/collab/routes.php": "cfb132c259f4b807f1d3ace3873fa2c2deedcbb69bc1cf9316215ccafc8d2181",
+        "private/crm/core.php": "475d030c042a5449dd019d3930bfda732872ff1c550d61e44d43e3ad98d21ab8",
+        "private/crm/portal.php": "a78e27a0e0f1ad93fc7fcbfca307ad7306c3e10f6a971d5595ba850494a88de1",
+        "private/crm/read.php": "aa01381dabce18d72475ff90fc46e790fa7543f5f7dff2c80efebe2167c63607",
+        "private/crm/routes.php": "29e436bdf7f2c8022d5e8c1351eb1ab8626320f2ca40123ca46024b9eb15438a",
+        "private/crm/write.php": "ea05051233d1531eac080a5a2bc710876c144a4a070898a66356452c233ecef7",
+        "private/customer-auth.php": "1a9e6a07abd6ecdbb2808d97faa916fc5d88989c2ad71693f60e6abe4699309e",
+        "private/customer-mail.php": "ce5d2d142c37d423052a90edbd3fa24f54490ce00ae2b9483eb16c9f26787ba4",
+        "private/customer-settings-state.php": "5483975304971a6dd4ac82fb422a0626f869d04b36f0fecaaf764741a03feedf",
+        "private/customer-settings.php": "cf3ac88ff2ec7e1d84895238e03187b3a0beccfce2cfc2f2fbea943540847bdb",
+        "private/legal/privacy-2026-10-26-v1.json": "43d439d8235d4aaeba04c658edc84237bb210eb9758961e073c2af44fcc51fc6",
+        "private/legal/privacy-2026-10-27-v2.json": "7b624624e6803843ab14e73e4620d7e60335c686dae51057dc7ff9b267cfe737",
+        "private/lifecycle/closure.php": "99ec36ee98a7dd1388095a8df13b4dfcebb7c1e955008b934c4ad88715e1446c",
+        "private/lifecycle/contract-details.php": "ce94683679a0e69d73540434ace85a82219e91d5ef56d81381b6a938cf9e06b0",
+        "private/lifecycle/contract-package.php": "549f704a9af26a8b2e37bddd5b2b38adf9c9b5d5e9411b74287cbbd67acb5b70",
+        "private/lifecycle/contract-routes.php": "42bfaccebc00e90138b4ff618f7892e2250d415e9c12c2cc9195069ecb6ca643",
+        "private/lifecycle/dashboard.php": "14f93a54fb1e55a74db354c4d1c9e8c77b6ed93daed444f5eb927c9b17f89dc9",
+        "private/lifecycle/documents.php": "8f86a7427a9237150c7f44c8facb9be75c86fa52c553ef2fa0684f589c5500a4",
+        "private/lifecycle/flow.php": "2f6f8a3bb49c1c137e81055913e236732b8f83d063e2ecf7c34491bbe28a45d1",
+        "private/lifecycle/package/01_contract.docx": "e554f2578f8911c2cc8d44785149a0a6d09c04e9c35b564d7a7c9e795b690ad8",
+        "private/lifecycle/package/02_specification.docx": "4bfcd72b32ada090a9dc587b0d70c3358ac997a65adadbf164cdcdef65bb0b59",
+        "private/lifecycle/package/03_acceptance_act.docx": "52a17cb82265706b6bebb222b38cf38ff125ac75867e88d02f15121dc2562593",
+        "private/lifecycle/package/04_change_agreement.docx": "96b67a04ac17907680fc484dafeb6b490b6a80da0e22ecfd94c0f373999d7570",
+        "private/lifecycle/package/05_portfolio_permission.docx": "2ff7d9e8aef6856d5d1313d4b2cecc794165227cfa0437f78b639c50bf8720e6",
+        "private/lifecycle/package/06_review_permission.docx": "8537d3c659f0d49a6ad4b8ea3eef6dcbef73478ef3c139c5f529365a9a88f0a7",
+        "private/lifecycle/package/catalog.json": "1d3153e90cf09bfcff97c241cf73288fb62d59defae7594936bd383f99c1ccbb",
+        "private/lifecycle/package/logo.png": "19b596a6b557496013ae0fb4524b25c515f59b827a811ef866919df4174ca4a0",
+        "private/lifecycle/payments.php": "9805739535d06eb16a327b818f41588396a2b697fc3878bf22670415435915e7",
+        "private/lifecycle/pdf.php": "73e140b057dbc9135cf77cd65a601858f0c168f302b7cdd347e785254bab1c92",
+        "private/lifecycle/prospects.php": "504fa9635f1cb6315359c341f610c5f6e0c993fa8b3591dd6400c2d11e180062",
+        "private/lifecycle/routes.php": "98a28b5dbd6397ff9fec40331714dd151846fa3e73eb4e4d364c80c1f050096b",
+        "private/lifecycle/schedule.php": "1f9f039f30a7cc42b44172e38e36fbe2f10d1efd8ef5ef8c85d9236e029691d3",
+        "private/lifecycle/templates.php": "6b8565a943055409a5d9910d5ff4b2c4d2d991f43f4be317bb8d9fc929bb1e68",
+        "private/manual/actions.php": "00bfa44f5f184b13d3158286701dd126c6f40b9ffde856ad32c6d3133a38db02",
+        "private/manual/core.php": "57f82273cec32a9481975520b86be27717664146770997a0184193de2426d129",
+        "private/manual/routes.php": "2ec0062bed093b40a695559ce4742f43313a4cc3060343a25f1b91a6e050ac31",
+        "private/manual/seal.php": "606e8aa86d2df2c02347fd61514695192d860ebcb645d71ad93199eba04bc7eb",
+        "private/notifications/max.php": "114899d1aab3921d8c0b58ebc42bf82edaadd137ee93d2ef089dea744208b410",
+        "private/notifications/worker.php": "ab6a8bb5cb83d75820fde1962f74a22dc2e38f8e1b14a0f00d261099d81e5c80",
+        "private/owner-bootstrap.json": "ab3e8a16526ce5e18c2fc9345e2aa8debe5f846ada35d7dd5704ffa5f56a3ca0",
+        "private/owner-bootstrap.php": "9ba39070713357b1ce99617bd01789ac33c02dd9e339a4654e69f69f0ccd61cb",
+        "private/pricing/automation.php": "28ade0fdca295c2a2b07299b00127c68e553ee9917c290907c09cbd5948b5cd9",
+        "private/pricing/core.php": "74e3a2bf1d369d90c8155a63b9677878e5794016ce1d531181ace1221618dd88",
+        "private/pricing/engine.php": "4746db7082c486eb8b629d96fcc310983fec450d7e27f130029bc7911f571203",
+        "private/pricing/routes.php": "b444e29348a683f03740bd4b2b281547fc3493c9ef8aacb882367e931f2ef17b",
+        "private/product-navigation.php": "2649712ebd65130e62ac8e6e47ab45cfffaefeb9a33dc039f2988e4f102784e8",
+        "private/production/artifacts.php": "d3d7a7c9aec8283d22c8b62c47965e367030ddf5c0e26c0921a6c1acf782e74a",
+        "private/production/contracts.php": "feacfcd164f1e139549e95607ddf21c9b3b4c8aa6fc46e9fe10b6fa817a156da",
+        "private/production/core.php": "dfc43b2318c5ba607b8506e0605f9b12adab4b812b8bf4459c9cbb51b6096d30",
+        "private/production/costs.php": "86e7eafeda1cc39c104177fcae7110c4fed3a56a5f46fa3d353b02dadf445c20",
+        "private/production/engine.php": "b6b84e72cce0b3d7baf26d432a8342876113db576901c197c0ee0d7a49ecc9dc",
+        "private/production/packages.php": "4fa5f5f1d6c4914159d118fca6c5ce3fbeac91b194b6458db3416bb78c603479",
+        "private/production/plans.php": "8dff7a26e5285aa70565e4bacbb5986885bfa061ab5f7dada388c23c0cb9cd9e",
+        "private/production/qa.php": "7555d746aa8deec69f988a15ca14705b295574b930aeb9ab9cea088dc50998e7",
+        "private/production/read.php": "3aebe95e5f6843319173763a1e71045b6646f12ca4dd046e031a46d62171116c",
+        "private/production/registry.php": "a79c0a663d9e735e3b9312fa65ea5717efd20a8c1b99e55c2a2784c94da775be",
+        "private/production/routes.php": "f0a5e33d9dbb634f5faf67e78ffc7b4184767369f39a9a092c81c49f7251a695",
+        "private/production/seal.php": "e1278aed2d2ab557d15e79a77c0c0cb0f17c6f7a1657454854c46a864909fa53",
+        "private/release-features.php": "8b3fc7ad3028ae8d18b9b8524ef73d4b6ae0f0bca300ce813fa3c18fedc6ffe8",
+        "private/services/catalog.php": "000584002d78cae483af20dd9e4e65504157693be353500771ca06bddef65405",
+        "private/vendor/tfpdf/DEJAVU-LICENSE.txt": "63d3ba759d12804c5b31a9d5940d855c1820d1f5999e6b0872eb1c7ff045fbc9",
+        "private/vendor/tfpdf/LICENSE.txt": "273cc5937b062c569acdd8c4cc8a4440ff4dcddbc33a7b2baa8f4ff0611ae403",
+        "private/vendor/tfpdf/NOTICE.txt": "978cdadb55a99835feee4d35ce4afe00896b03a92b27320a2f8ba5a3d1665d49",
+        "private/vendor/tfpdf/font/unifont/DejaVuSans-Bold.ttf": "a4c5bc453ca281d90ea079e596da7ae0dfeb5777497c29ec254e76d97ff6f890",
+        "private/vendor/tfpdf/font/unifont/DejaVuSans.ttf": "57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e",
+        "private/vendor/tfpdf/font/unifont/ttfonts.php": "113790ec67ad76f084fdb6dc244d420c6fc1e0769139d70396977278d1d6ef36",
+        "private/vendor/tfpdf/tfpdf.php": "59bbf230dd430ee28d874f261063f61a1572ae319b11a465f4db3760f38a780c"
+      },
+      "ok": true,
+      "applied": true,
+      "revision": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+      "migrations": [
+        "019_contract_details"
+      ],
+      "baseline_healthy": true
+    },
+    "finalize": {
+      "ok": true,
+      "revision": "d0f8437b41143d06b703f9076b4d0bc8a944ad5f",
+      "files_verified": true
+    }
+  }
 }
