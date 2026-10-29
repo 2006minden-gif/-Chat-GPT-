@@ -26,7 +26,7 @@ function lc_dispatch(bool $customer,string $route,string $method):never{
   if(preg_match('~^templates/([1-9][0-9]*)/(review|approve|retire)$~D',$route,$m))return lc_template_action($a,(int)$m[1],$m[2],$d);
   if($route==='documents')return lc_generate($a,$d);
   if(preg_match('~^documents/([1-9][0-9]*)/(send|response|signed-copy|verify|reject)$~D',$route,$m))return lc_document_action($a,(int)$m[1],$m[2],$d);
-  crm_fail(404,'Действие не найдено.');});json_response($result);
+  crm_fail(404,'Действие не найдено.');});if(isset($result['access_job_order'])){try{$result['access']=la_run((int)$result['access_job_order']);}catch(Throwable $e){$result['access']=['state'=>'PENDING','delivery_confirmed'=>false,'retry_needed'=>true];}}json_response($result);
  }crm_fail(404,'Раздел не найден.');
  }catch(PDOException $e){if($e->getCode()==='23000')fail(409,'Запись уже существует или связана с другим действием. Обновите данные.','lifecycle_conflict');throw $e;}catch(CrmFailure $e){fail($e->status,$e->getMessage(),'lifecycle_error');}
 }
