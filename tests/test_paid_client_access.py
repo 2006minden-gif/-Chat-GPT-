@@ -7,6 +7,8 @@ class PaidClientAccess(orders.OrderLifecycle):
  def setUp(self):
   super().setUp();self.smtp=SMTPServer(('127.0.0.1',0),SMTPHandler);self.smtp.messages=[];self.smtp.reject=False;self.smtp.reject_once=0;threading.Thread(target=self.smtp.serve_forever,daemon=True).start();self.addCleanup(self.smtp.server_close);self.addCleanup(self.smtp.shutdown)
   self.f.config.update(customer_registration_enabled=False,paid_client_invitation_required=True,customer_mail_verified=True,customer_mail={'transport':'test-smtp','host':'127.0.0.1','port':self.smtp.server_address[1],'from':'owner@example.invalid','encryption':'none'});self.f.write_config()
+ def bank(self,i,**extra):
+  extra.setdefault('amount',f"{int(i['total_minor'])//100}.{int(i['total_minor'])%100:02}");return super().bank(i,**extra)
  def invite(self,oid,email=None):return self.owner.post(self.base+'/customer-api.php?r=owner/invite',json={'customer_id':self.customer_id,'order_id':oid,'email':email or self.invite_email})
  def token(self):
   body=base64.b64decode(self.smtp.messages[-1][1].split(b'\r\n\r\n',1)[1]).decode();return re.search(r'#token=([a-f0-9]{64})',body).group(1)

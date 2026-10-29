@@ -6,6 +6,7 @@ function product_navigation(bool $owner):void{
  if(($c['client_collaboration_enabled']??false)===true){foreach(['messages'=>'Сообщения','files'=>'Файлы','documents'=>'Документы','approvals'=>'Согласования'] as $route=>$title)$links[$title]='/collaboration.php'.$mode.'#'.$route;}
  if(($c['lifecycle_documents_enabled']??false)===true)$links['Договорные документы']='/documents.php'.$mode;
  if($owner)$links['Документы до кабинета']='/prospect-owner.php';
+ if($owner)$links['Реквизиты и PDF']='/contract-settings.php';
  if($owner)$links['Настройка клиентского кабинета']='/client-settings.php';
  if(($c['order_lifecycle_enabled']??false)===true)$links['Рабочий цикл заказов']='/orders.php'.$mode;
  if(($c['lifecycle_finance_enabled']??false)===true)$links['Оплата и чеки']='/finance.php'.$mode;

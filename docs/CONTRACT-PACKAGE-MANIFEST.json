@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "customer_template_files": [
+    "01_contract.docx",
+    "02_specification.docx",
+    "03_acceptance_act.docx",
+    "04_change_agreement.docx",
+    "05_portfolio_permission.docx",
+    "06_review_permission.docx"
+  ],
+  "internal_only_files": [
+    "00_INTERNAL_GUIDE.md",
+    "manifest.json"
+  ],
+  "status": "DRAFT_REQUIRES_OWNER_APPROVAL",
+  "generation_rule": "One template produces one standalone PDF. Never export the archive or internal files as a customer document."
+}

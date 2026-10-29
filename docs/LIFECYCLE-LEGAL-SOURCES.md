@@ -48,3 +48,17 @@ https://help.sweb.ru/nastrojka-smtp-na-sajte_973.html .
 Fixed smtp.spaceweb.ru465SSL uses the actual mailbox login/from and protected
 password input, with peer verification. A real received-code challenge follows
 SMTP acceptance; no fake mailbox or transport credential is seeded in production.
+
+## Separate supplied DOCX package checkpoint — 28 October 2026
+
+Rechecked official FNS NPD FAQ (https://npd.nalog.ru/faq/), Mintrud 152-FZ
+publication (https://mintrud.gov.ru/docs/laws/130), and official Rospotrebnadzor
+consumer-law publication (https://zpp.rospotrebnadzor.ru/npa/federal/192115).
+These official publications do not establish an independent legal review or
+current suitability of every supplied clause. No substantive legal clauses
+were drafted or rewritten by this import. The six owner-supplied standalone
+DOCX files replace the combined package as new source templates; each starts
+NEEDS_LEGAL_REVIEW and requires exact owner approval. Internal guide and source
+notes stay outside customer PDFs. Paper-copy review is an owner attestation,
+not an automatic signature check. MyTax receipts remain manual. Publication
+permissions do not automatically authorize identifying-data or photo publication.
