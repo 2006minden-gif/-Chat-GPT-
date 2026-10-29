@@ -27,7 +27,7 @@ class OwnerWorkflow(package.ContractPackage):
   with sync_playwright() as pw:
    browser=pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);page=browser.new_page();page.goto(self.base+'/studio.php');page.locator('#password').fill(self.f.password);page.locator('#login-form button').click();page.locator('#dashboard').wait_for(state='visible')
    page.route('**/order-workflow-api.php?r=records*',lambda route:route.fulfill(status=503,content_type='application/json',body=json.dumps({'ok':False,'detail':'SYNTHETIC preparation disabled'})))
-   page.goto(self.base+'/order-workflow.php');page.get_by_role('heading',name='Готовность рабочего процесса',exact=True).wait_for();page.get_by_text('SYNTHETIC preparation disabled',exact=False).wait_for();self.assertTrue(page.get_by_text('Повторная проверка не требуется.',exact=False).is_visible());browser.close()
+   page.goto(self.base+'/order-workflow.php');page.get_by_role('heading',name='Готовность рабочего процесса',exact=True).wait_for();page.get_by_text('SYNTHETIC preparation disabled',exact=False).wait_for();self.assertTrue(page.get_by_text('Действующая политика:',exact=False).is_visible());browser.close()
 
 for name in dir(package.ContractPackage):
  if name.startswith('test_'):setattr(OwnerWorkflow,name,None)
