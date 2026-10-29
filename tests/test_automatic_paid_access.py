@@ -33,5 +33,8 @@ class AutomaticPaidAccess(workflow.OwnerWorkflow):
   self.f.sql('UPDATE nd_lc_access_jobs SET next_attempt=UTC_TIMESTAMP() WHERE order_id=?',params=[oid]);self.pump();self.assertEqual(len(self.smtp.messages),1)
   token=self.token();s=requests.Session();r=s.get(self.base+'/customer-api.php?r=session');s.headers['X-CSRF-Token']=r.json()['csrf'];payload={'token':token,'password':'SYNTHETIC-auto12345','password_confirmation':'SYNTHETIC-auto12345','consent':True,'policy_version':self.policy['version']};self.assertEqual(s.post(self.base+'/customer-api.php?r=invite',json=payload).status_code,200);self.assertTrue(self.job(oid)['delivery_confirmed'])
 
+ def test_changed_email_does_not_create_second_account(self):
+  oid,items,docs=self.prepared();self.f.sql('INSERT INTO nd_customer_accounts(customer_id,email) VALUES (?,?)',params=[self.customer_id,'previous-reviewed@example.invalid']);r=self.bank(items[0]);self.assertEqual(r.status_code,200,r.text);self.assertEqual(self.job(oid)['blocked_code'],'account_conflict');self.assertEqual(len(self.smtp.messages),0);self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_customer_accounts WHERE customer_id=?',params=[self.customer_id])[0]['n'],1)
+
 for name in dir(workflow.OwnerWorkflow):
  if name.startswith('test_'):setattr(AutomaticPaidAccess,name,None)
