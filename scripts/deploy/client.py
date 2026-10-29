@@ -158,11 +158,19 @@ if __name__=='__main__':
         release_id=datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'-r'+run+'-a'+attempt+'-'+args.revision[:12]
         remote=Remote(args.bundle,args.revision,release_id)
         expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if (p.startswith('public_html/') and p.endswith(('.js','.css'))) or p in ['public_html/favicon.svg','public_html/favicon.ico','public_html/sitemap.xml','public_html/robots.txt']}
-        try:report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets))
+        try:
+            report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets))
+            if report['result']=='deployed_and_verified' and 'private/workflow/diagnostics.php' in manifest['files']:
+                try:
+                    gates=remote.command(shlex.join([remote.php,ACCOUNT+'/private/workflow/diagnostics.php']),json_output=True)
+                    # Explicit safe field selection; never echo arbitrary remote settings or failures.
+                    report['workflow_gates']={k:gates[k] for k in ['ok','legal','document_templates','owner_details_reviewed','mail_verified','repeat_mail_verification_required','capabilities','remaining_actions'] if k in gates}
+                except Exception:
+                    report['workflow_gates']={'ok':False,'error':'gate_evidence_unavailable'}
         finally:remote.close()
         report['revision']=args.revision;report['release_id']=release_id
     except Exception as error:
         report={'result':'failed','error_type':type(error).__name__}
     args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,indent=2,ensure_ascii=False))
-    print(json.dumps({'result':report['result'],'rollback_verified':report.get('rollback_verified',False)}))
+    print(json.dumps({'result':report['result'],'rollback_verified':report.get('rollback_verified',False),**({'workflow_gates':report['workflow_gates']} if 'workflow_gates' in report else {})}))
     raise SystemExit(0 if report['result'] in ['deployed_and_verified','preview_passed','rollback_verified_to_baseline'] else 1)

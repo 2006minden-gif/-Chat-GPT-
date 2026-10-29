@@ -94,5 +94,11 @@
     "operator_sha256": "d3eb279f7d8cf6552a21befc808671587780f359d4074621b0bf5f32d82f1e6a",
     "up_sha256": "90ae6151c5df84fa11135cd1143c01d3489d0036e3a248d4dceaaf15018928ae",
     "down_sha256": "420448a7f7c3a169094681d9e45d47069bca6bf0dc69fa420daff43212b5662b"
+  },
+  "020_inquiry_workflow": {
+    "operator": "scripts/migrate-workflow.php",
+    "operator_sha256": "56608b8f20ad074eb08cb5c1dc0917e71f1e9a846b1a4c7fb53c84be5fec6d1d",
+    "up_sha256": "04644f824840e69d894a5b80ecac2b5369e98bf8c66dc3e37096555d22d19814",
+    "down_sha256": "f8f219b6f48f827b667d66061b0d6529e3d4363fe75d3f0e37d423dd090346cc"
   }
 }

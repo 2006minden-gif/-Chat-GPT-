@@ -13,4 +13,4 @@ try{if((config()['crm_operations_enabled']??false)!==true){http_response_code(40
 <div id="content"></div><footer id="pagination"><button id="prev">Назад</button><span id="page-number"></span><button id="next">Далее</button></footer>
 </main><dialog id="editor" aria-labelledby="editor-title"><h2 id="editor-title">Запись</h2><form id="record-form"><div id="fields"></div><p id="form-message" role="status" aria-live="polite"></p><button id="save">Сохранить</button><button type="button" id="cancel">Отмена</button></form><button id="reload-record" type="button">Загрузить актуальные данные</button></dialog>
 <dialog id="details" aria-labelledby="details-title"><h2 id="details-title">Карточка</h2><div id="detail-content"></div><button id="close-details">Закрыть</button></dialog>
-<script src="operations.js"></script></body></html>
+<script src="operations.js"></script><script src="owner-context.js" defer></script></body></html>
