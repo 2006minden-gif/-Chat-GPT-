@@ -8,6 +8,8 @@ function product_navigation(bool $owner):void{
  if(($c['lifecycle_documents_enabled']??false)===true)$links['Договорные документы']='/documents.php'.$mode;
  if($owner)$links['От обращения до приёмки']='/order-workflow.php';
  if($owner)$links['Документы до кабинета']='/prospect-owner.php';
+ if($owner)$links['Сроки и загрузка']='/planning.php';
+ if($owner)$links['Ручная оплата и QR']='/payment-settings.php';
  if($owner)$links['Реквизиты и PDF']='/contract-settings.php';
  if($owner)$links['Настройка клиентского кабинета']='/client-settings.php';
  if(($c['order_lifecycle_enabled']??false)===true)$links['Рабочий цикл заказов']='/orders.php'.$mode;

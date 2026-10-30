@@ -124,5 +124,17 @@
     "operator_sha256": "dba7594847c76d3aa484c2c3ba9686d5dc6a42685f787617643b8fe92d71e649",
     "up_sha256": "620df2e68c6604a4d96ec01abc5633a37bd455e13c226e1d6771119d41f356a2",
     "down_sha256": "28221c0362eeb8c01c7d9e55a906a5f4f40320b5859933d1567c8d27100e06c9"
+  },
+  "025_manual_qr": {
+    "operator": "scripts/migrate-qr.php",
+    "operator_sha256": "cdc0acb30e04faf03705c9a807c5774327989a48e038cd5ebb21bbe18524f7b0",
+    "up_sha256": "55cd6695c178e0c25484d3734cc2148fe7ad8349b6b730d948c91c954389f242",
+    "down_sha256": "fd321b3d0bac9ddf240c160ab40e62ef4987d8c8befe0b345ae90e42d84caa7e"
+  },
+  "026_owner_planning": {
+    "operator": "scripts/migrate-planning.php",
+    "operator_sha256": "eb195d623c2f3ca4c46892c94ba34bdde316519520d308b933b7fcdc9632e18a",
+    "up_sha256": "105bebe6aaa4570d2ad9d6499719ce608214ec85bb9273db520e2e72a7affb45",
+    "down_sha256": "4907f4f48c0882bfb0ca16eb831eed839f66fb2e4d5a38d7932f8d6a37e6a96c"
   }
 }

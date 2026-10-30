@@ -177,6 +177,9 @@ class RemoteFilesystemTests(unittest.TestCase):
   (self.candidate/'after-health.json').write_text(json.dumps(worse))
   self.assertEqual(self.agent('mark-unhealthy',1)['error'],'new_regression_requires_rollback')
   self.agent('rollback')
+ def test_private_payment_qr_original_survives_release_and_rollback(self):
+  file=self.root/'private/payment-qr-files'/'synthetic-original';file.parent.mkdir();data=b'SYNTHETIC private QR original bytes, not a payment QR';file.write_bytes(data)
+  self.agent('apply');self.assertEqual(file.read_bytes(),data);self.agent('rollback');self.assertEqual(file.read_bytes(),data)
  def test_private_publication_upload_survives_release_and_rollback(self):
   file=self.root/'private/publication-files'/'synthetic-retained-media';file.parent.mkdir();file.write_bytes(b'SYNTHETIC private publication media')
   self.agent('apply');self.assertEqual(file.read_bytes(),b'SYNTHETIC private publication media');self.agent('rollback');self.assertEqual(file.read_bytes(),b'SYNTHETIC private publication media')
