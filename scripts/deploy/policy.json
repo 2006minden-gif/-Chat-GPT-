@@ -52,8 +52,13 @@
     "invoice-document.php",
     "lifecycle-api.php",
     "manual-invoice.php",
+    "max-api.php",
+    "max-app.js",
+    "max-link.js",
+    "max-link.php",
     "max-settings.js",
     "max-webhook.php",
+    "max.php",
     "operations.css",
     "operations.js",
     "order-workflow-api.php",
@@ -184,6 +189,8 @@
     "manual/core.php",
     "manual/routes.php",
     "manual/seal.php",
+    "maxapp/core.php",
+    "maxapp/session.php",
     "notifications/max.php",
     "notifications/worker.php",
     "owner-bootstrap.json",
@@ -442,6 +449,17 @@
       "up_sha256": "8f7f9c2280160217a2140d7b0eec26a597a93db958933e39d67b38074a3e2444",
       "down_sha256": "13785871f4068d36f48211256342b91557af7fc358f2280f22f949a16f2ce344",
       "operator_sha256": "e543c0dce8b85a2e889ceb637b04bf27a503321cf5c2b14b6d53d40f961cdcb5"
+    },
+    {
+      "version": "024_max_identity",
+      "kind": "reviewed_additive",
+      "automatic": true,
+      "required": true,
+      "operator": "scripts/migrate-maxapp.php",
+      "depends_on": "023_publication",
+      "up_sha256": "620df2e68c6604a4d96ec01abc5633a37bd455e13c226e1d6771119d41f356a2",
+      "down_sha256": "28221c0362eeb8c01c7d9e55a906a5f4f40320b5859933d1567c8d27100e06c9",
+      "operator_sha256": "dba7594847c76d3aa484c2c3ba9686d5dc6a42685f787617643b8fe92d71e649"
     }
   ],
   "database_recovery_required": true

@@ -63,7 +63,7 @@ function ca_cookie(string $raw,int $expiry):void {
 }
 function ca_csrf(string $raw):string {return hash_hmac('sha256','customer-csrf-v1',$raw);}
 function ca_session(bool $write=false):array {
-    $raw=$_COOKIE[ca_cookie_name()]??'';
+    $raw=$_COOKIE[ca_cookie_name()]??'';if(isset($_SERVER['HTTP_X_NEURO_MAX_SESSION'])){require_once __DIR__.'/maxapp/session.php';$raw=ma_session_token($_SERVER['HTTP_X_NEURO_MAX_SESSION']);}
     if (!is_string($raw)||!preg_match('/^[a-f0-9]{64}$/D',$raw))ca_fail(401,'session_expired','Войдите в кабинет заново.');
     $q=db()->prepare('SELECT * FROM nd_customer_sessions WHERE token_hash=? AND expires_at>?');$q->execute([hash('sha256',$raw),time()]);$row=$q->fetch();
     if (!$row)ca_fail(401,'session_expired','Войдите в кабинет заново.');
