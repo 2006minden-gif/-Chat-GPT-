@@ -112,5 +112,11 @@
     "operator_sha256": "440f3ddde45aac409ad38d259319d5b5ff39a41f46aba93ae774f07ec23832be",
     "up_sha256": "49e340c6a8a0139ebb5f0e6a69f05c5167b51ff49c885e9e4d325e0496d4ae7d",
     "down_sha256": "a13d1c9310ca619e4d97cad3adca8ff4b68854589ecea7826540bf0c69900891"
+  },
+  "023_publication": {
+    "operator": "scripts/migrate-publication.php",
+    "operator_sha256": "e543c0dce8b85a2e889ceb637b04bf27a503321cf5c2b14b6d53d40f961cdcb5",
+    "up_sha256": "810d85fe5b3222fb5bbf075ab3595b5d088afbf67e69012abdafcbeea9230378",
+    "down_sha256": "13785871f4068d36f48211256342b91557af7fc358f2280f22f949a16f2ce344"
   }
 }
