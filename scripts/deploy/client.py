@@ -170,7 +170,7 @@ if __name__=='__main__':
                 try:
                     gates=remote.command(shlex.join([remote.php,ACCOUNT+'/private/workflow/diagnostics.php']),json_output=True)
                     # Explicit safe field selection; never echo arbitrary remote settings or failures.
-                    report['workflow_gates']={k:gates[k] for k in ['ok','legal','document_templates','owner_details_reviewed','mail_verified','repeat_mail_verification_required','capabilities','remaining_actions'] if k in gates}
+                    report['workflow_gates']={k:gates[k] for k in ['ok','launch_readiness','legal','document_templates','owner_details_reviewed','mail_verified','repeat_mail_verification_required','capabilities','remaining_actions'] if k in gates}
                 except Exception:
                     report['workflow_gates']={'ok':False,'error':'gate_evidence_unavailable'}
         finally:remote.close()

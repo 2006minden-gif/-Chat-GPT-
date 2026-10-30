@@ -2,7 +2,7 @@
 'use strict';
 const year=document.querySelector('#year');if(year)year.textContent = new Date().getFullYear();
 document.querySelectorAll('[data-service]').forEach(link => {
-  link.addEventListener('click', () => { document.querySelector('#service').value = link.dataset.service; });
+  link.addEventListener('click', () => { const select=document.querySelector('#service');if(select&&Array.from(select.options).some(o=>o.value===link.dataset.service))select.value=link.dataset.service; });
 });
 let pendingSnapshot = null, pendingKey = null, submitting = false, privacy = null;
 const briefForm = document.querySelector('#brief-form');
