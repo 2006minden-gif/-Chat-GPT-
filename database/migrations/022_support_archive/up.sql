@@ -1,0 +1,13 @@
+CREATE TABLE nd_order_access_policies (
+ order_id BIGINT UNSIGNED PRIMARY KEY,
+ agreement_id BIGINT UNSIGNED NOT NULL,
+ terms_hash CHAR(64) NOT NULL,
+ expires_on DATE NOT NULL,
+ warning_days INT UNSIGNED NOT NULL,
+ reason TEXT NOT NULL,
+ retention_json MEDIUMTEXT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ reviewed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY(order_id) REFERENCES nd_orders(id) ON DELETE RESTRICT,
+ FOREIGN KEY(agreement_id) REFERENCES nd_lc_document_bindings(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

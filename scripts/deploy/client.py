@@ -160,6 +160,12 @@ if __name__=='__main__':
         expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if (p.startswith('public_html/') and p.endswith(('.js','.css'))) or p in ['public_html/favicon.svg','public_html/favicon.ico','public_html/sitemap.xml','public_html/robots.txt']}
         try:
             report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets))
+            if report['result']=='deployed_and_verified' and 'private/workflow/prepare.php' in manifest['files']:
+                try:
+                    prepared=remote.command(shlex.join([remote.php,ACCOUNT+'/private/workflow/prepare.php']),json_output=True)
+                    report['draft_preparation']={k:prepared[k] for k in ['ok','legal_draft_prepared','service_drafts_created','published','error'] if k in prepared}
+                except Exception:
+                    report['draft_preparation']={'ok':False,'error':'draft_preparation_unavailable'}
             if report['result']=='deployed_and_verified' and 'private/workflow/diagnostics.php' in manifest['files']:
                 try:
                     gates=remote.command(shlex.join([remote.php,ACCOUNT+'/private/workflow/diagnostics.php']),json_output=True)

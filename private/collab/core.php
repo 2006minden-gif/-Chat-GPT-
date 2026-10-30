@@ -12,6 +12,7 @@ function cc_project(array $a,int $id,bool $write=false,bool $lock=false):array{
  $params=[$id];$sql='SELECT p.*,c.status AS customer_status FROM nd_projects p JOIN nd_customers c ON c.id=p.customer_id WHERE p.id=?';
  if($a['type']==='customer'){$sql.=" AND p.customer_id=? AND c.status='active'";$params[]=$a['customer_id'];}
  if($lock)$sql.=' FOR UPDATE';$p=crm_query($sql,$params)->fetch();if(!$p)crm_fail(404,'Запись не найдена.');
+ if($a['type']==='customer'&&$p['order_id']&&!($a['document_archive']??false)){require_once dirname(__DIR__).'/support/core.php';sa_assert((int)$p['order_id']);}
  if($write&&($p['archived_at']!==null||$p['status']==='cancelled'||$p['customer_status']!=='active'))crm_fail(409,'Проект закрыт для изменений. История сохранена для чтения.');return $p;
 }
 function cc_owner(array $a):void{if($a['type']!=='owner')crm_fail(403,'Это действие доступно только владельцу.');}
