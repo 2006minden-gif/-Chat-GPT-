@@ -105,6 +105,7 @@
     "services.php",
     "services/guide.css",
     "services/guide.js",
+    "sitemap-publications.php",
     "sitemap.php",
     "sitemap.xml",
     "studio.php",

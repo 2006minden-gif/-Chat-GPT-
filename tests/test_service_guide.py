@@ -36,7 +36,7 @@ class ServiceGuide(unittest.TestCase):
   import xml.etree.ElementTree as ET
   xml=requests.get(self.base+'/sitemap.xml');self.assertEqual(xml.status_code,200)
   locations={n.text for n in ET.fromstring(xml.content).findall('{*}url/{*}loc')}
-  self.assertEqual(locations,{'https://neurodelo.pro'+p for p in ['/','/services.php','/privacy.php','/consent.php','/sitemap.php']})
+  self.assertEqual(locations,{'https://neurodelo.pro'+p for p in ['/','/services.php','/privacy.php','/consent.php','/sitemap.php','/catalog.php','/portfolio.php','/reviews.php']})
   robots=requests.get(self.base+'/robots.txt');self.assertIn('Sitemap: https://neurodelo.pro/sitemap.xml',robots.text)
   page=requests.get(self.base+'/sitemap.php');self.assertEqual(page.status_code,200);self.assertIn('Карта сайта',page.text)
   icon=requests.get(self.base+'/favicon.ico');self.assertEqual(icon.content[:4],b'\x00\x00\x01\x00')

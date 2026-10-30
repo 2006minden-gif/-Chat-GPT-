@@ -7,3 +7,5 @@ Disallow: /crm.html
 Disallow: /private/
 
 Sitemap: https://neurodelo.pro/sitemap.xml
+
+Sitemap: https://neurodelo.pro/sitemap-publications.php
