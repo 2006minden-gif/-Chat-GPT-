@@ -1,6 +1,6 @@
 
 'use strict';
-document.querySelector('#year').textContent = new Date().getFullYear();
+const year=document.querySelector('#year');if(year)year.textContent = new Date().getFullYear();
 document.querySelectorAll('[data-service]').forEach(link => {
   link.addEventListener('click', () => { document.querySelector('#service').value = link.dataset.service; });
 });

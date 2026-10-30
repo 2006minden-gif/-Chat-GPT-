@@ -50,4 +50,14 @@
       status.textContent = 'Автоматическое копирование недоступно. Выделите текст и скопируйте его вручную.';
     }
   });
+  let inquiryScriptsLoaded=false;
+  document.getElementById('send-site-brief').addEventListener('click',()=>{
+    if(result.hidden||!summary.value)return;
+    const section=document.getElementById('site-inquiry');section.hidden=false;
+    document.getElementById('idea').value=summary.value;
+    document.getElementById('service').value=({landing:'Сайт или лендинг',website:'Сайт или лендинг',ai:'ИИ-агент',app:'Веб-приложение'})[service.value];
+    section.scrollIntoView({behavior:'smooth'});
+    if(!inquiryScriptsLoaded){inquiryScriptsLoaded=true;const api=document.createElement('script');api.src='/api-client.js';api.onload=()=>{const form=document.createElement('script');form.src='/script.js';document.body.append(form);};document.body.append(api);}
+    status.textContent='Текст перенесён в форму ниже. Заявка ещё не отправлена; проверьте текст и самостоятельно подтвердите согласие.';
+  });
 })();
