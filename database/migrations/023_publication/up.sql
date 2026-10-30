@@ -3,7 +3,7 @@ CREATE TABLE nd_publications (
  kind ENUM('portfolio','review') NOT NULL,
  slug VARCHAR(80) NOT NULL UNIQUE,
  order_id BIGINT UNSIGNED NULL,
- state ENUM('DRAFT','PUBLISHED','UNPUBLISHED') NOT NULL DEFAULT 'DRAFT',
+ state ENUM('DRAFT','PUBLISHED','UNPUBLISHED','ARCHIVED') NOT NULL DEFAULT 'DRAFT',
  head_revision INT UNSIGNED NOT NULL DEFAULT 0,
  published_version_id BIGINT UNSIGNED NULL,
  sort_order INT NOT NULL DEFAULT 0,
@@ -13,7 +13,11 @@ CREATE TABLE nd_publications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE nd_publication_media (
  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
- storage_key CHAR(64) NOT NULL UNIQUE,
+ storage_key CHAR(64) NULL UNIQUE,
+ kind ENUM('upload','external') NOT NULL DEFAULT 'upload',
+ external_url TEXT NULL,
+ deleted_at DATETIME NULL,
+ purged_at DATETIME NULL,
  display_name VARCHAR(190) NOT NULL,
  mime VARCHAR(64) NOT NULL,
  size_bytes BIGINT UNSIGNED NOT NULL,
