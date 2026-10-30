@@ -17,7 +17,8 @@ function crm_portal(string $route,string $method):never{
   $sql.=' ORDER BY id DESC LIMIT 25 OFFSET '.(($page-1)*25);$rows=crm_query($sql,$params)->fetchAll();
   if($kind==='orders'&&crm_query("SELECT state FROM nd_schema_migrations WHERE version='016_order_lifecycle'")->fetchColumn()==='applied')foreach($rows as &$row){$flow=crm_query('SELECT commercial_state FROM nd_lc_order_flow WHERE order_id=?',[$row['id']])->fetchColumn();if(!in_array($flow,['PROPOSAL_SENT','PROPOSAL_ACCEPTED'],true)){$row['total_amount']=null;$row['price_pending_approval']=true;}}unset($row);
   if($id&&!$rows)crm_fail(404,'Запись не найдена.');
-  if($kind==='projects')foreach($rows as &$r){$r['progress']=crm_progress((int)$r['id']);$r['stages']=crm_query('SELECT id,title,status,position,due_on,completed_at FROM nd_project_stages WHERE project_id=? ORDER BY position,id',[$r['id']])->fetchAll();}unset($r);
+  require_once dirname(__DIR__).'/support/core.php';foreach($rows as &$row){$oid=$kind==='orders'?(int)$row['id']:(int)($row['order_id']??0);$state=$oid?sa_state($oid):['state'=>'UNCONFIGURED'];$row['workspace_access']=$state['state']!=='EXPIRED';$row['access']=array_intersect_key($state,array_flip(['state','expires_on','archive_available']));if($id&&$kind==='projects'&&!$row['workspace_access'])crm_fail(403,'Срок рабочего доступа завершён. Документы доступны в приватном архиве.');}unset($row);
+  if($kind==='projects')foreach($rows as &$r){if(!$r['workspace_access'])continue;$r['progress']=crm_progress((int)$r['id']);$r['stages']=crm_query('SELECT id,title,status,position,due_on,completed_at FROM nd_project_stages WHERE project_id=? ORDER BY position,id',[$r['id']])->fetchAll();}unset($r);
   json_response($id?['ok'=>true,'record'=>$rows[0]]:['ok'=>true,'items'=>$rows,'page'=>$page,'page_size'=>25]);
  }catch(CrmFailure $e){fail($e->status,$e->getMessage(),'portal_error');}
 }

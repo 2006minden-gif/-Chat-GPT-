@@ -106,5 +106,11 @@
     "operator_sha256": "62f1bb1094e845d13dc9159d40fc8ee94d68f069da67c119c570c7dd6acdc1b9",
     "up_sha256": "1d3b8c73f4e03ec980144f07a62994bc19ab1fb0522ae7acfcb39f9079b11204",
     "down_sha256": "5e73e526396e81dd34d29c974fe038b69fe86a4b140616aaf3a4310dbf439778"
+  },
+  "022_support_archive": {
+    "operator": "scripts/migrate-support.php",
+    "operator_sha256": "440f3ddde45aac409ad38d259319d5b5ff39a41f46aba93ae774f07ec23832be",
+    "up_sha256": "49e340c6a8a0139ebb5f0e6a69f05c5167b51ff49c885e9e4d325e0496d4ae7d",
+    "down_sha256": "a13d1c9310ca619e4d97cad3adca8ff4b68854589ecea7826540bf0c69900891"
   }
 }

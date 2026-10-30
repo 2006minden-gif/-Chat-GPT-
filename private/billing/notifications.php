@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 function bill_templates():array{return [
+ 'support_expiring'=>'Приближается согласованный срок рабочего доступа','support_expired'=>'Рабочий доступ завершён; приватный архив сохранён','support_hold'=>'Прекращение доступа удержано до решения обязательств',
  'workflow_updated'=>'По заказу изменился следующий шаг','document_approved'=>'Документ согласован','new_request'=>'Получена новая заявка','new_message'=>'Новый комментарий по проекту','invoice_issued'=>'Новый счёт','invoice_adjusted'=>'Корректировка счёта','payment_pending'=>'Платёж обрабатывается','payment_confirmed'=>'Оплата подтверждена','payment_failed'=>'Оплата не прошла','payment_overdue'=>'Напоминание об оплате','refund_completed'=>'Возврат оформлен','awaiting_approval'=>'Документ ожидает согласования','changes_requested'=>'Запрошена доработка','new_deliverable'=>'Результат работы готов','project_completed'=>'Проект завершён','task_soon'=>'Приближается срок задачи','task_overdue'=>'Просрочен срок задачи'
 ];}
 function bill_emit(string $key,string $template,string $entity,int $id,?int $customer,bool $essential=true):void{

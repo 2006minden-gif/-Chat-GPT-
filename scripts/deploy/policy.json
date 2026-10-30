@@ -46,6 +46,7 @@
     "finance.php",
     "handoff.js",
     "handoff.php",
+    "help.php",
     "index.html",
     "index.php",
     "invoice-document.php",
@@ -87,6 +88,9 @@
     "sitemap.xml",
     "studio.php",
     "styles.css",
+    "support-api.php",
+    "support.js",
+    "support.php",
     "workspace.php"
   ],
   "private_files": [
@@ -135,6 +139,7 @@
     "customer-mail.php",
     "customer-settings-state.php",
     "customer-settings.php",
+    "legal/portal-draft.php",
     "legal/privacy-2026-10-26-v1.json",
     "legal/privacy-2026-10-27-v2.json",
     "lifecycle/access.php",
@@ -186,6 +191,7 @@
     "production/seal.php",
     "release-features.php",
     "services/catalog.php",
+    "support/core.php",
     "vendor/tfpdf/DEJAVU-LICENSE.txt",
     "vendor/tfpdf/LICENSE.txt",
     "vendor/tfpdf/NOTICE.txt",
@@ -194,7 +200,8 @@
     "vendor/tfpdf/font/unifont/ttfonts.php",
     "vendor/tfpdf/tfpdf.php",
     "workflow/core.php",
-    "workflow/diagnostics.php"
+    "workflow/diagnostics.php",
+    "workflow/prepare.php"
   ],
   "keep_backups": 3,
   "migrations": [
@@ -395,6 +402,17 @@
       "up_sha256": "1d3b8c73f4e03ec980144f07a62994bc19ab1fb0522ae7acfcb39f9079b11204",
       "down_sha256": "5e73e526396e81dd34d29c974fe038b69fe86a4b140616aaf3a4310dbf439778",
       "operator_sha256": "62f1bb1094e845d13dc9159d40fc8ee94d68f069da67c119c570c7dd6acdc1b9"
+    },
+    {
+      "version": "022_support_archive",
+      "kind": "reviewed_additive",
+      "automatic": true,
+      "required": true,
+      "operator": "scripts/migrate-support.php",
+      "depends_on": "021_paid_access_jobs",
+      "up_sha256": "49e340c6a8a0139ebb5f0e6a69f05c5167b51ff49c885e9e4d325e0496d4ae7d",
+      "down_sha256": "a13d1c9310ca619e4d97cad3adca8ff4b68854589ecea7826540bf0c69900891",
+      "operator_sha256": "440f3ddde45aac409ad38d259319d5b5ff39a41f46aba93ae774f07ec23832be"
     }
   ],
   "database_recovery_required": true
