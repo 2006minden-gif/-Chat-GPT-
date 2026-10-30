@@ -177,6 +177,10 @@ class RemoteFilesystemTests(unittest.TestCase):
   (self.candidate/'after-health.json').write_text(json.dumps(worse))
   self.assertEqual(self.agent('mark-unhealthy',1)['error'],'new_regression_requires_rollback')
   self.agent('rollback')
+ def test_private_publication_upload_survives_release_and_rollback(self):
+  file=self.root/'private/publication-files'/'synthetic-retained-media';file.parent.mkdir();file.write_bytes(b'SYNTHETIC private publication media')
+  self.agent('apply');self.assertEqual(file.read_bytes(),b'SYNTHETIC private publication media');self.agent('rollback');self.assertEqual(file.read_bytes(),b'SYNTHETIC private publication media')
+
  def test_unfinished_release_blocks_new_apply(self):
   self.agent('apply');self.assertEqual(self.agent('apply',1)['error'],'unfinished_release_requires_recovery')
  def test_wrong_auto_rollback_id_cannot_undo_prior_success(self):

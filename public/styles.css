@@ -43,3 +43,6 @@ summary:hover{color:#7aabff}summary span{color:var(--pink)}
 .messenger-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .messenger-links--compact .messenger-link{width:48px;height:48px;min-height:48px;flex-basis:48px;padding:10px;border-radius:14px}.messenger-links--compact .messenger-icon{width:24px;height:24px}
 @media(prefers-reduced-motion:reduce){.messenger-link{transition:none}.messenger-link:hover{transform:none}}
+.footer{flex-wrap:wrap}.footer>*{max-width:100%}.public-sections{display:flex;gap:18px;flex-wrap:wrap;padding-bottom:14px;font-size:14px}.public-sections a{padding:6px 0;text-decoration:underline;text-underline-offset:4px}
+
+.owner-tools{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0;padding:12px 0}.owner-tools a{padding:8px 12px;border:1px solid #45506a;border-radius:8px}
