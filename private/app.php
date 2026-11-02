@@ -109,10 +109,10 @@ function valid_contact(string $contact): bool {
 }
 /** Owner-authorized, versioned public legal documents; contains no secrets. */
 function release_legal_documents(): array {
-    $file=__DIR__.'/legal/privacy-2026-11-02-v3.json';
+    $file=__DIR__.'/legal/privacy-2026-11-02-v4.json';
     $raw=@file_get_contents($file);
     $data=$raw===false ? null : json_decode($raw,true);
-    if (!is_array($data) || ($data['version']??'')!=='privacy-2026-11-02-v3'
+    if (!is_array($data) || ($data['version']??'')!=='privacy-2026-11-02-v4'
         || ($data['activation_requested']??false)!==true || ($data['analytics_approved']??false)!==true) return [];
     foreach(['policy','consent','owner','address','contact'] as $key) {
         if (!is_string($data[$key]??null) || trim($data[$key])==='') return [];
@@ -144,7 +144,7 @@ function privacy_document(): array {
     if (trim($text)==='') return $disabled;
     // The owner-approved analytics update may replace only the exact known prior release text.
     // Explicit emergency stops and unrelated/custom policies retain authority.
-    if($version==='privacy-2026-10-27-v2'){$prior=json_decode((string)@file_get_contents(__DIR__.'/legal/privacy-2026-10-27-v2.json'),true);$next=release_legal_documents();if($prior&&$next&&($next['analytics_approved']??false)===true&&hash_equals(hash('sha256',$prior['policy']),hash('sha256',$text)))return ['settings'=>['enabled'=>true,'version'=>$next['version'],'url'=>'/privacy.php','hash'=>hash('sha256',$next['policy']."\nCONSENT\n".$next['consent'])],'text'=>$next['policy']];}
+    if(in_array($version,['privacy-2026-10-27-v2','privacy-2026-11-02-v3'],true)){$prior=json_decode((string)@file_get_contents(__DIR__.'/legal/'.$version.'.json'),true);$next=release_legal_documents();if($prior&&$next&&($next['analytics_approved']??false)===true&&hash_equals(hash('sha256',$prior['policy']),hash('sha256',$text)))return ['settings'=>['enabled'=>true,'version'=>$next['version'],'url'=>'/privacy.php','hash'=>hash('sha256',$next['policy']."\nCONSENT\n".$next['consent'])],'text'=>$next['policy']];}
     return ['settings'=>['enabled'=>true,'version'=>$version,'url'=>'/privacy.php','hash'=>hash('sha256',$text)],'text'=>$text];
 }
 function privacy_settings(): array {

@@ -23,4 +23,5 @@ function nd_analytics_record(string $choice):array{
  setcookie('neuro_analytics',$value,['expires'=>time()+15552000,'path'=>'/','secure'=>parse_url(config()['app_url'],PHP_URL_SCHEME)==='https','httponly'=>true,'samesite'=>'Lax']);return $r;
 }
 
-function nd_analytics_noscript():string{return nd_analytics_public_path($_SERVER['REQUEST_URI']??'')&&nd_analytics_approved()&&nd_analytics_choice()&&!nd_analytics_private_session()?'<noscript><div><img src="https://mc.yandex.ru/watch/114024456" class="nd-analytics-pixel" alt=""></div></noscript>':'';}
+function nd_analytics_opted_out():bool{return isset($_COOKIE['neuro_analytics_block'])||(nd_analytics_receipt()['choice']??null)==='deny';}
+function nd_analytics_noscript():string{return nd_analytics_public_path($_SERVER['REQUEST_URI']??'')&&nd_analytics_approved()&&!nd_analytics_opted_out()&&!nd_analytics_private_session()?'<noscript><div><img src="https://mc.yandex.ru/watch/114024456" class="nd-analytics-pixel" alt=""></div></noscript>':'';}

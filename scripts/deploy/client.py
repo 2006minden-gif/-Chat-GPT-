@@ -166,8 +166,8 @@ if __name__=='__main__':
                     report['draft_preparation']={k:prepared[k] for k in ['ok','legal_draft_prepared','service_drafts_created','published','error'] if k in prepared}
                 except Exception:
                     report['draft_preparation']={'ok':False,'error':'draft_preparation_unavailable'}
-            if report['result']=='deployed_and_verified' and 'private/legal/privacy-2026-11-02-v3.json' in manifest['files']:
-                analytics=json.loads((args.bundle/'private/legal/privacy-2026-11-02-v3.json').read_text())
+            if report['result']=='deployed_and_verified' and 'private/legal/privacy-2026-11-02-v4.json' in manifest['files']:
+                analytics=json.loads((args.bundle/'private/legal/privacy-2026-11-02-v4.json').read_text())
                 if analytics.get('analytics_approved') is True:
                     control=[remote.php,ACCOUNT+'/private/analytics-control.php']
                     evidence=args.report.with_name('analytics-verification.json')
