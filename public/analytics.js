@@ -11,7 +11,7 @@
  let receipt=null,localDenied=false;
  function choice(){if(localDenied||document.cookie.split(';').some(x=>x.trim()==='neuro_analytics_block=1'))return 'deny';return receipt?.version===version&&['allow','deny'].includes(receipt.choice)&&receipt.time<=Date.now()/1000&&Date.now()/1000-receipt.time<ttl?receipt.choice:null;}
  function blockChoice(on){document.cookie='neuro_analytics_block='+(on?'1':'')+'; Path=/; Max-Age='+(on?ttl:0)+'; SameSite=Lax'+(location.protocol==='https:'?'; Secure':'');}
- async function save(state){const r=await fetch('/analytics-status.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({choice:state})});const d=await r.json();if(!r.ok||d.ok!==true)throw Error(d.detail||'Не удалось сохранить выбор. Аналитика выключена.');receipt=d.receipt;return receipt;}
+ async function save(state){const r=await fetch('/analytics-status.php',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({version,choice:state})});const d=await r.json();if(!r.ok||d.ok!==true)throw Error(d.detail||'Не удалось сохранить выбор. Аналитика выключена.');receipt=d.receipt;return receipt;}
  function eraseMetrikaCookies(){for(const entry of document.cookie.split(';')){const name=entry.trim().split('=')[0];if(!/^_ym_/.test(name))continue;for(const domain of ['',location.hostname,'.'+location.hostname])document.cookie=name+'=; Max-Age=0; Path=/'+(domain?'; Domain='+domain:'')+'; SameSite=Lax'+(location.protocol==='https:'?'; Secure':'');}}
  function cleanUrl(value){try{const u=new URL(value,location.origin);return ['http:','https:'].includes(u.protocol)?u.origin+u.pathname:'';}catch{return '';}}
  function mask(root=document){

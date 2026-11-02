@@ -9,13 +9,13 @@ class Analytics(unittest.TestCase):
   cls.f=F;F.setUpClass();cls.addClassCleanup(F.doClassCleanups);cls.base=F.base
   F.config.update(privacy_policy_version='',privacy_policy_approved=False);F.write_config()
   p=F.path/'private/legal/privacy-2026-11-02-v3.json';d=json.loads(p.read_text());d.update(activation_requested=True,analytics_approved=True);p.write_text(json.dumps(d,ensure_ascii=False))
- def post(self,s,choice):return s.post(self.base+'/analytics-status.php',json={'choice':choice},headers={'Origin':self.base})
+ def post(self,s,choice):return s.post(self.base+'/analytics-status.php',json={'version':'analytics-2026-11-02-v1','choice':choice},headers={'Origin':self.base})
  def test_minimal_signed_receipt_owner_gate_and_private_csp(self):
   s=requests.Session();d=s.get(self.base+'/analytics-status.php').json();self.assertTrue(d['eligible']);self.assertIsNone(d['receipt']);r=self.post(s,'allow');self.assertEqual(r.status_code,200,r.text);receipt=r.json()['receipt'];self.assertEqual(set(receipt),{'version','time','choice'});self.assertEqual(receipt['version'],'analytics-2026-11-02-v1');self.assertIn('HttpOnly',r.headers['Set-Cookie']);self.assertEqual(s.get(self.base+'/analytics-status.php').json()['receipt'],receipt)
-  s.cookies.clear();s.cookies.set('neuro_analytics','tampered');self.assertIsNone(s.get(self.base+'/analytics-status.php').json()['receipt']);s.cookies.clear();self.assertEqual(s.post(self.base+'/analytics-status.php',json={'choice':'allow'},headers={'Origin':'https://foreign.invalid'}).status_code,403)
+  s.cookies.clear();s.cookies.set('neuro_analytics','tampered');self.assertIsNone(s.get(self.base+'/analytics-status.php').json()['receipt']);s.cookies.clear();self.assertEqual(s.post(self.base+'/analytics-status.php',json={'version':'old','choice':'allow'},headers={'Origin':self.base}).status_code,409);self.assertEqual(s.post(self.base+'/analytics-status.php',json={'choice':'allow'},headers={'Origin':'https://foreign.invalid'}).status_code,403)
   for cookie in ['nd_session','nd_customer','__Host-nd_customer','nd_prospect','__Host-nd_prospect']:
    t=requests.Session();t.cookies.set(cookie,'SYNTHETIC');self.assertFalse(t.get(self.base+'/analytics-status.php').json()['eligible']);self.assertNotIn('mc.yandex',t.get(self.base+'/').headers.get('Content-Security-Policy',''));self.assertEqual(self.post(t,'allow').status_code,409)
-  for path in ['/studio.php','/customer.php','/portal.php','/documents.php?mode=owner','/payment.php','/prospect.php','/max.php','/max-link.php','/contract-settings.php','/services.php?token=SYNTHETIC']:
+  for path in ['/studio.php','/customer.php','/portal.php','/documents.php?mode=owner','/payment.php','/prospect.php','/max.php','/max-link.php','/contract-settings.php','/services.php?token=SYNTHETIC','/portfolio-case.php?preview=1','/customer.php?invite=SYNTHETIC']:
    r=requests.get(self.base+path);self.assertNotIn('mc.yandex',r.headers.get('Content-Security-Policy',''));self.assertNotIn('metrika/tag.js',r.text)
   self.assertNotIn('mc.yandex.ru/watch/',requests.get(self.base+'/').text);self.post(s,'allow');self.assertIn('mc.yandex.ru/watch/114024456',s.get(self.base+'/').text);self.assertNotIn('mc.yandex.ru/watch/',s.get(self.base+'/?token=SYNTHETIC').text);self.post(s,'deny');self.assertNotIn('mc.yandex.ru/watch/',s.get(self.base+'/').text)
  def browser(self):
@@ -47,6 +47,11 @@ class Analytics(unittest.TestCase):
   try:
    r=subprocess.run([self.f.php,str(tool),'disable'],capture_output=True,text=True);self.assertEqual(r.returncode,0);self.assertFalse(requests.get(self.base+'/analytics-status.php').json()['approved']);self.assertNotIn('mc.yandex',requests.get(self.base+'/').headers.get('Content-Security-Policy',''))
   finally:self.assertEqual(subprocess.run([self.f.php,str(tool),'enable'],capture_output=True).returncode,0)
+ def test_known_public_policy_upgrade_preserves_custom_policy_and_emergency_stop(self):
+  original=dict(self.f.config);path=self.f.path/'private/privacy-policy.txt';content=path.read_bytes();old=json.loads((self.f.path/'private/legal/privacy-2026-10-27-v2.json').read_text())
+  try:
+   self.f.config.update(privacy_policy_approved=True,privacy_policy_version='privacy-2026-10-27-v2');self.f.write_config();path.write_text(old['policy']);self.assertEqual(requests.get(self.base+'/api.php?r=privacy').json()['version'],'privacy-2026-11-02-v3');self.assertTrue(requests.get(self.base+'/analytics-status.php').json()['approved']);path.write_text('SYNTHETIC custom approved policy');self.assertEqual(requests.get(self.base+'/api.php?r=privacy').json()['version'],'privacy-2026-10-27-v2');self.assertFalse(requests.get(self.base+'/analytics-status.php').json()['approved']);path.write_text(old['policy']);self.f.config['privacy_policy_disabled']=True;self.f.write_config();self.assertFalse(requests.get(self.base+'/api.php?r=privacy').json()['enabled']);self.assertFalse(requests.get(self.base+'/analytics-status.php').json()['approved'])
+  finally:path.write_bytes(content);self.f.config.clear();self.f.config.update(original);self.f.write_config()
  def test_unapproved_analytics_remains_disabled(self):
   path=self.f.path/'private/legal/privacy-2026-11-02-v3.json';original=path.read_bytes();d=json.loads(original);d['analytics_approved']=False;path.write_text(json.dumps(d))
   try:self.assertFalse(requests.get(self.base+'/analytics-status.php').json()['approved']);self.assertNotIn('mc.yandex',requests.get(self.base+'/').headers.get('Content-Security-Policy',''))
