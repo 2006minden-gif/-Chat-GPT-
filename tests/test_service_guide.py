@@ -36,7 +36,7 @@ class ServiceGuide(unittest.TestCase):
   import xml.etree.ElementTree as ET
   xml=requests.get(self.base+'/sitemap.xml');self.assertEqual(xml.status_code,200)
   locations={n.text for n in ET.fromstring(xml.content).findall('{*}url/{*}loc')}
-  self.assertEqual(locations,{'https://neurodelo.pro'+p for p in ['/','/services.php','/privacy.php','/consent.php','/sitemap.php','/catalog.php','/portfolio.php','/reviews.php']})
+  self.assertEqual(locations,{'https://neurodelo.pro'+p for p in ['/','/services.php','/privacy.php','/consent.php','/sitemap.php','/catalog.php','/portfolio.php','/reviews.php','/analytics.php']})
   robots=requests.get(self.base+'/robots.txt');self.assertIn('Sitemap: https://neurodelo.pro/sitemap.xml',robots.text)
   page=requests.get(self.base+'/sitemap.php');self.assertEqual(page.status_code,200);self.assertIn('Карта сайта',page.text)
   icon=requests.get(self.base+'/favicon.ico');self.assertEqual(icon.content[:4],b'\x00\x00\x01\x00')
@@ -55,7 +55,11 @@ class ServiceGuide(unittest.TestCase):
   self.assertTrue(page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'))
   page.locator('#brief-goal').fill('Изменённая задача');self.assertTrue(page.locator('#brief-result').is_hidden())
   self.assertEqual(page.locator('#brief-summary').input_value(),'');self.assertEqual(page.locator('#telegram-brief').get_attribute('href'),'https://t.me/minden2006')
-  self.assertFalse(any(m!='GET' or t in ['fetch','xhr'] for m,u,t in requests_seen));self.assertEqual(errors,[])
+  # Consent configuration is a read-only request; the brief itself still never leaves this page.
+  self.assertTrue(all(m=='GET' for m,u,t in requests_seen))
+  self.assertTrue(all(u==self.base+'/analytics-status.php' for m,u,t in requests_seen if t in ['fetch','xhr']))
+  self.assertTrue(all(u.startswith(self.base+'/') for m,u,t in requests_seen))
+  self.assertEqual(errors,[])
  def test_service_changes_exclude_hidden_options_and_query_is_not_html(self):
   page=self.browser().new_page();page.goto(self.base+'/services.php?service=%3Cscript%3Ebad%3C%2Fscript%3E')
   self.assertEqual(page.locator('#brief-service').input_value(),'landing')

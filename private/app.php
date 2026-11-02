@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/analytics.php';
 function config(): array {
     static $config;
     if ($config === null) {
@@ -26,7 +27,10 @@ function security_headers(): void {
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: DENY');
     header('Referrer-Policy: no-referrer');
-    header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+    if(nd_analytics_public_path($_SERVER['REQUEST_URI']??'')){header('Cache-Control: private, no-store');header('Vary: Cookie');}
+    $analytics=nd_analytics_public_path($_SERVER['REQUEST_URI']??'')&&nd_analytics_approved()&&!nd_analytics_private_session();
+    $scripts=$analytics?' https://mc.yandex.ru https://mc.yandex.com https://yastatic.net':'';$network=$analytics?' https://mc.yandex.ru https://mc.yandex.com':'';
+    header("Content-Security-Policy: default-src 'self'; script-src 'self'".$scripts."; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:".$network."; connect-src 'self'".$network.($analytics?' wss://mc.yandex.ru':'')."; ".($analytics?"worker-src 'self' blob:; ":'')."base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
 }
 function json_response(array $data, int $status=200): void {
     http_response_code($status);
@@ -105,11 +109,11 @@ function valid_contact(string $contact): bool {
 }
 /** Owner-authorized, versioned public legal documents; contains no secrets. */
 function release_legal_documents(): array {
-    $file=__DIR__.'/legal/privacy-2026-10-27-v2.json';
+    $file=__DIR__.'/legal/privacy-2026-11-02-v3.json';
     $raw=@file_get_contents($file);
     $data=$raw===false ? null : json_decode($raw,true);
-    if (!is_array($data) || ($data['version']??'')!=='privacy-2026-10-27-v2'
-        || ($data['activation_requested']??false)!==true) return [];
+    if (!is_array($data) || ($data['version']??'')!=='privacy-2026-11-02-v3'
+        || ($data['activation_requested']??false)!==true || ($data['analytics_approved']??false)!==true) return [];
     foreach(['policy','consent','owner','address','contact'] as $key) {
         if (!is_string($data[$key]??null) || trim($data[$key])==='') return [];
     }
@@ -138,6 +142,9 @@ function privacy_document(): array {
         return $disabled;
     }
     if (trim($text)==='') return $disabled;
+    // The owner-approved analytics update may replace only the exact known prior release text.
+    // Explicit emergency stops and unrelated/custom policies retain authority.
+    if($version==='privacy-2026-10-27-v2'){$prior=json_decode((string)@file_get_contents(__DIR__.'/legal/privacy-2026-10-27-v2.json'),true);$next=release_legal_documents();if($prior&&$next&&($next['analytics_approved']??false)===true&&hash_equals(hash('sha256',$prior['policy']),hash('sha256',$text)))return ['settings'=>['enabled'=>true,'version'=>$next['version'],'url'=>'/privacy.php','hash'=>hash('sha256',$next['policy']."\nCONSENT\n".$next['consent'])],'text'=>$next['policy']];}
     return ['settings'=>['enabled'=>true,'version'=>$version,'url'=>'/privacy.php','hash'=>hash('sha256',$text)],'text'=>$text];
 }
 function privacy_settings(): array {

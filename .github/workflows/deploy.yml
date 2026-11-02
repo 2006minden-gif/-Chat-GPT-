@@ -178,6 +178,14 @@ jobs:
         with:
           name: neurodelo-${{ github.sha }}
           path: ${{ runner.temp }}/neurodelo-release
+      - name: Prepare public analytics verification browser
+        if: steps.current.outputs.current == 'true'
+        run: |
+          set -euo pipefail
+          if python -c "import json,sys; d=json.load(open('private/legal/privacy-2026-11-02-v3.json')); sys.exit(0 if d.get('analytics_approved') else 1)"; then
+            python -m pip install -r tests/requirements.txt
+            python -m playwright install --with-deps chromium
+          fi
       - name: Recheck production environment before secret use
         if: steps.current.outputs.current == 'true'
         env:
