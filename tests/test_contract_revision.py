@@ -3,6 +3,11 @@ import copy,json,subprocess,tempfile
 from pathlib import Path
 import test_contract_package as package
 class RevisedContract(package.ContractPackage):
+ @classmethod
+ def setUpClass(cls):
+  super().setUpClass();r=subprocess.run([cls.f.php,str(cls.f.path/'scripts/migrate-workflow.php'),'up'],capture_output=True,text=True)
+  if r.returncode:raise RuntimeError(r.stderr)
+
  def test_explicit_fields_schedules_preview_and_preserved_source(self):
   oid,legacy,g,values,terms=self.new_documents();spec=self.templates[1]
   def generate(v):
@@ -22,5 +27,11 @@ class RevisedContract(package.ContractPackage):
   for t in self.templates[:2]:
    preview=self.owner.get(self.base+'/lifecycle-api.php?mode=owner&r=contracts/sample/'+t['kind']);self.assertEqual(preview.status_code,200,preview.text[:80]);self.assertTrue(preview.content.startswith(b'%PDF-'));self.assertIn(self.stranger.get(self.base+'/lifecycle-api.php?mode=owner&r=contracts/sample/'+t['kind']).status_code,[401,403]);self.assertIn(self.customer.get(self.base+'/lifecycle-api.php?r=contracts/sample/'+t['kind']).status_code,[401,403,503])
   before=[(t['id'],t['checksum'],t['state']) for t in self.templates];self.assertEqual(self.ctp('import').json()['ids'],[t[0] for t in before]);after=[self.lg('templates/'+str(t[0])).json()['record'] for t in before];self.assertEqual(before,[(t['id'],t['checksum'],t['state']) for t in after])
+ def test_browser_structured_fields_and_conditional_stage_editor(self):
+  import os
+  from playwright.sync_api import sync_playwright,expect
+  oid,legacy,g,values,terms=self.new_documents()
+  with sync_playwright() as pw:
+   b=pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);c=b.new_context(viewport={'width':375,'height':812});p=c.new_page();p.goto(self.base+'/studio.php');p.locator('#password').fill(self.f.password);p.locator('#login-form button').click();p.locator('#dashboard').wait_for(state='visible');p.goto(self.base+'/contract-settings.php?order='+str(oid));p.locator('label').filter(has_text='Тип отдельного документа').locator('select').select_option(str(self.templates[1]['id']));p.get_by_role('button',name='Добавить сценарий',exact=True).click();p.get_by_label('Роль пользователя',exact=True).fill('Тестовый посетитель');p.get_by_role('button',name='Регулярных внешних расходов нет',exact=True).click();self.assertEqual(p.locator('[data-contract-field="spec.recurring_costs"]').input_value(),'[]');self.assertEqual(json.loads(p.locator('[data-contract-field="spec.acceptance_criteria"]').input_value())[0]['role'],'Тестовый посетитель');milestones=p.locator('section.card').filter(has=p.get_by_role('heading',name='Этапы работ',exact=True));milestones.get_by_role('button',name='Добавить этап',exact=True).click();milestones.locator('label').filter(has_text='Расчёт срока этапа').locator('select').select_option('relative');milestones.get_by_label('Объективное условие начала',exact=True).fill('Получены материалы');milestones.get_by_label('Длительность в днях',exact=True).fill('10');milestones.locator('label').filter(has_text='Какие дни').locator('select').select_option('business');row=json.loads(p.locator('[data-contract-field="spec.milestones"]').input_value())[0];self.assertNotIn('due_on',row);self.assertEqual(row['duration_days'],10);self.assertFalse(p.evaluate('document.documentElement.scrollWidth>innerWidth'));b.close()
 for name in dir(package.ContractPackage):
  if name.startswith('test_'):setattr(RevisedContract,name,None)
