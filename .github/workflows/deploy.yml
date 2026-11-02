@@ -178,11 +178,6 @@ jobs:
         with:
           name: neurodelo-${{ github.sha }}
           path: ${{ runner.temp }}/neurodelo-release
-      - name: Recheck production environment before secret use
-        if: steps.current.outputs.current == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python scripts/github/bootstrap.py check
       - name: Prepare public analytics verification browser
         if: steps.current.outputs.current == 'true'
         run: |
@@ -191,6 +186,11 @@ jobs:
             python -m pip install -r tests/requirements.txt
             python -m playwright install --with-deps chromium
           fi
+      - name: Recheck production environment before secret use
+        if: steps.current.outputs.current == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/github/bootstrap.py check
       - name: Publish or maintain checked release
         if: steps.current.outputs.current == 'true'
         env:

@@ -175,7 +175,8 @@ if __name__=='__main__':
                     try:
                         enabled=remote.command(shlex.join(control+['enable']),json_output=True)
                         if enabled.get('analytics_disabled') is not False:raise RuntimeError('analytics_enable_not_verified')
-                        checked=subprocess.run([__import__('sys').executable,'scripts/verify-analytics-production.py','--evidence',str(evidence)],capture_output=True,text=True,timeout=180)
+                        browser_env={k:v for k,v in os.environ.items() if not k.startswith('SSH_') and k not in {'GH_TOKEN','GITHUB_TOKEN','ACTIONS_RUNTIME_TOKEN','ACTIONS_ID_TOKEN_REQUEST_TOKEN','DEPLOY_PATH'}}
+                        checked=subprocess.run([__import__('sys').executable,'scripts/verify-analytics-production.py','--evidence',str(evidence)],capture_output=True,text=True,timeout=180,env=browser_env)
                         verification=json.loads(evidence.read_text()) if evidence.is_file() else {'ok':False,'error':'verification_evidence_missing'}
                         if checked.returncode or verification.get('ok') is not True:raise RuntimeError('analytics_verification_failed')
                         report['analytics_verification']=verification
