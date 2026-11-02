@@ -27,6 +27,7 @@ function security_headers(): void {
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: DENY');
     header('Referrer-Policy: no-referrer');
+    if(nd_analytics_public_path($_SERVER['REQUEST_URI']??'')){header('Cache-Control: private, no-store');header('Vary: Cookie');}
     $analytics=nd_analytics_public_path($_SERVER['REQUEST_URI']??'')&&nd_analytics_approved()&&!nd_analytics_private_session();
     $scripts=$analytics?' https://mc.yandex.ru https://mc.yandex.com https://yastatic.net':'';$network=$analytics?' https://mc.yandex.ru https://mc.yandex.com':'';
     header("Content-Security-Policy: default-src 'self'; script-src 'self'".$scripts."; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:".$network."; connect-src 'self'".$network.($analytics?' wss://mc.yandex.ru':'')."; ".($analytics?"worker-src 'self' blob:; ":'')."base-uri 'none'; frame-ancestors 'none'; form-action 'self'");

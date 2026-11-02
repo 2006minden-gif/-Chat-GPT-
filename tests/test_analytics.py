@@ -17,7 +17,7 @@ class Analytics(unittest.TestCase):
    t=requests.Session();t.cookies.set(cookie,'SYNTHETIC');self.assertFalse(t.get(self.base+'/analytics-status.php').json()['eligible']);self.assertNotIn('mc.yandex',t.get(self.base+'/').headers.get('Content-Security-Policy',''));self.assertEqual(self.post(t,'allow').status_code,409)
   for path in ['/studio.php','/customer.php','/portal.php','/documents.php?mode=owner','/payment.php','/prospect.php','/max.php','/max-link.php','/contract-settings.php','/services.php?token=SYNTHETIC','/portfolio-case.php?preview=1','/customer.php?invite=SYNTHETIC']:
    r=requests.get(self.base+path);self.assertNotIn('mc.yandex',r.headers.get('Content-Security-Policy',''));self.assertNotIn('metrika/tag.js',r.text)
-  self.assertNotIn('mc.yandex.ru/watch/',requests.get(self.base+'/').text);self.post(s,'allow');self.assertIn('mc.yandex.ru/watch/114024456',s.get(self.base+'/').text);self.assertNotIn('mc.yandex.ru/watch/',s.get(self.base+'/?token=SYNTHETIC').text);self.post(s,'deny');self.assertNotIn('mc.yandex.ru/watch/',s.get(self.base+'/').text)
+  public=requests.get(self.base+'/');self.assertIn('no-store',public.headers.get('Cache-Control',''));self.assertEqual(public.headers.get('Vary'),'Cookie');self.assertNotIn('mc.yandex.ru/watch/',public.text);self.post(s,'allow');self.assertIn('mc.yandex.ru/watch/114024456',s.get(self.base+'/').text);self.assertNotIn('mc.yandex.ru/watch/',s.get(self.base+'/?token=SYNTHETIC').text);self.post(s,'deny');self.assertNotIn('mc.yandex.ru/watch/',s.get(self.base+'/').text)
  def browser(self):
   from playwright.sync_api import sync_playwright
   pw=sync_playwright().start();b=pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);return pw,b
