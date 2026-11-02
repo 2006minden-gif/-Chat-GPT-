@@ -2,7 +2,8 @@
 declare(strict_types=1);
 if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
 ini_set('display_errors','0');require dirname(__DIR__).'/app.php';require dirname(__DIR__).'/customer-settings.php';require dirname(__DIR__).'/legal/portal-draft.php';require dirname(__DIR__).'/catalog/core.php';
-try{$legal=nd_prepare_portal_draft();$count=crm_atomic(function(){
+require_once dirname(__DIR__).'/lifecycle/routes.php';
+try{$templateImport=crm_atomic(fn()=>ct_import(['type'=>'owner','id'=>1]));$legal=nd_prepare_portal_draft();$count=crm_atomic(function(){
  $title='НейроДело: бриф существующих направлений';$tid=crm_query('SELECT id FROM nd_catalog_templates WHERE title=? LIMIT 1 FOR UPDATE',[$title])->fetchColumn();
  if(!$tid){$template=cat_template(['title'=>$title,'steps'=>[['title'=>'Цель проекта','questions'=>[['id'=>'goal','label'=>'Что требуется получить и для кого?','type'=>'textarea','semantic'=>'goal','required'=>true,'options'=>[],'min'=>10,'max'=>3000,'when'=>null],['id'=>'deadline','label'=>'Желаемый срок и его основание','type'=>'text','semantic'=>'deadline','required'=>false,'options'=>[],'min'=>0,'max'=>1000,'when'=>null]]]]]);$raw=ai_json($template);crm_query('INSERT INTO nd_catalog_templates(title) VALUES (?)',[$title]);$tid=(int)db()->lastInsertId();crm_query('INSERT INTO nd_catalog_template_versions(template_id,revision_number,body,checksum) VALUES (?,1,?,?)',[$tid,$raw,hash('sha256',$raw)]);}
  $tv=crm_query('SELECT id FROM nd_catalog_template_versions WHERE template_id=? ORDER BY revision_number DESC LIMIT 1',[$tid])->fetchColumn();$n=0;

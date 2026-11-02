@@ -22,6 +22,7 @@ def rebuild(root=ROOT):
     if text.strip():paragraphs.append(text)
    if not paragraphs:raise ValueError('empty_source')
   items.append({'file':name,'kind':kind,'title':paragraphs[0],'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'paragraphs':paragraphs[1:],'fields':sorted(set(re.findall(r'\{\{([^{}]+)\}\}','\n'.join(paragraphs))))})
+ for item in items[:2]:item['terms_schema']=2
  data={'schema_version':1,'status':'DRAFT_REQUIRES_OWNER_APPROVAL','templates':items}
  (folder/'catalog.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
  return data
