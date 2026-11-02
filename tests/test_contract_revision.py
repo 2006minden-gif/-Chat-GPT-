@@ -29,6 +29,10 @@ class RevisedContract(package.ContractPackage):
    with tempfile.TemporaryDirectory() as tmp:
     f=Path(tmp)/'preview.pdf';f.write_bytes(preview.content);text=subprocess.check_output(['pdftotext',str(f),'-']).decode();self.assertIn(t['title'],text);self.assertNotIn(self.templates[1 if t['kind']=='agreement' else 0]['title'],text)
    self.assertIn(self.stranger.get(self.base+'/lifecycle-api.php?mode=owner&r=contracts/sample/'+t['kind']).status_code,[401,403]);self.assertIn(self.customer.get(self.base+'/lifecycle-api.php?r=contracts/sample/'+t['kind']).status_code,[401,403,503])
+  original=self.templates[0]['clauses'];swapped=copy.deepcopy(original);swapped['_package']['paragraphs']=self.templates[1]['clauses']['_package']['paragraphs'];self.f.sql('UPDATE nd_lc_templates SET clauses_json=? WHERE id=?',params=[json.dumps(swapped,ensure_ascii=False),self.templates[0]['id']])
+  try:
+   self.assertEqual(self.owner.get(self.base+'/lifecycle-api.php?mode=owner&r=contracts/sample/agreement').status_code,409);self.assertEqual(self.owner.get(self.base+'/lifecycle-api.php?mode=owner&r=contracts/sample/'+str(self.templates[0]['id'])).status_code,409)
+  finally:self.f.sql('UPDATE nd_lc_templates SET clauses_json=? WHERE id=?',params=[json.dumps(original,ensure_ascii=False),self.templates[0]['id']])
   before=[(t['id'],t['checksum'],t['state']) for t in self.templates];self.assertEqual(self.ctp('import').json()['ids'],[t[0] for t in before]);after=[self.lg('templates/'+str(t[0])).json()['record'] for t in before];self.assertEqual(before,[(t['id'],t['checksum'],t['state']) for t in after])
  def test_browser_structured_fields_and_conditional_stage_editor(self):
   import os
@@ -51,6 +55,7 @@ class RevisedContract(package.ContractPackage):
     p.goto(external);p.get_by_role('link',name=label,exact=True).click();p.get_by_role('heading',name=t['title']+' · v'+str(t['revision_number']),exact=True).wait_for();button=p.get_by_role('button',name='Скачать образец PDF',exact=False)
     with p.expect_download() as download:button.click()
     file=download.value;self.assertEqual(file.suggested_filename,'NeuroDelo-'+t['kind']+'-v'+str(t['revision_number'])+'-sample.pdf');text=subprocess.check_output(['pdftotext',str(file.path()),'-']).decode();self.assertIn(t['title'],text);texts.append(text)
-   self.assertNotEqual(texts[0],texts[1]);self.assertNotIn(self.templates[1]['title'],texts[0]);self.assertNotIn(self.templates[0]['title'],texts[1]);b.close()
+   self.assertNotEqual(texts[0],texts[1]);self.assertNotIn(self.templates[1]['title'],texts[0]);self.assertNotIn(self.templates[0]['title'],texts[1]);
+   first=self.templates[0];other=self.templates[1];p.goto(self.base+'/documents.php?mode=owner&preview=agreement');button=p.get_by_role('button',name='Скачать образец PDF',exact=False);button.wait_for();unexpected=[];p.on('download',lambda d:unexpected.append(d));pattern='**/lifecycle-api.php?mode=owner&r=contracts/sample/'+str(first['id']);wrong=self.owner.get(self.base+'/lifecycle-api.php?mode=owner&r=contracts/sample/'+str(other['id']));headers={k:v for k,v in wrong.headers.items() if k.lower()=='content-type' or k.lower().startswith('x-neuro-')};p.route(pattern,lambda route:route.fulfill(status=200,headers=headers,body=wrong.content));button.click();expect(p.locator('#lc-message')).to_contain_text('другой тип');self.assertEqual(unexpected,[]);p.unroute(pattern);right=self.owner.get(self.base+'/lifecycle-api.php?mode=owner&r=contracts/sample/'+str(first['id']));headers={k:v for k,v in right.headers.items() if k.lower()=='content-type' or k.lower().startswith('x-neuro-')};p.route(pattern,lambda route:route.fulfill(status=200,headers=headers,body=right.content+b'corrupted'));button.click();expect(p.locator('#lc-message')).to_contain_text('Контрольная сумма');self.assertEqual(unexpected,[]);b.close()
 for name in dir(package.ContractPackage):
  if name.startswith('test_'):setattr(RevisedContract,name,None)
