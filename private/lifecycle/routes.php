@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/documents.php';require_once __DIR__.'/payments.php';require_once __DIR__.'/flow.php';require_once __DIR__.'/closure.php';require_once __DIR__.'/contract-routes.php';
 function lc_dispatch(bool $customer,string $route,string $method):never{
- try{$a=cc_actor($customer,$method!=='GET');lc_gate();rate('lifecycle:'.$a['type'].':'.$a['id'],150);
+ try{$templateOnly=!$customer&&(($method==='GET'&&($route==='settings'||$route==='templates'||preg_match('~^(?:templates/[1-9][0-9]*|contracts/(?:source/[1-9][0-9]*|sample/(?:[1-9][0-9]*|agreement|specification)))$~D',$route)))||($method==='POST'&&preg_match('~^templates/[1-9][0-9]*/(?:review|approve|retire)$~D',$route)));if($templateOnly){current_session($method!=='GET');$a=['type'=>'owner','id'=>1];}else{$a=cc_actor($customer,$method!=='GET');}lc_gate();rate('lifecycle:'.$a['type'].':'.$a['id'],150);
  if(str_starts_with($route,'contracts/'))ct_dispatch($a,substr($route,10),$method);
  if(str_starts_with($route,'flow/'))lc_flow_dispatch($a,substr($route,5),$method);
  if(str_starts_with($route,'finance'))lc_finance_gate();

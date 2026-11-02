@@ -62,3 +62,9 @@ NEEDS_LEGAL_REVIEW and requires exact owner approval. Internal guide and source
 notes stay outside customer PDFs. Paper-copy review is an owner attestation,
 not an automatic signature check. MyTax receipts remain manual. Publication
 permissions do not automatically authorize identifying-data or photo publication.
+
+## Проверка новых редакций договора и ТЗ — 2026-11-02
+Статьи 160 и 434 ГК РФ сверены по действующим опубликованным текстам:
+https://www.consultant.ru/document/cons_doc_LAW_5142/95f9ba225766dcfec8461f257ed0b179d032c5b7/
+https://www.consultant.ru/document/cons_doc_LAW_5142/08b8673b58e230c76f61b3a81736d4b2fd9ea3d2/
+Различаются сохранение содержания, достоверное определение выразившего волю лица и доказательства обмена. Самостоятельная загрузка скана/ограниченная ссылка не объявляются идентификацией или проверкой подписи. Выбран бумажный процесс с личной проверкой и сохранением версии/истории; иной электронный механизм не внедрён. Проверка источников разработчиком не является одобрением юридического шаблона владельцем или гарантией исхода спора. Указания этого файла не включаются в клиентские PDF.
