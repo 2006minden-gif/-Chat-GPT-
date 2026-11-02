@@ -24,3 +24,9 @@ function ct_sample_preview(array $t):string{
  if(($item['terms_schema']??1)>=2)$v=ct_terms_v2($v,1200000,[['label'=>'Начало работ','amount_minor'=>400000,'due_on'=>'2026-11-03','gate'=>'production','stage_id'=>null],['label'=>'Завершение','amount_minor'=>800000,'due_on'=>'2026-12-01','gate'=>'handover','stage_id'=>null]],$item['kind']);
  return ct_pdf_bytes($t['title'],ct_fill($item,$v),true);
 }
+
+/** Resolve the requested kind, never a neighbouring catalog item or another revision. */
+function ct_preview_template(string $reference):array{
+ if(in_array($reference,['agreement','specification'],true)){foreach(ct_catalog() as $item)if($item['kind']===$reference){$hash=hash('sha256',lc_json([$item['kind'],$item['title'],['_package'=>$item]]));$id=crm_query('SELECT id FROM nd_lc_templates WHERE checksum=?',[$hash])->fetchColumn();if(!$id)crm_fail(503,'Редакция шаблона ещё не подготовлена.');$t=ct_preview_template((string)$id);if($t['kind']!==$reference||!hash_equals($hash,$t['checksum'])||($t['clauses']['_package']['sha256']??null)!==$item['sha256'])crm_fail(409,'Предпросмотр не соответствует выбранному шаблону.');return $t;}crm_fail(404,'Шаблон не найден.');}
+ if(!preg_match('/^[1-9][0-9]*$/D',$reference))crm_fail(404,'Шаблон не найден.');$t=lc_template((int)$reference);$actual=hash('sha256',lc_json([$t['kind'],$t['title'],$t['clauses']]));if(!hash_equals($t['checksum'],$actual))crm_fail(409,'Содержимое редакции не совпадает с её контрольной суммой. PDF не выдан.');return $t;
+}
