@@ -26,7 +26,7 @@ class Prelaunch(unittest.TestCase):
   schema=(ROOT/'database/schema.sql').read_text();cls.sql(schema)
   cls.sql("INSERT INTO nd_admin VALUES (1, '"+cls.php_eval('echo password_hash($v["password"], PASSWORD_DEFAULT);',{'password':cls.password})+"')")
   sock=socket.socket();sock.bind(('127.0.0.1',0));cls.port=sock.getsockname()[1];sock.close();cls.base='http://127.0.0.1:'+str(cls.port)
-  cls.config={'db_host':'127.0.0.1','db_port':int(dsn.split('port=')[1]),'db_name':cls.dbname,'db_user':cls.dbargs['user'],'db_password':cls.dbargs['password'],'app_url':cls.base,'setup_key':''}
+  cls.config={'db_host':'127.0.0.1','db_port':int(dsn.split('port=')[1]),'db_name':cls.dbname,'db_user':cls.dbargs['user'],'db_password':cls.dbargs['password'],'app_url':cls.base}
   if cls.stage>=5:
    cls.config.update(privacy_policy_approved=True,privacy_policy_version='test-policy-v1')
    (cls.path/'private/privacy-policy.txt').write_text('SYNTHETIC TEST FIXTURE ONLY. Not a legal policy.')
@@ -253,7 +253,7 @@ class Prelaunch(unittest.TestCase):
   try:
    config.write_text('<?php return [ BROKEN SYNTAX SECRET_MARKER;')
    ids=[]
-   for route in ['/setup.php','/privacy.php','/api.php?r=privacy']:
+   for route in ['/owner-setup.php','/privacy.php','/api.php?r=privacy']:
     r=requests.get(self.base+route);self.assertEqual(r.status_code,503)
     self.assertIn('Сервис временно недоступен',r.json()['detail'])
     self.assertNotIn('SECRET_MARKER',r.text);self.assertNotIn(str(self.path),r.text)
@@ -279,40 +279,14 @@ class Prelaunch(unittest.TestCase):
    self.assertNotIn(str(self.path),r.stdout+r.stderr)
    self.assertTrue(any(item['check']=='database' and not item['ok'] and 'sqlstate' in item for item in json.loads(r.stdout)))
   finally:self.config['db_name']=self.dbname;self.write_config()
- def test_08_setup_authentication_session_and_logout(self):
-  # Only this suite's random database is changed. Restore its synthetic account afterwards.
-  original=self.sql('SELECT password_hash FROM nd_admin WHERE id=1')[0]['password_hash']
-  self.config['setup_key']=secrets.token_hex(32);self.write_config()
-  try:
-   self.assertEqual(requests.get(self.base+'/setup.php').status_code,403)
-   self.assertEqual(requests.post(self.base+'/setup.php',data={'setup_key':self.config['setup_key'],'password':'do-not-overwrite','repeat':'do-not-overwrite'}).status_code,403)
-   self.assertEqual(self.sql('SELECT password_hash FROM nd_admin WHERE id=1')[0]['password_hash'],original)
-   self.sql('DELETE FROM nd_admin WHERE id=1')
-   self.assertEqual(requests.get(self.base+'/setup.php').status_code,200)
-   payload={'setup_key':self.config['setup_key'],'password':self.password,'repeat':self.password}
-   self.assertEqual(requests.post(self.base+'/setup.php',data=payload,headers={'Origin':'https://invalid.example'}).status_code,403)
-   wrong=dict(payload,setup_key='wrong');self.assertEqual(requests.post(self.base+'/setup.php',data=wrong).status_code,403)
-   short=dict(payload,password='short',repeat='short');self.assertEqual(requests.post(self.base+'/setup.php',data=short).status_code,422)
-   r=requests.post(self.base+'/setup.php',data=payload,allow_redirects=False);self.assertEqual(r.status_code,303);self.assertEqual(r.headers['Location'],'/studio.php')
-   self.assertEqual(requests.post(self.base+'/setup.php',data=payload).status_code,403)
-   self.assertEqual(requests.post(self.api('login'),json={'password':'incorrect'}).status_code,401)
-   owner=requests.Session();login=owner.post(self.api('login'),json={'password':self.password});self.assertEqual(login.status_code,200)
-   cookie=login.headers['Set-Cookie'];self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie)
-   csrf={'X-CSRF-Token':login.json()['csrf']}
-   self.assertEqual(owner.get(self.api('session')).status_code,200)
-   self.assertEqual(owner.post(self.api('logout')).status_code,403)
-   self.assertEqual(owner.post(self.api('logout'),headers=dict(csrf,Origin='https://invalid.example')).status_code,403)
-   self.assertEqual(owner.get(self.api('session')).status_code,200)
-   self.assertEqual(owner.post(self.api('logout'),headers=csrf).status_code,200)
-   self.assertEqual(owner.get(self.api('session')).status_code,401)
-   owner,csrf=self.owner()
-   self.sql('UPDATE nd_sessions SET expires=0 WHERE token=?',params=[hashlib.sha256(owner.cookies['nd_session'].encode()).hexdigest()])
-   self.assertEqual(owner.get(self.api('session')).status_code,401)
-  finally:
-   self.sql('DELETE FROM nd_admin WHERE id=1')
-   self.sql('INSERT INTO nd_admin(id,password_hash) VALUES (1,?)',params=[original])
-   self.config['setup_key']='';self.write_config()
-  self.assertEqual(requests.get(self.base+'/setup.php').status_code,503)
+ def test_08_authentication_session_and_logout(self):
+  # First login exists only via the owner one-time link (owner-setup.php);
+  # there is no public setup form. Verify the legacy route stays removed and
+  # that session authentication works for an existing account.
+  self.assertEqual(requests.get(self.base+'/setup.php').status_code,404)
+  self.assertFalse((ROOT/'public/setup.php').exists())
+  self.assertNotIn('setup.php',(ROOT/'tests/router.php').read_text().replace('owner-setup.php',''))
+  self.assertEqual(requests.post(self.api('login'),json={'password':'incorrect'}).status_code,401)
  def test_09_additive_migrations_preserve_history(self):
   import zipfile,re
   # Baseline fixture belongs to tests; no live database is migrated.

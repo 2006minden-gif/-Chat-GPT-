@@ -28,7 +28,11 @@ if (is_file($path) && is_readable($path)) {
         }
         check_result('config_structure',$valid);
         check_result('https_url',is_string($config['app_url'] ?? null) && parse_url($config['app_url'],PHP_URL_SCHEME)==='https');
-        check_result('setup_disabled',empty($config['setup_key']));
+        check_result('legacy_setup_file_absent',!is_file(dirname(__DIR__).'/public/setup.php'));
+        $grant=@file_get_contents(dirname(__DIR__).'/private/owner-bootstrap.json');
+        $grant_arr=is_string($grant)?json_decode($grant,true):null;
+        // The one-time first-login link must exist only before the cabinet is created.
+        check_result('owner_bootstrap_coherent',is_array($grant_arr)===false || ($grant_arr['enabled']??false)!==true || !empty($grant_arr['expires_at']) && $grant_arr['expires_at']>time());
         $policy=dirname(__DIR__).'/private/privacy-policy.txt';
         $approved=($config['privacy_policy_approved'] ?? false)===true;
         $version=$config['privacy_policy_version'] ?? '';

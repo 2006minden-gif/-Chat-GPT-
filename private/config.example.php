@@ -7,9 +7,9 @@ return [
     'db_user' => 'YOUR_DATABASE_USER',
     'db_password' => 'YOUR_DATABASE_PASSWORD',
     'app_url' => 'https://neurodelo.pro',
-    // Invent a separate random secret of at least 32 characters for first installation.
-    // After installation remove this value and delete public/setup.php.
-    'setup_key' => '',
+    // First login happens ONLY via the personal one-time link sent to the client
+    // after payment: /owner-setup.php#token=... (see docs/OWNER-FIRST-LOGIN.md).
+    // There is no public setup form; do not add one back.
     // Enable only after owner/legal review; place approved text in private/privacy-policy.txt.
     'privacy_policy_approved' => false,
     'privacy_policy_version' => '',

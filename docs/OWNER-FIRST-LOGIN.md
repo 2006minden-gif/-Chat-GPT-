@@ -1,10 +1,29 @@
 # Owner first login
 
-The owner explicitly requested creating/configuring owner access and publishing.
+The client's first login happens ONLY after payment, through a personal
+one-time link. There is no public setup form (the legacy public/setup.php and
+config 'setup_key' mechanism were removed; do not reintroduce them).
 The grant in private/owner-bootstrap.json contains only SHA-256 of a random
 256-bit capability and a three-day expiry. Its unhashed value stays outside Git,
 CI, artifacts and server logs; deliver the personal fragment URL only to the
 requesting owner. It is not the permanent password.
+
+Generating a grant (run locally, hand the token to the owner over a private
+channel, write the JSON to private/owner-bootstrap.json):
+
+```sh
+python3 - <<'PY'
+import hashlib, secrets, time, json
+token = secrets.token_hex(32)
+grant = {'enabled': True, 'expires_at': int(time.time()) + 3*86400,
+         'token_sha256': hashlib.sha256(token.encode()).hexdigest()}
+print('https://neurodelo.pro/owner-setup.php#token=' + token)
+open('private/owner-bootstrap.json', 'w').write(json.dumps(grant, indent=2) + '\n')
+PY
+```
+
+After the owner creates the cabinet, set `enabled` to false (or delete the
+file) so the unexpired link cannot be replayed.
 
 GET /owner-setup.php does not expose the grant or account status. The browser
 reads the URL fragment into memory and immediately clears it from the address.
