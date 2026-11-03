@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "source_sha": "fdc5bcc0af1f782b3a6618415afc2430491c8929",
-  "nonce": "workflow-41629601899",
-  "run_id": "41631440027",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/41631440027",
-  "time": "2026-11-03T11:55:40.908408+00:00",
+  "nonce": "workflow-41631440124",
+  "run_id": "41631448241",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/41631448241",
+  "time": "2026-11-03T11:56:03.470339+00:00",
   "production_touched": false,
   "producer": {
-    "id": 41629601899,
-    "name": "Validate fdc5bcc0af1f782b3a6618415afc2430491c8929",
+    "id": 41631440124,
+    "name": "Enable approved auto-merge",
     "head_sha": "fdc5bcc0af1f782b3a6618415afc2430491c8929",
     "head_branch": "main",
-    "event": "push",
+    "event": "workflow_run",
     "status": "completed",
-    "conclusion": "failure",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/41629601899",
-    "path": ".github/workflows/deploy.yml"
+    "conclusion": "skipped",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/41631440124",
+    "path": ".github/workflows/auto-merge.yml"
   },
   "inspection": {
     "repository": {
@@ -239,7 +239,7 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "fdc5bcc0af1f782b3a6618415afc2430491c8929",
-          "status": "pending",
+          "status": "in_progress",
           "conclusion": null,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/41631448241",
           "path": ".github/workflows/evidence.yml",
@@ -247,9 +247,30 @@
             {
               "id": 125901752030,
               "name": "record",
-              "status": "pending",
+              "status": "in_progress",
               "conclusion": null,
-              "steps": []
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
             }
           ]
         },
@@ -307,16 +328,16 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "fdc5bcc0af1f782b3a6618415afc2430491c8929",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/41631440027",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
               "id": 125901724278,
               "name": "record",
-              "status": "in_progress",
-              "conclusion": null,
+              "status": "completed",
+              "conclusion": "success",
               "steps": [
                 {
                   "name": "Set up job",
@@ -330,13 +351,18 @@
                 },
                 {
                   "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": null,
-                  "status": "in_progress"
+                  "conclusion": "success",
+                  "status": "completed"
                 },
                 {
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": null,
-                  "status": "pending"
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -1181,158 +1207,5 @@
       ]
     }
   },
-  "deployment_evidence": {
-    "mode": "deploy",
-    "result": "failed",
-    "rollback_verified": false,
-    "revision": "fdc5bcc0af1f782b3a6618415afc2430491c8929",
-    "release_id": "20261103T115409Z-r41629601899-a1-fdc5bcc0af1f",
-    "before": {
-      "ok": false,
-      "complete": false,
-      "checks": {
-        "/": {
-          "status": 200,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/studio.php": {
-          "status": 200,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/api.php?r=privacy": {
-          "status": 200,
-          "content_type": "application/json",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true,
-          "enabled": true,
-          "version": "privacy-2026-11-02-v4"
-        },
-        "/privacy.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "TimeoutError"
-        },
-        "/api.php?r=session": {
-          "status": 401,
-          "content_type": "application/json",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/api.php?r=leads": {
-          "status": 401,
-          "content_type": "application/json",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/~.htaccess": {
-          "status": 403,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/index~.html": {
-          "status": 403,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/.htaccess": {
-          "status": 403,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/private/config.php": {
-          "status": 404,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/index.html": {
-          "status": 403,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/crm.html": {
-          "status": 403,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/styles.css": {
-          "status": 200,
-          "content_type": "text/css",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true,
-          "sha256": "e5dc3e168dd5caf50dacdd42ecdea600f8f632bbf487ee255f87ed0ddc63cc67"
-        },
-        "/crm.css": {
-          "status": 200,
-          "content_type": "text/css",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true,
-          "sha256": "c435ecb98a9df9a55782423917296d144e40d5b3c754e107bb2b6a8675163b99"
-        },
-        "/script.js": {
-          "status": 200,
-          "content_type": "text/javascript",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true,
-          "sha256": "80748986a7d87149ec816470b9c83a484059a6c6e497df52802bb6a90753893d"
-        },
-        "/crm.js": {
-          "status": 200,
-          "content_type": "text/javascript",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true,
-          "sha256": "32a4e6959476ddb58a0afbc02111ff202a2e7d24df624caa2eeeab8979ba5016"
-        },
-        "/api-client.js": {
-          "status": 200,
-          "content_type": "text/javascript",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true,
-          "sha256": "cc2d1539d8787d34c8c831c551e835df60b255e6f167cb5ffe862aebe5abbe20"
-        }
-      }
-    },
-    "error": "baseline_transport_unavailable"
-  }
+  "deployment_evidence": null
 }
