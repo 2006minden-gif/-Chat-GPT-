@@ -1,7 +1,11 @@
 <?php
 declare(strict_types=1);
+require_once dirname(__DIR__).'/crm/core.php';
+require_once dirname(__DIR__).'/collab/core.php';
+require_once dirname(__DIR__).'/lifecycle/documents.php';
 require_once dirname(__DIR__).'/lifecycle/prospects.php';
-function pub_gate():void{if(crm_query("SELECT state FROM nd_schema_migrations WHERE version='023_publication'")->fetchColumn()!=='applied')crm_fail(503,'Раздел публикаций ещё не установлен.');}
+require_once dirname(__DIR__).'/customer-mail.php';
+function pub_gate():void{crm_gate();if(crm_query("SELECT state FROM nd_schema_migrations WHERE version='023_publication'")->fetchColumn()!=='applied')crm_fail(503,'Раздел публикаций ещё не установлен. Импортируйте схему или выполните миграцию 023_publication в панели хостинга.');}
 function pub_record(int $id,bool $lock=false):array{$p=crm_query('SELECT * FROM nd_publications WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$p)crm_fail(404,'Материал не найден.');return $p;}
 function pub_version(int $id):array{$v=crm_query('SELECT * FROM nd_publication_versions WHERE id=?',[$id])->fetch();if(!$v||!hash_equals($v['checksum'],hash('sha256',$v['body_json'])))crm_fail(404,'Редакция не найдена.');$v['body']=json_decode($v['body_json'],true,512,JSON_THROW_ON_ERROR);return $v;}
 function pub_head(array $p):array{$id=crm_query('SELECT id FROM nd_publication_versions WHERE publication_id=? AND revision_number=?',[$p['id'],$p['head_revision']])->fetchColumn();return pub_version((int)$id);}

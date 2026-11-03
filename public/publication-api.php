@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
-ini_set('display_errors','0');require dirname(__DIR__).'/private/app.php';require dirname(__DIR__).'/private/publication/core.php';require dirname(__DIR__).'/private/publication/media.php';security_headers();header('Cache-Control: no-store');header('Referrer-Policy: no-referrer');header('Content-Type: application/json; charset=utf-8');
-try{pub_gate();$mode=$_GET['mode']??'public';$r=$_GET['r']??'items';$method=$_SERVER['REQUEST_METHOD'];$a=null;
- if($mode==='owner'){current_session($method!=='GET');$a=['type'=>'owner','id'=>1];}elseif($mode==='customer')$a=cc_actor(true,$method!=='GET');elseif($mode==='prospect'){$s=ps_session($method!=='GET');$a=['type'=>'prospect','id'=>(int)$s['link_id'],'order_id'=>(int)$s['order_id'],'customer_id'=>(int)$s['customer_id'],'session'=>$s];}elseif($mode!=='public'||$method!=='GET')crm_fail(403,'Доступ запрещён.');rate('publications:'.$mode,300);
+ini_set('display_errors','0');require dirname(__DIR__).'/private/app.php';require dirname(__DIR__).'/private/crm/core.php';require dirname(__DIR__).'/private/publication/core.php';require dirname(__DIR__).'/private/publication/media.php';security_headers();header('Cache-Control: no-store');header('Referrer-Policy: no-referrer');header('Content-Type: application/json; charset=utf-8');
+try{$mode=$_GET['mode']??'public';if(in_array($mode,['owner','customer'],true))pub_gate();$r=$_GET['r']??'items';$method=$_SERVER['REQUEST_METHOD'];$a=null;
+ if($mode==='owner'){current_session($method!=='GET');$a=['type'=>'owner','id'=>1];}elseif($mode==='customer'){$a=cc_actor(true,$method!=='GET');pub_gate();}elseif($mode==='prospect'){$s=ps_session($method!=='GET');$a=['type'=>'prospect','id'=>(int)$s['link_id'],'order_id'=>(int)$s['order_id'],'customer_id'=>(int)$s['customer_id'],'session'=>$s];}elseif($mode!=='public'||$method!=='GET')crm_fail(403,'Доступ запрещён.');rate('publications:'.$mode,300);
  $page=filter_var($_GET['page']??1,FILTER_VALIDATE_INT);if(!$page||$page<1||$page>intdiv(PHP_INT_MAX,30))crm_fail(422,'Некорректная страница.');$size=24;$offset=($page-1)*$size;
  if($method==='GET'){
   if($r==='settings'&&$mode==='owner')json_response(['ok'=>true,'categories'=>pub_categories(),'storage'=>pub_storage_info()]);
