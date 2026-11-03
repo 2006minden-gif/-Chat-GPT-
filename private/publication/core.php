@@ -5,7 +5,12 @@ require_once dirname(__DIR__).'/collab/core.php';
 require_once dirname(__DIR__).'/lifecycle/documents.php';
 require_once dirname(__DIR__).'/lifecycle/prospects.php';
 require_once dirname(__DIR__).'/customer-mail.php';
-function pub_gate():void{crm_gate();if(crm_query("SELECT state FROM nd_schema_migrations WHERE version='023_publication'")->fetchColumn()!=='applied')crm_fail(503,'Раздел публикаций ещё не установлен. Импортируйте схему или выполните миграцию 023_publication в панели хостинга.');}
+function pub_gate():void{crm_gate();try{$state=crm_query("SELECT state FROM nd_schema_migrations WHERE version='023_publication'")->fetchColumn();}catch(PDOException $e){$state=false;}
+ // Журнал миграций мог не содержать запись 023 (например, таблицы созданы импортом SQL). Если сами таблицы на месте — раздел считается установленным и журнал чинится автоматически.
+ if($state!=='applied'){try{$tables=(int)db()->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN ('nd_publications','nd_publication_versions','nd_publication_media','nd_publication_permissions','nd_publication_permission_events')")->fetchColumn();}catch(PDOException $e){$tables=0;}
+  if($tables===5){try{db()->prepare("INSERT INTO nd_schema_migrations(version,state,applied_at) VALUES ('023_publication','applied',NOW()) ON DUPLICATE KEY UPDATE state='applied'")->execute([]);$state='applied';}catch(PDOException $e){}}
+  if($state!=='applied')crm_fail(503,'Раздел публикаций ещё не установлен. Импортируйте схему или выполните миграцию 023_publication в панели хостинга.');}
+}
 function pub_record(int $id,bool $lock=false):array{$p=crm_query('SELECT * FROM nd_publications WHERE id=?'.($lock?' FOR UPDATE':''),[$id])->fetch();if(!$p)crm_fail(404,'Материал не найден.');return $p;}
 function pub_version(int $id):array{$v=crm_query('SELECT * FROM nd_publication_versions WHERE id=?',[$id])->fetch();if(!$v||!hash_equals($v['checksum'],hash('sha256',$v['body_json'])))crm_fail(404,'Редакция не найдена.');$v['body']=json_decode($v['body_json'],true,512,JSON_THROW_ON_ERROR);return $v;}
 function pub_head(array $p):array{$id=crm_query('SELECT id FROM nd_publication_versions WHERE publication_id=? AND revision_number=?',[$p['id'],$p['head_revision']])->fetchColumn();return pub_version((int)$id);}
