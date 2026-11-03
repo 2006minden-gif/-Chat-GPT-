@@ -9,17 +9,12 @@ CI, artifacts and server logs; deliver the personal fragment URL only to the
 requesting owner. It is not the permanent password.
 
 Generating a grant (run locally, hand the token to the owner over a private
-channel, write the JSON to private/owner-bootstrap.json):
+channel; the script writes only the hash+expiry to
+private/owner-bootstrap.json and prints the ready link):
 
 ```sh
-python3 - <<'PY'
-import hashlib, secrets, time, json
-token = secrets.token_hex(32)
-grant = {'enabled': True, 'expires_at': int(time.time()) + 3*86400,
-         'token_sha256': hashlib.sha256(token.encode()).hexdigest()}
-print('https://neurodelo.pro/owner-setup.php#token=' + token)
-open('private/owner-bootstrap.json', 'w').write(json.dumps(grant, indent=2) + '\n')
-PY
+python3 scripts/owner-bootstrap-link.py            # default: 3 days
+python3 scripts/owner-bootstrap-link.py --days 7   # optional validity 1–30
 ```
 
 After the owner creates the cabinet, set `enabled` to false (or delete the
