@@ -1,10 +1,24 @@
 # Owner first login
 
-The owner explicitly requested creating/configuring owner access and publishing.
+The client's first login happens ONLY after payment, through a personal
+one-time link. There is no public setup form (the legacy public/setup.php and
+config 'setup_key' mechanism were removed; do not reintroduce them).
 The grant in private/owner-bootstrap.json contains only SHA-256 of a random
 256-bit capability and a three-day expiry. Its unhashed value stays outside Git,
 CI, artifacts and server logs; deliver the personal fragment URL only to the
 requesting owner. It is not the permanent password.
+
+Generating a grant (run locally, hand the token to the owner over a private
+channel; the script writes only the hash+expiry to
+private/owner-bootstrap.json and prints the ready link):
+
+```sh
+python3 scripts/owner-bootstrap-link.py            # default: 3 days
+python3 scripts/owner-bootstrap-link.py --days 7   # optional validity 1–30
+```
+
+After the owner creates the cabinet, set `enabled` to false (or delete the
+file) so the unexpired link cannot be replayed.
 
 GET /owner-setup.php does not expose the grant or account status. The browser
 reads the URL fragment into memory and immediately clears it from the address.
