@@ -33,7 +33,7 @@
 
 В архиве для загрузки папка `public/` называется `public_html/` для наглядности; фактический корень определяется в панели.
 
-**Обновление сайта после изменений в коде.** Автоматической синхронизации рабочего каталога с сервером Sweb нет: изменения попадают на сайт только через загрузку архива. Порядок: `python3 scripts/package.py` (пересобирает `dist/neurodelo-sweb.zip`, включая подпапки вроде `services/`) → загрузка в файловый менеджер/SFTP панели → перезапись файлов, кроме `private/config.php` и `private/owner-bootstrap.json`. GitHub Actions (`deploy.yml`) требует SSH-доступа к хостингу; если он не настроен, используйте описанный выше ручной путь.
+**Обновление сайта после изменений в коде.** Основной путь — автоматический деплой GitHub Actions (`deploy.yml`): push в `main` проходит Validate (PHP lint, тесты MySQL/Apache) и публикуется на SpaceWeb по SSH с проверкой хешей, бэкапом и откатом при неудачном health. Секреты `SSH_HOST`, `SSH_PORT`, `SSH_USER`, `DEPLOY_PATH`, `SSH_PRIVATE_KEY`, `SSH_KNOWN_HOSTS` уже настроены в environment `production`; конфигурация (`private/config.php`) и данные на сервере при деплое не перезаписываются. Резервный ручной путь (если Actions недоступны): `python3 scripts/package.py` (пересобирает `dist/neurodelo-sweb.zip`, включая подпапки вроде `services/`) → загрузка в файловый менеджер/SFTP панели → перезапись файлов, кроме `private/config.php` и `private/owner-bootstrap.json`.
 
 ## Возможности и защита
 
