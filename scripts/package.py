@@ -5,8 +5,8 @@ root=Path(__file__).resolve().parents[1]
 output=root/'dist/neurodelo-sweb.zip'
 output.parent.mkdir(exist_ok=True)
 with zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED) as z:
-    for p in sorted((root/'public').iterdir()):
-        if p.is_file():z.write(p,'public_html/'+p.name)
+    for p in sorted((root/'public').rglob('*')):
+        if p.is_file():z.write(p,'public_html/'+p.relative_to(root/'public').as_posix())
     for name in ['app.php','config.example.php','.htaccess']:
         z.write(root/'private'/name,'private/'+name)
     for p in sorted((root/'database').rglob('*.sql')):
