@@ -9,6 +9,6 @@ class OwnerHelp(planning.OwnerPlanning):
   with tempfile.TemporaryDirectory() as folder:
    p=Path(folder)/'guide.pdf';p.write_bytes(pdf.content);text=subprocess.check_output(['pdftotext',str(p),'-'],text=True);self.assertIn('Что мне сделать сейчас',text);self.assertIn('Как добавить работу в портфолио',text);self.assertIn('синтетических данных',text);self.assertNotIn(self.f.password,text);self.assertNotIn('smtp-password',text)
   if os.environ.get('NEURO_GUIDE_PDF'):Path(os.environ['NEURO_GUIDE_PDF']).write_bytes(pdf.content)
-  page=requests.get(self.base+'/help.php');self.assertEqual(page.status_code,200);self.assertIn('Один заказ от начала до завершения',page.text);self.assertIn('/owner-help-api.php?r=guide',page.text);questions=self.owner.get(self.base+'/owner-help-api.php?r=provider-questions');self.assertEqual(questions.status_code,200);self.assertIn('Поддержка',questions.text)
+  page=requests.get(self.base+'/help.php');self.assertEqual(page.status_code,200);self.assertIn('no-store',page.headers.get('Cache-Control',''));self.assertIn('noindex',page.headers.get('X-Robots-Tag',''));self.assertIn('Один заказ от начала до завершения',page.text);self.assertIn('/owner-help-api.php?r=guide',page.text);questions=self.owner.get(self.base+'/owner-help-api.php?r=provider-questions');self.assertEqual(questions.status_code,200);self.assertIn('Поддержка',questions.text)
 for name in dir(planning.OwnerPlanning):
  if name.startswith('test_'):setattr(OwnerHelp,name,None)

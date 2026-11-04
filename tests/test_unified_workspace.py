@@ -1,6 +1,7 @@
 """One owner workspace; real existing APIs, isolated synthetic data, no production decisions."""
-import os,secrets,subprocess,json,requests,tempfile
+import os,secrets,subprocess,json,requests,tempfile,shutil
 from urllib.parse import urlsplit
+from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
 import test_owner_workflow as workflow
 class UnifiedWorkspace(workflow.OwnerWorkflow):
@@ -28,6 +29,12 @@ class UnifiedWorkspace(workflow.OwnerWorkflow):
    r=self.owner.get(self.base+'/order-workflow.php',params={'order':oid,'stage':stage});self.assertEqual(r.status_code,200,(stage,r.text[:100]));self.assertIn('data-workflow-stage="'+stage+'"',r.text);self.assertIn('workflow-shell.js',r.text);self.assertNotIn('<iframe',r.text);self.assertEqual(r.headers.get('X-Frame-Options'),'DENY');self.assertNotIn('mc.yandex',r.headers.get('Content-Security-Policy',''))
   for stage in ['../../private/config.php','unknown','../orders.php']:
    r=self.owner.get(self.base+'/order-workflow.php',params={'order':oid,'stage':stage});self.assertEqual(r.status_code,404)
+ def test_spaceweb_public_html_layout_renders_without_repository_public_directory(self):
+  with tempfile.TemporaryDirectory() as folder:
+   root=Path(folder);shutil.copytree(self.f.path/'public',root/'public_html');shutil.copytree(self.f.path/'private',root/'private')
+   for stage in ['qualify','brief','price','proposal','details','contract','signatures','payment','access','production','acceptance','handover','support','archive','planning','messages','files']:
+    code="$_SERVER['REQUEST_METHOD']='GET';$_SERVER['REQUEST_URI']='/order-workflow.php';$_GET=['order'=>'1','stage'=>"+json.dumps(stage)+"];require "+json.dumps(str(root/'public_html/order-workflow.php'))+";"
+    r=subprocess.run([self.f.php,'-d','display_errors=0','-r',code],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stderr);self.assertIn('data-workflow-stage="'+stage+'"',r.stdout);self.assertIn('/workflow-shell.js?v=20261103',r.stdout)
  def test_browser_price_confirmation_uses_workspace_and_advances_without_native_dialog(self):
   oid=self.start_order();self.ready_brief(oid);self.approved_price();q=self.estimate()
   with sync_playwright() as pw:
