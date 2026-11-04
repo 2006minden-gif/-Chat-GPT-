@@ -22,6 +22,10 @@ class PortfolioSaveRecovery(publications.Publications):
      if len(keys)==1:route.fetch();route.abort('failed');return
     route.continue_()
    page.route('**/publication-api.php?*',handler);page.goto(self.base+'/publication-owner.php');page.get_by_label('Название',exact=True).fill('SYNTHETIC retry after lost response');page.get_by_role('button',name='Сохранить приватную редакцию',exact=True).click();expect(page.locator('#pub-message')).to_contain_text('Связь прервалась');expect(page.locator('#pub-message')).to_be_in_viewport();page.get_by_role('button',name='Сохранить приватную редакцию',exact=True).click();page.get_by_role('heading',name='Добавить изображения и видео',exact=True).wait_for();self.assertEqual(len(keys),2);self.assertEqual(keys[0],keys[1]);self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_publications')[0]['n'],1);browser.close()
+ def test_boot_failure_keeps_original_error_and_offers_retry(self):
+  self.prepare_synthetic_owner()
+  with sync_playwright() as pw:
+   browser=pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);page=self.page(browser);errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.route('**/publication-api.php?mode=owner&r=settings',lambda route:route.fulfill(status=503,content_type='application/json',body=json.dumps({'ok':False,'detail':'Хранилище временно недоступно. Повторите загрузку.'})));page.goto(self.base+'/publication-owner.php');expect(page.locator('#pub-message')).to_have_text('Хранилище временно недоступно. Повторите загрузку.');expect(page.get_by_role('button',name='Повторить загрузку редактора',exact=True)).to_be_visible();self.assertEqual(page.get_by_role('button',name='Сохранить приватную редакцию',exact=True).count(),0);self.assertEqual(errors,[]);browser.close()
  def test_upload_failure_preserves_selection_and_shows_plain_russian_error(self):
   self.prepare_synthetic_owner()
   with sync_playwright() as pw:
