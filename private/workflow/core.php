@@ -49,3 +49,14 @@ function wf_records(?int $order):array{
 }
 
 function wf_apply_price(array $d):array{return crm_idempotent('workflow/apply-approved-price',$d,function()use($d){$o=crm_record('orders',cc_id($d['order_id']??null),true);crm_version($d,$o);$q=pricing_detail(cc_id($d['quotation_id']??null));$p=crm_record('projects',(int)$q['project_id']);if((int)$p['order_id']!==(int)$o['id']||$q['state']!=='APPROVED'||!pricing_fresh($q)||($d['confirm']??false)!==true)crm_fail(409,'Выберите текущий одобренный расчёт этого заказа и подтвердите применение цены.');$value=bill_decimal((int)$q['calculation']['selling_minor']);$values=crm_values('orders',['total_amount'=>$value],$o);crm_query('UPDATE nd_orders SET total_amount=?,version=version+1 WHERE id=?',[$values['total_amount'],$o['id']]);crm_event('orders',(int)$o['id'],'approved_price_applied',$o);return ['ok'=>true,'order_id'=>(int)$o['id'],'price'=>$value];});}
+
+/** One explicit owner decision: bind the exact approved quote and apply its price atomically. */
+function wf_confirm_price(array $d):array{return crm_idempotent('workflow/confirm-price',$d,function()use($d){
+ $order=cc_id($d['order_id']??null);$a=['type'=>'owner','id'=>1];$f=lc_flow($a,$order,true);crm_version($d,$f);$o=crm_record('orders',$order,true);
+ if(($d['order_version']??null)!==(int)$o['version'])crm_fail(409,'Заказ изменился. Обновите шаг перед подтверждением цены.');
+ $q=pricing_detail(cc_id($d['quotation_id']??null));$project=crm_record('projects',(int)$q['project_id']);
+ if((int)$project['order_id']!==$order||$q['state']!=='APPROVED'||!pricing_fresh($q)||($d['confirm']??false)!==true)crm_fail(409,'Нужен актуальный одобренный расчёт именно этого заказа.');
+ $value=bill_decimal((int)$q['calculation']['selling_minor']);$values=crm_values('orders',['total_amount'=>$value],$o);lc_flow_commercial($a,$f,'quote',$d);
+ crm_query('UPDATE nd_orders SET total_amount=?,version=version+1 WHERE id=?',[$values['total_amount'],$order]);crm_event('orders',$order,'approved_price_applied',$o);lc_audit($a,'order',$order,'workflow_price_applied',(int)$o['version'],['quotation_id'=>(int)$q['id'],'quotation_hash'=>$q['checksum'],'from_scope_hash'=>hash('sha256',ai_json($q['calculation']['scope'])),'to_scope_hash'=>hash('sha256',ai_json(pricing_scope((int)$q['project_id'])))]);
+ return ['ok'=>true,'order_id'=>$order,'price'=>$value];
+});}

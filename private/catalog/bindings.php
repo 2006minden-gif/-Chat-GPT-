@@ -30,3 +30,12 @@ function cat_owner_labor_packages(int $project):array{
  foreach(['owner_review_hours'=>'Проверка результата владельцем','correction_hours'=>'Исправления владельцем'] as $field=>$label)$out[]=['name'=>$label,'development_hours'=>$package[$field],'testing_hours'=>'0','ai_input_tokens'=>'0','ai_output_tokens'=>'0','hosting_months'=>'0','tool_units'=>'0','external_units'=>'0','other_units'=>'0','risk'=>'medium','uncertain'=>true,'basis'=>'Отдельная модель времени владельца для точной редакции услуги; null — неизвестное, не ноль.'];return $out;
 }
 function cat_revision_request(int $revision):?int{if(!cat_binding_installed())return null;$id=crm_query('SELECT request_id FROM nd_catalog_briefs WHERE spec_revision_id=? UNION ALL SELECT request_id FROM nd_catalog_offers WHERE proposal_revision_id=? LIMIT 1',[$revision,$revision])->fetchColumn();return $id===false?null:(int)$id;}
+
+/** Only the recorded application of this exact approved price may preserve freshness. */
+function cat_owner_price_scope_matches(array $q,array $scope):bool{
+ $order=$scope['order']['id']??null;if(!is_int($order)||$q['state']!=='APPROVED')return false;
+ if((int)crm_query("SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME IN ('nd_lc_audit','nd_lc_order_flow')")->fetchColumn()!==2)return false;
+ $flow=crm_query('SELECT quotation_id FROM nd_lc_order_flow WHERE order_id=?',[$order])->fetch();if(!$flow||(int)$flow['quotation_id']!==(int)$q['id'])return false;
+ $row=crm_query("SELECT evidence_json FROM nd_lc_audit WHERE entity='order' AND record_id=? AND action='workflow_price_applied' ORDER BY id DESC LIMIT 1",[$order])->fetchColumn();if(!$row)return false;$e=json_decode($row,true);
+ return is_array($e)&&(int)($e['quotation_id']??0)===(int)$q['id']&&hash_equals($q['checksum'],(string)($e['quotation_hash']??''))&&hash_equals(hash('sha256',ai_json($q['calculation']['scope'])),(string)($e['from_scope_hash']??''))&&hash_equals(hash('sha256',ai_json($scope)),(string)($e['to_scope_hash']??''));
+}

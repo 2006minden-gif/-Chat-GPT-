@@ -69,6 +69,8 @@
     "operations.js",
     "order-workflow-api.php",
     "order-workflow.js",
+    "workflow-shell.js",
+    "workflow-shell.css",
     "order-workflow.php",
     "ordering.js",
     "ordering.php",
@@ -258,6 +260,7 @@
     "vendor/tfpdf/font/unifont/ttfonts.php",
     "vendor/tfpdf/tfpdf.php",
     "workflow/core.php",
+    "workflow/page.php",
     "workflow/diagnostics.php",
     "workflow/prepare.php"
   ],
