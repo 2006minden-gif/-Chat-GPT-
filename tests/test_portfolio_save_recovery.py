@@ -22,6 +22,19 @@ class PortfolioSaveRecovery(publications.Publications):
      if len(keys)==1:route.fetch();route.abort('failed');return
     route.continue_()
    page.route('**/publication-api.php?*',handler);page.goto(self.base+'/publication-owner.php');page.get_by_label('Название',exact=True).fill('SYNTHETIC retry after lost response');page.get_by_role('button',name='Сохранить приватную редакцию',exact=True).click();expect(page.locator('#pub-message')).to_contain_text('Связь прервалась');expect(page.locator('#pub-message')).to_be_in_viewport();page.get_by_role('button',name='Сохранить приватную редакцию',exact=True).click();page.get_by_role('heading',name='Добавить изображения и видео',exact=True).wait_for();self.assertEqual(len(keys),2);self.assertEqual(keys[0],keys[1]);self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_publications')[0]['n'],1);page.unroute_all(behavior='wait');browser.close()
+ def test_dragged_files_require_explicit_upload_and_new_editor_stays_usable(self):
+  self.prepare_synthetic_owner()
+  with sync_playwright() as pw:
+   browser=pw.chromium.launch(executable_path=os.environ.get('CHROMIUM_BIN','/usr/bin/chromium'),args=['--no-sandbox']);page=self.page(browser);page.goto(self.base+'/publication-owner.php');page.get_by_label('Название',exact=True).fill('SYNTHETIC editor upload walkthrough');page.get_by_role('button',name='Сохранить приватную редакцию',exact=True).click();page.get_by_role('heading',name='Добавить изображения и видео',exact=True).wait_for()
+   with page.expect_file_chooser() as chosen:page.locator('.pub-file-trigger').click()
+   chosen.value.set_files([]);transfer=page.evaluate_handle("()=>{const d=new DataTransfer();d.items.add(new File([Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='),c=>c.charCodeAt(0))],'SYNTHETIC-dropped.png',{type:'image/png'}));return d;}");page.locator('.pub-dropzone').dispatch_event('drop',{'dataTransfer':transfer});expect(page.locator('.pub-selection')).to_contain_text('Выбрано файлов: 1');expect(page.locator('.pub-selection')).to_contain_text('SYNTHETIC-dropped.png');self.assertEqual(self.f.sql('SELECT COUNT(*) n FROM nd_publication_media')[0]['n'],0);page.get_by_role('button',name='Загрузить выбранные файлы',exact=True).click();page.get_by_role('heading',name='Элементов в смешанной галерее: 1',exact=True).wait_for();expect(page.locator('[data-pub-count]')).to_have_text('Медиа в черновике: 1');head=self.api('items').json()['items'][0]['head']['id'];self.assertEqual(page.locator('[data-pub-preview]').get_attribute('href'),'/portfolio-case.php?preview='+str(head));self.assertEqual(requests.get(self.base+'/publication-api.php?r=items').json()['items'],[]);self.assertFalse(page.evaluate('document.documentElement.scrollWidth>innerWidth'))
+   if os.environ.get('NEURO_PORTFOLIO_SCREENSHOT'):
+    page.set_viewport_size({'width':1280,'height':1000});page.locator('#pub-media').scroll_into_view_if_needed();page.screenshot(path=os.environ['NEURO_PORTFOLIO_SCREENSHOT'])
+   if os.environ.get('NEURO_PORTFOLIO_MOBILE_SCREENSHOT'):
+    page.set_viewport_size({'width':375,'height':812});page.locator('#pub-media').scroll_into_view_if_needed();page.screenshot(path=os.environ['NEURO_PORTFOLIO_MOBILE_SCREENSHOT'])
+   if os.environ.get('NEURO_PORTFOLIO_OVERVIEW_SCREENSHOT'):
+    page.set_viewport_size({'width':1280,'height':1000});page.evaluate('window.scrollTo(0,0)');page.screenshot(path=os.environ['NEURO_PORTFOLIO_OVERVIEW_SCREENSHOT'])
+   page.unroute_all(behavior='wait');browser.close()
  def test_boot_failure_keeps_original_error_and_offers_retry(self):
   self.prepare_synthetic_owner()
   with sync_playwright() as pw:
