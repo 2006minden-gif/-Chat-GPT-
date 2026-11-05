@@ -1,3 +1,4 @@
+from mail_content import mail_plain
 """Paid invitation, real loopback inbox receipt, no real bank/FNS activity."""
 import base64,re,threading,secrets,requests
 import test_order_lifecycle as orders
@@ -11,7 +12,7 @@ class PaidClientAccess(orders.OrderLifecycle):
   extra.setdefault('amount',f"{int(i['total_minor'])//100}.{int(i['total_minor'])%100:02}");return super().bank(i,**extra)
  def invite(self,oid,email=None):return self.owner.post(self.base+'/customer-api.php?r=owner/invite',json={'customer_id':self.customer_id,'order_id':oid,'email':email or self.invite_email})
  def token(self):
-  body=base64.b64decode(self.smtp.messages[-1][1].split(b'\r\n\r\n',1)[1]).decode();return re.search(r'#token=([a-f0-9]{64})',body).group(1)
+  body=mail_plain(self.smtp.messages[-1][1]);return re.search(r'#token=([a-f0-9]{64})',body).group(1)
  def activate_invite(self,token,s=None):
   s=s or requests.Session();r=s.get(self.base+'/customer-api.php?r=session');s.headers['X-CSRF-Token']=r.json()['csrf'];return s,s.post(self.base+'/customer-api.php?r=invite',json={'token':token,'password':'SYNTHETIC-secret12345','password_confirmation':'SYNTHETIC-secret12345','consent':True,'policy_version':'test-policy-v1'})
  def test_paid_only_single_use_expiry_duplicate_bank_and_existing_login_without_smtp(self):

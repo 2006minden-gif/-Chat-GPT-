@@ -1,3 +1,4 @@
+from mail_content import mail_plain
 """Stage 4 HTTP/SMTP/browser tests. Only random loopback databases; no production mail."""
 import base64
 from concurrent.futures import ThreadPoolExecutor
@@ -74,7 +75,7 @@ class CustomerAuth(unittest.TestCase):
  def payload(self,**changes):
   p={'name':'Тестовый клиент','email':'Customer@Example.invalid','password':'LongTestPassword123!','password_confirmation':'LongTestPassword123!','consent':True,'policy_version':'test-policy-v1'};p.update(changes);return p
  def link(self,purpose=None):
-  message=self.smtp.messages[-1][1];text=base64.b64decode(message.split(b'\r\n\r\n',1)[1]).decode()
+  message=self.smtp.messages[-1][1];text=mail_plain(message)
   link=re.search(r'http://[^\s]+',text).group()
   if purpose:self.assertIn('?view='+purpose,link)
   token=link.split('#token=')[1];self.assertRegex(token,r'^[a-f0-9]{64}$');return link,token

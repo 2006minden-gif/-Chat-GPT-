@@ -11,7 +11,26 @@ function ct_fill(array $item,array $fields):array{
  foreach($item['paragraphs'] as $p){if((str_contains($p,'{{client.registration}}')&&($fields['client.registration']??null)==='')||(str_contains($p,'{{client.bank_details}}')&&($fields['client.bank_details']??null)===''))continue;foreach(['review.rating'=>'Оценка при желании','review.company'=>'Компания при желании','review.photo_reference'=>'Фото при желании'] as $optionalKey=>$label)if(($fields[$optionalKey]??null)==='')$p=str_replace($label.' {{'.$optionalKey.'}}.','',$p);if(str_contains($p,'{{owner.postal_address_line}}')&&$fields['owner.postal_address_line']==='')continue;$p=preg_replace_callback('/\{\{([^{}]+)\}\}/',fn($m)=>$fields[$m[1]],$p);if(str_contains($p,'{{')||str_contains($p,'}}'))crm_fail(422,'Остались неразрешённые поля.');$out[]=$p;}return $out;
 }
 function ct_asset(array $b):array{$x=crm_query('SELECT * FROM nd_lc_pdf_assets WHERE binding_id=?',[$b['id']])->fetch();if(!$x||!hash_equals($x['source_hash'],$b['generated_hash']))crm_fail(404,'Для этой версии PDF не выпущен.');return $x;}
-function ct_download(array $b):never{$x=ct_asset($b);$path=cc_file_path($x);header('Cache-Control: private, no-store');header('Referrer-Policy: no-referrer');header('X-Content-Type-Options: nosniff');header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="document-'.$b['id'].'.pdf"');header('Content-Length: '.$x['size_bytes']);readfile($path);exit;}
+/** PDF from the exact approved legacy snapshot; never re-fill from current settings. */
+function ct_snapshot_pdf(array $b):string{
+ $in=json_decode($b['input_snapshot'],true,512,JSON_THROW_ON_ERROR);$template=json_decode($b['template_snapshot'],true,512,JSON_THROW_ON_ERROR);
+ if(!hash_equals($b['generated_hash'],hash('sha256',lc_json([$template,$in]))))crm_fail(409,'Сохранённая версия документа не прошла проверку целостности. PDF не выдан.');
+ $rendered=$in['rendered']??[];$title=$rendered['title']??null;$text=$rendered['description']??null;
+ if(!is_string($title)||trim($title)===''||!is_string($text)||trim($text)===''||preg_match('/\{\{[^{}]+\}\}/u',$title."\n".$text))crm_fail(409,'В документе есть незаполненные поля. Владелец должен подготовить и проверить новую версию.');
+ $created=DateTimeImmutable::createFromFormat('!Y-m-d H:i:s',$b['created_at'],new DateTimeZone('UTC'));if(!$created||$created->format('Y-m-d H:i:s')!==$b['created_at'])crm_fail(409,'Не удалось проверить дату сохранённой версии.');
+ return ct_pdf_bytes($title,preg_split('/\r?\n\r?\n/u',$text),false,$created->getTimestamp());
+}
+function ct_download(array $b):never{
+ $snapshot=json_decode($b['input_snapshot'],true,512,JSON_THROW_ON_ERROR);
+ if(!isset($snapshot['package_fields'])){
+  $ready=crm_query("SELECT state FROM nd_schema_migrations WHERE version='019_contract_details'")->fetchColumn()==='applied';
+  if(!$ready){$bytes=ct_snapshot_pdf($b);header('Cache-Control: private, no-store');header('Referrer-Policy: no-referrer');header('X-Content-Type-Options: nosniff');header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="document-'.$b['id'].'.pdf"');header('Content-Length: '.strlen($bytes));header('X-Neuro-Source-Hash: '.$b['generated_hash']);header('X-Neuro-PDF-SHA256: '.hash('sha256',$bytes));echo $bytes;exit;}
+  // Materialize once in the existing private persistent PDF store. No approval flags are set.
+  crm_atomic(function()use($b){$locked=crm_query('SELECT * FROM nd_lc_document_bindings WHERE id=? FOR UPDATE',[$b['id']])->fetch();if(!$locked||!hash_equals($b['generated_hash'],$locked['generated_hash']))crm_fail(409,'Версия документа изменилась.');$existing=crm_query('SELECT binding_id FROM nd_lc_pdf_assets WHERE binding_id=?',[$b['id']])->fetchColumn();if(!$existing)ct_store_pdf((int)$b['id'],$b['generated_hash'],ct_snapshot_pdf($locked));});
+ }
+ $x=ct_asset($b);$path=cc_file_path($x);header('Cache-Control: private, no-store');header('Referrer-Policy: no-referrer');header('X-Content-Type-Options: nosniff');header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="document-'.$b['id'].'.pdf"');header('Content-Length: '.$x['size_bytes']);header('X-Neuro-Source-Hash: '.$b['generated_hash']);header('X-Neuro-PDF-SHA256: '.$x['checksum']);readfile($path);exit;
+}
+
 function ct_store_pdf(int $id,string $source,string $bytes):void {
  $root=cc_storage(true);$lock=fopen($root.'/.quota.lock','c');if(!$lock||!flock($lock,LOCK_EX))crm_fail(503,'Хранилище занято.');$path=null;
  try{$used=0;foreach(new DirectoryIterator($root) as $e){if($e->isDot()||$e->getFilename()==='.quota.lock')continue;if($e->isLink()||!$e->isFile())crm_fail(503,'Проверьте хранилище.');$used+=$e->getSize();}cc_capacity($used,strlen($bytes),min(536870912,max(1,(int)(config()['collaboration_total_max_bytes']??104857600))),disk_free_space($root));$key=bin2hex(random_bytes(32));$path=$root.'/'.$key;$h=fopen($path,'x');if(!$h)crm_fail(503,'PDF не сохранён.');chmod($path,0600);$n=fwrite($h,$bytes);fclose($h);if($n!==strlen($bytes))crm_fail(503,'PDF не сохранён.');crm_query('INSERT INTO nd_lc_pdf_assets(binding_id,storage_key,checksum,size_bytes,source_hash) VALUES (?,?,?,?,?)',[$id,$key,hash('sha256',$bytes),strlen($bytes),$source]);}catch(Throwable $e){if($path&&is_file($path))unlink($path);throw $e;}finally{flock($lock,LOCK_UN);fclose($lock);}

@@ -1,3 +1,4 @@
+from mail_content import mail_plain
 """Developer rehearsal only: synthetic owner settings/inbox/paper copies, no real payment or FNS receipt."""
 import base64,hashlib,json,re,secrets,subprocess,requests,os
 import test_paid_client_access as paid
@@ -27,7 +28,7 @@ class ProspectJourney(paid.PaidClientAccess):
   if runtime.exists():shutil.rmtree(runtime)
   self.f.config['customer_settings_test_mode']=True;self.f.write_config()
   p=self.setup_action('policy/draft',operator_name='SYNTHETIC owner',operator_address='SYNTHETIC test address',contact='SYNTHETIC test contact',legal_basis='SYNTHETIC rehearsal only, not real owner legal review',retention='SYNTHETIC test-only retention',processors='SYNTHETIC loopback SMTP and disposable database')['policy'];self.setup_action('policy/approve',hash=p['hash'],confirm_reviewed=True,reason='SYNTHETIC owner fixture decision, never production approval');self.policy=p;self.setup_action('enable-preparation',confirm=True);self.setup_action('document-exchange',confirm=True)
-  self.setup_action('mail/probe',**{'from':'owner@example.invalid','recipient':'owner@example.invalid','password':'SYNTHETIC-mail-password'});body=base64.b64decode(self.smtp.messages[-1][1].split(b'\r\n\r\n',1)[1]).decode();code=re.search(r'Код: ([0-9]{6})',body).group(1);self.setup_action('mail/confirm',code=code);self.smtp.messages.clear()
+  self.setup_action('mail/probe',**{'from':'owner@example.invalid','recipient':'owner@example.invalid','password':'SYNTHETIC-mail-password'});body=mail_plain(self.smtp.messages[-1][1]);code=re.search(r'Код: ([0-9]{6})',body).group(1);self.setup_action('mail/confirm',code=code);self.smtp.messages.clear()
  def own(self,route,**data):
   data.setdefault('request_key',secrets.token_hex(32));return self.owner.post(self.base+'/prospect-api.php?mode=owner&r='+route,json=data)
  def exchange(self,token):
