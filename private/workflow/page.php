@@ -8,8 +8,8 @@ function wf_page(string $publicRoot):never{
  $_GET['mode']='owner';ob_start();require $publicRoot.'/'.$pages[$stage];$html=ob_get_clean();
  if(http_response_code()>=400){echo $html;exit;}
  $attrs=' data-workflow-stage="'.$stage.'" data-workflow-order="'.$order.'"';
- $html=preg_replace('~<body\b([^>]*)>~i','<body$1'.$attrs.'><script src="/workflow-shell.js?v=navigation-20261105"></script><section id="workflow-shell" class="workflow-shell" aria-label="Рабочее место заказа"><a href="/order-workflow.php">← Все обращения и заказы</a><h1 id="workflow-title">Заказ</h1><details id="workflow-steps"><summary id="workflow-step-summary">Текущий шаг и все этапы заказа</summary><ol id="workflow-progress" aria-label="Этапы заказа"></ol></details><p id="workflow-status" role="status">Загружаем текущий шаг…</p><nav id="workflow-tools" aria-label="Документы и сообщения заказа"></nav></section>',$html,1);
- $html=str_replace('</head>','<link rel="stylesheet" href="/workflow-shell.css?v=navigation-20261105"></head>',$html);
+ $html=preg_replace('~<body\b([^>]*)>~i','<body$1'.$attrs.'><script src="/workflow-shell.js?v=order-layout-20261105"></script><section id="workflow-shell" class="workflow-shell" aria-label="Рабочее место заказа"><a href="/order-workflow.php">← Все обращения и заказы</a><p id="workflow-reference"></p><h1 id="workflow-title">Заказ</h1><details id="workflow-steps"><summary id="workflow-step-summary">Текущий шаг и все этапы заказа</summary><ol id="workflow-progress" aria-label="Этапы заказа"></ol></details><p id="workflow-status" role="status">Загружаем текущий шаг…</p><nav id="workflow-tools" aria-label="Документы и сообщения заказа"></nav></section>',$html,1);
+ $html=str_replace('</head>','<link rel="stylesheet" href="/workflow-shell.css?v=order-layout-20261105"></head>',$html);
  $html=str_replace('</body>','<section id="workflow-next" class="workflow-shell" aria-label="Следующее действие"></section></body>',$html);
  echo $html;exit;
 }
