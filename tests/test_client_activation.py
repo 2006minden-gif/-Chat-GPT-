@@ -1,3 +1,4 @@
+from mail_content import mail_plain
 """Owner-approved scoped privacy + actual loopback SMTP challenge. No production mail."""
 import base64,json,re,shutil,secrets,os
 import requests
@@ -17,7 +18,7 @@ class ClientActivation(auth.CustomerAuth):
   p=self.draft();r=self.change('policy/approve',hash=p['hash'],confirm_reviewed=True,reason='SYNTHETIC owner legal review in isolated tests only');self.assertEqual(r.status_code,200,r.text);return p
  def probe(self):
   r=self.change('mail/probe',**{'from':'owner@example.invalid','recipient':'owner@example.invalid','password':'SyntheticPrivateSmtpPassword!'});self.assertEqual(r.status_code,200,r.text);self.assertTrue(r.json()['inbox_confirmation_pending']);self.assertFalse(r.json()['mail_verified']);self.assertNotIn('SyntheticPrivateSmtpPassword',r.text);self.assertNotIn('probe_hash',r.text)
-  message=self.smtp.messages[-1][1];body=base64.b64decode(message.split(b'\r\n\r\n',1)[1]).decode();code=re.search(r'Код: ([0-9]{6})',body).group(1);self.assertNotIn(code,r.text);return code
+  message=self.smtp.messages[-1][1];body=mail_plain(message);code=re.search(r'Код: ([0-9]{6})',body).group(1);self.assertNotIn(code,r.text);return code
  def open(self):
   p=self.approve_policy();self.assertEqual(self.change('enable-preparation',confirm=True).status_code,200);code=self.probe();r=self.change('mail/confirm',code=code);self.assertEqual(r.status_code,200,r.text);self.assertTrue(r.json()['mail_verified']);r=self.change('open',confirm=True);self.assertEqual(r.status_code,200,r.text);return p
  def test_activation_01_explicit_policy_and_received_mail_code_required(self):
