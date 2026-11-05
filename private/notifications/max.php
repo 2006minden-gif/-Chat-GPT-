@@ -46,7 +46,7 @@ function max_http(string $method,string $path,string $token,?array $body=null): 
 function max_queue(array $s): array {
     // Track acknowledged IDs, not a MAX(id) cursor: commit order can differ from ID order.
     $done=array_fill_keys($s['completed_ids']??[],true);
-    $ids=db()->query('SELECT id FROM nd_leads ORDER BY id')->fetchAll(PDO::FETCH_COLUMN);
+    $ids=db()->query("SELECT id FROM nd_leads WHERE status<>'В корзине' ORDER BY id")->fetchAll(PDO::FETCH_COLUMN);
     return array_values(array_filter($ids,static fn($id)=>!isset($done[$id])));
 }
 function max_workflow_queue(array $s):array{

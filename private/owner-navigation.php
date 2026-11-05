@@ -3,7 +3,7 @@ declare(strict_types=1);
 /** One directory of owner screens. Links never grant access or create scoped customer URLs. */
 function owner_navigation_groups():array{return [
  'Заказы и клиенты'=>[
- ['Заказы от обращения до приёмки','/order-workflow.php'],['Заявки и уведомления MAX','/studio.php'],['Обзор CRM','/workspace.php#dashboard'],['Все заявки CRM','/workspace.php#leads'],['Клиенты','/workspace.php#customers'],['Сделки','/workspace.php#deals'],['Заказы','/workspace.php#orders'],['Проекты','/workspace.php#projects'],['Задачи','/workspace.php#tasks'],['Сроки и загрузка','/planning.php'],['Поддержка и архив','/support.php?mode=owner']],
+ ['Заказы от обращения до приёмки','/order-workflow.php'],['Заявки и уведомления MAX','/studio.php'],['Корзина заявок','/studio.php#trash'],['Обзор CRM','/workspace.php#dashboard'],['Все заявки CRM','/workspace.php#leads'],['Клиенты','/workspace.php#customers'],['Сделки','/workspace.php#deals'],['Заказы','/workspace.php#orders'],['Проекты','/workspace.php#projects'],['Задачи','/workspace.php#tasks'],['Сроки и загрузка','/planning.php'],['Поддержка и архив','/support.php?mode=owner']],
  'Документы и общение'=>[
  ['Документы заказов','/documents.php?mode=owner#documents'],['Шаблоны и правовая проверка','/documents.php?mode=owner#templates'],['Реквизиты исполнителя','/contract-settings.php'],['Обмен до открытия кабинета','/prospect-owner.php'],['Сообщения','/collaboration.php?mode=owner#messages'],['Закрытые файлы','/collaboration.php?mode=owner#files'],['Согласования','/collaboration.php?mode=owner#approvals']],
  'Услуги и расчёты'=>[
