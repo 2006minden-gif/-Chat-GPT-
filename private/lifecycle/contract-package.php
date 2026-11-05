@@ -21,6 +21,7 @@ function ct_snapshot_pdf(array $b):string{
  return ct_pdf_bytes($title,preg_split('/\r?\n\r?\n/u',$text),false,$created->getTimestamp());
 }
 function ct_download(array $b):never{
+ $print=$_GET['print']??null;if($print!==null&&($print!=='compact-v1'||($b['kind']??'')!=='proposal'))crm_fail(422,'Выбранный вариант PDF недоступен для этого документа.');
  $snapshot=json_decode($b['input_snapshot'],true,512,JSON_THROW_ON_ERROR);
  if(!isset($snapshot['package_fields'])){
   $ready=crm_query("SELECT state FROM nd_schema_migrations WHERE version='019_contract_details'")->fetchColumn()==='applied';
@@ -28,7 +29,12 @@ function ct_download(array $b):never{
   // Materialize once in the existing private persistent PDF store. No approval flags are set.
   crm_atomic(function()use($b){$locked=crm_query('SELECT * FROM nd_lc_document_bindings WHERE id=? FOR UPDATE',[$b['id']])->fetch();if(!$locked||!hash_equals($b['generated_hash'],$locked['generated_hash']))crm_fail(409,'Версия документа изменилась.');$existing=crm_query('SELECT binding_id FROM nd_lc_pdf_assets WHERE binding_id=?',[$b['id']])->fetchColumn();if(!$existing)ct_store_pdf((int)$b['id'],$b['generated_hash'],ct_snapshot_pdf($locked));});
  }
- $x=ct_asset($b);$path=cc_file_path($x);header('Cache-Control: private, no-store');header('Referrer-Policy: no-referrer');header('X-Content-Type-Options: nosniff');header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="document-'.$b['id'].'.pdf"');header('Content-Length: '.$x['size_bytes']);header('X-Neuro-Source-Hash: '.$b['generated_hash']);header('X-Neuro-PDF-SHA256: '.$x['checksum']);readfile($path);exit;
+ $x=ct_asset($b);$path=cc_file_path($x);
+ if($print==='compact-v1'){
+  // A separate print aid from the same immutable text. Never replace an issued PDF asset.
+  $bytes=ct_snapshot_pdf($b);header('Cache-Control: private, no-store');header('Referrer-Policy: no-referrer');header('X-Content-Type-Options: nosniff');header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="document-'.$b['id'].'-print.pdf"');header('Content-Length: '.strlen($bytes));header('X-Neuro-Source-Hash: '.$b['generated_hash']);header('X-Neuro-PDF-SHA256: '.hash('sha256',$bytes));header('X-Neuro-PDF-Purpose: compact-print-copy');echo $bytes;exit;
+ }
+ header('Cache-Control: private, no-store');header('Referrer-Policy: no-referrer');header('X-Content-Type-Options: nosniff');header('Content-Type: application/pdf');header('Content-Disposition: attachment; filename="document-'.$b['id'].'.pdf"');header('Content-Length: '.$x['size_bytes']);header('X-Neuro-Source-Hash: '.$b['generated_hash']);header('X-Neuro-PDF-SHA256: '.$x['checksum']);readfile($path);exit;
 }
 
 function ct_store_pdf(int $id,string $source,string $bytes):void {
