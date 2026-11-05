@@ -14,6 +14,7 @@ function crm_list(string $kind,array $filters=[]):array{
   if(in_array($kind,['customers','employees'],true)){$where[]='t.status'.(($filters['archived']??'')==='true'?"='archived'":"<>'archived'");}
   else $where[]='t.archived_at IS '.(($filters['archived']??'')==='true'?'NOT NULL':'NULL');
  }
+ if($kind==='leads'&&($filters['archived']??'')!=='all'){$where[]="t.status".(($filters['archived']??'')==='true'?"='В корзине'":"<>'В корзине'");}
  $allowed=['status','customer_id','project_id','assignee_employee_id','priority','kind'];
  foreach($allowed as $f){if(!isset($filters[$f])||$filters[$f]==='')continue;
   if(($f==='project_id'&&$kind==='tasks')){$where[]='t.id IN (SELECT task_id FROM nd_task_projects WHERE project_id=?)';$p[]=$filters[$f];continue;}

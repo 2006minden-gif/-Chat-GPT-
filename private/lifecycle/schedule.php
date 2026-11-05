@@ -1,5 +1,9 @@
 <?php
 declare(strict_types=1);
+function lc_schedule_text(array $rows):string{
+ $labels=['none'=>'по согласованному сроку','production'=>'до начала работ','milestone'=>'для выбранного этапа','acceptance'=>'до итоговой приёмки','handover'=>'до передачи','closure'=>'до закрытия'];
+ return implode("\n",array_map(fn($r)=>$r['label'].': '.bill_decimal((int)$r['amount_minor']).' RUB, до '.$r['due_on'].', условие: '.($labels[$r['gate']]??throw new LogicException('unknown_payment_gate')).($r['stage_id']?' №'.$r['stage_id']:''),$rows));
+}
 function lc_schedule_parse(string $json,int $total,int $project):array{
  try{$rows=json_decode($json,true,32,JSON_THROW_ON_ERROR);}catch(Throwable $e){crm_fail(422,'График оплаты: нужен список этапов JSON.');}
  if($rows===[]&&$total===0)return [];
