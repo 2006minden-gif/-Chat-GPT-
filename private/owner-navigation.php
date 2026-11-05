@@ -13,7 +13,7 @@ function owner_navigation_groups():array{return [
  'Публикации'=>[
  ['Редактор портфолио','/publication-owner.php?kind=portfolio'],['Редактор отзывов','/publication-owner.php?kind=review']],
  'Инструменты и помощь'=>[
- ['ИИ-центр','/ai.php?mode=owner'],['ИИ-производство','/production.php'],['Ручные задания','/handoff.php'],['Сотрудники','/workspace.php#employees'],['Помощь владельцу','/help.php']],
+ ['ИИ-центр','/ai.php?mode=owner'],['ИИ-производство','/production.php'],['Ручные задания','/handoff.php'],['Помощь владельцу','/help.php']],
  'Публичные страницы'=>[
  ['Главная сайта','/'],['Услуги','/catalog.php'],['Портфолио на сайте','/portfolio.php'],['Отзывы на сайте','/reviews.php'],['Политика конфиденциальности','/privacy.php'],['Согласие на обработку данных','/consent.php'],['Политика клиентского кабинета','/customer-privacy.php'],['Аналитика и выбор посетителя','/analytics.php'],['Карта сайта','/sitemap.php']]
 ];}
