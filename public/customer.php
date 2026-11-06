@@ -7,7 +7,7 @@ $view=$_GET['view']??'login';
 if(!is_string($view)||!in_array($view,['login','register','forgot','reset','invite','verify','resend'],true))$view='login';
 $titles=['login'=>'Войти в кабинет','register'=>'Создать аккаунт','forgot'=>'Восстановить пароль','reset'=>'Новый пароль','invite'=>'Принять приглашение','verify'=>'Подтвердить email','resend'=>'Повторить подтверждение'];
 ?>
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title><?= $titles[$view] ?> — НейроДело</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="crm.css"><link rel="stylesheet" href="customer.css"><link rel="stylesheet" href="/brand-ui.css?v=20261105"></head>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title><?= $titles[$view] ?> — НейроДело</title><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="crm.css"><link rel="stylesheet" href="customer.css"><link rel="stylesheet" href="/brand-ui.css?v=20261105-layout"></head>
 <body class="neuro-interface" data-view="<?= $view ?>"><header class="wrap header"><a class="logo" href="/">НейроДело<span class="logo-dot">.</span></a><span class="eyebrow">КАБИНЕТ КЛИЕНТА</span></header>
 <main class="wrap"><section class="login-panel customer-panel"><div class="eyebrow">ВАШИ ИДЕИ. НАШ СЛЕДУЮЩИЙ ШАГ.</div><h1 id="page-title"><?= $titles[$view] ?><span class="pink">.</span></h1>
 <p id="availability" role="status">Проверяем доступность кабинета…</p>

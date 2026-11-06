@@ -31,7 +31,8 @@ jobs:
   validate:
     name: Validate
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    # Dependency setup and the full MySQL/browser suite share this bounded budget.
+    timeout-minutes: 45
     concurrency:
       group: validate-${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true

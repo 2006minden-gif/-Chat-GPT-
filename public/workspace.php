@@ -4,7 +4,7 @@ ini_set('display_errors','0');
 require dirname(__DIR__).'/private/app.php';
 security_headers();header('Cache-Control: no-store');header('X-Robots-Tag: noindex,nofollow');
 try{if((config()['crm_operations_enabled']??false)!==true){http_response_code(404);exit;}}catch(Throwable $e){server_error($e);}
-?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>НейроДело — управление</title><link rel="stylesheet" href="operations.css"><link rel="stylesheet" href="/brand-ui.css?v=20261105"></head><body class="neuro-interface">
+?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>НейроДело — управление</title><link rel="stylesheet" href="operations.css"><link rel="stylesheet" href="/brand-ui.css?v=20261105-layout"></head><body class="neuro-interface">
 <button id="menu" class="mobile-menu" aria-controls="sidebar" aria-expanded="false">Меню</button>
 <aside id="sidebar"><a class="brand" href="/">НейроДело<span>•</span></a><nav id="navigation" aria-label="Разделы CRM"></nav><a href="/studio.php">Прежний список заявок</a></aside>
 <main><?php require_once dirname(__DIR__).'/private/product-navigation.php';product_navigation(true); ?><header><h1 id="title">Обзор</h1><form id="global-search"><label for="global-query">Поиск по CRM</label><input id="global-query" maxlength="100" placeholder="Имя или название"><button>Найти</button></form><a href="#notifications" aria-label="Уведомления">Уведомления</a><span>Владелец</span><button id="logout">Выйти</button></header>
