@@ -34,7 +34,7 @@ class UnifiedWorkspace(workflow.OwnerWorkflow):
    root=Path(folder);shutil.copytree(self.f.path/'public',root/'public_html');shutil.copytree(self.f.path/'private',root/'private')
    for stage in ['qualify','brief','price','proposal','details','contract','signatures','payment','access','production','acceptance','handover','support','archive','planning','messages','files']:
     code="$_SERVER['REQUEST_METHOD']='GET';$_SERVER['REQUEST_URI']='/order-workflow.php';$_GET=['order'=>'1','stage'=>"+json.dumps(stage)+"];require "+json.dumps(str(root/'public_html/order-workflow.php'))+";"
-    r=subprocess.run([self.f.php,'-d','display_errors=0','-r',code],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stderr);self.assertIn('data-workflow-stage="'+stage+'"',r.stdout);self.assertIn('/workflow-shell.js?v=order-layout-20261105',r.stdout)
+    r=subprocess.run([self.f.php,'-d','display_errors=0','-r',code],capture_output=True,text=True);self.assertEqual(r.returncode,0,r.stderr);self.assertIn('data-workflow-stage="'+stage+'"',r.stdout);self.assertIn('/workflow-shell.js?v=saved-forms-20261106',r.stdout)
  def test_browser_price_confirmation_uses_workspace_and_advances_without_native_dialog(self):
   oid=self.start_order();self.ready_brief(oid);self.approved_price();q=self.estimate()
   with sync_playwright() as pw:
