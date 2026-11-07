@@ -7,6 +7,11 @@ try{$r=$_GET['r']??'';$method=$_SERVER['REQUEST_METHOD'];current_session($method
  if($method==='GET'&&$r==='catalog-map'){$source=require dirname(__DIR__).'/private/services/catalog.php';$items=[];foreach($source as $key=>$s){$slug=$key;$existing=crm_query('SELECT id,state FROM nd_catalog_services WHERE slug=?',[$slug])->fetch();$items[]=['source'=>$key,'proposed_slug'=>$slug,'name'=>$s['title'],'description'=>$s['intro'],'scope'=>$s['options'],'deliverables'=>[$s['result']],'questions_to_review'=>[$s['clarify']],'category'=>['landing'=>'landing','website'=>'website','ai'=>'ai_agent','app'=>'webapp'][$key],'price'=>null,'approved'=>false,'existing'=>$existing?:null];}json_response(['ok'=>true,'draft_mapping'=>$items,'publication_performed'=>false]);}
  if($r==='access'&&$method==='GET'){require_once dirname(__DIR__).'/private/lifecycle/access.php';$order=cc_id(filter_var($_GET['order']??'',FILTER_VALIDATE_INT));json_response(['ok'=>true,'job'=>la_installed()?la_view($order):['state'=>'NOT_INSTALLED','delivery_confirmed'=>false]]);}
  if($r==='access/retry'&&$method==='POST'){require_once dirname(__DIR__).'/private/lifecycle/access.php';$d=input();$r=la_manual($d);$r['job']=la_run((int)$r['order_id']);json_response($r);}
+ require_once dirname(__DIR__).'/private/workflow/preparation.php';
+ if($method==='POST'&&$r==='estimate-answers')json_response(wf_estimate_answers(input()));
+ if($method==='POST'&&$r==='prepare-act')json_response(wf_prepare_act(input()));
+ if($method==='POST'&&$r==='prepare-documents')json_response(wf_prepare_documents(input()));
+ if($method==='POST'&&$r==='bind-prepared-agreement')json_response(wf_bind_prepared_agreement(input()));
  if($method==='POST'&&$r==='confirm-price')json_response(wf_confirm_price(input()));
  if($method==='POST'&&$r==='apply-price')json_response(wf_apply_price(input()));
  if($method==='POST'&&$r==='from-inquiry')json_response(wf_start(input()));crm_fail(404,'Раздел не найден.');
