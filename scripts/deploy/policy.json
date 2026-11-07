@@ -231,6 +231,7 @@
     "maxapp/core.php",
     "maxapp/session.php",
     "notifications/max.php",
+    "notifications/russian-trusted-root.pem",
     "notifications/worker.php",
     "owner-bootstrap.json",
     "owner-bootstrap.php",

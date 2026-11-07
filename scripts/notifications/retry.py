@@ -49,6 +49,10 @@ if __name__=='__main__':
             diagnostic=remote.command(shlex.join([remote.php,'/dev/stdin']),
                 input=Path(__file__).with_name('diagnose.php').read_text(),json_output=True)
             print(json.dumps(safe_diagnostic(diagnostic)))
+        # Executing a worker is not evidence of successful delivery. Keep retries
+        # scheduled, but make a persisted MAX delivery failure visible in Actions.
+        if result.get('error_code','').startswith('max_'):
+            sys.exit(1)
     except Exception:
         print('{"ok":false,"error":"notification_retry_failed"}');sys.exit(1)
     finally:
