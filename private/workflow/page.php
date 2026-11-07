@@ -3,7 +3,7 @@ declare(strict_types=1);
 /** Fixed, server-owned composition of existing owner screens. No frames or arbitrary includes. */
 function wf_page(string $publicRoot):never{
  $order=filter_var($_GET['order']??null,FILTER_VALIDATE_INT);$stage=$_GET['stage']??'';
- $pages=['answers'=>'order-answers.php','qualify'=>'orders.php','brief'=>'collaboration.php','price'=>'catalog-owner.php','proposal'=>'documents.php','details'=>'prospect-owner.php','contract'=>'contract-settings.php','signatures'=>'documents.php','payment'=>'finance.php','settlement'=>'finance.php','access'=>'orders.php','production'=>'orders.php','acceptance'=>'orders.php','handover'=>'orders.php','support'=>'orders.php','archive'=>'support.php','planning'=>'planning.php','messages'=>'collaboration.php','files'=>'collaboration.php'];
+ $pages=['act'=>'documents.php','answers'=>'order-answers.php','qualify'=>'orders.php','brief'=>'collaboration.php','price'=>'catalog-owner.php','proposal'=>'documents.php','details'=>'prospect-owner.php','contract'=>'contract-settings.php','signatures'=>'documents.php','payment'=>'finance.php','settlement'=>'finance.php','access'=>'orders.php','production'=>'orders.php','acceptance'=>'orders.php','handover'=>'orders.php','support'=>'orders.php','archive'=>'support.php','planning'=>'planning.php','messages'=>'collaboration.php','files'=>'collaboration.php'];
  if(!$order||$order<1||!is_string($stage)||!isset($pages[$stage])){http_response_code(404);exit('Шаг заказа не найден.');}
  $_GET['mode']='owner';ob_start();require $publicRoot.'/'.$pages[$stage];$html=ob_get_clean();
  if(http_response_code()>=400){echo $html;exit;}

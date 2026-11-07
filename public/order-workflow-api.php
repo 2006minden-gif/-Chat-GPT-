@@ -9,6 +9,7 @@ try{$r=$_GET['r']??'';$method=$_SERVER['REQUEST_METHOD'];current_session($method
  if($r==='access/retry'&&$method==='POST'){require_once dirname(__DIR__).'/private/lifecycle/access.php';$d=input();$r=la_manual($d);$r['job']=la_run((int)$r['order_id']);json_response($r);}
  require_once dirname(__DIR__).'/private/workflow/preparation.php';
  if($method==='POST'&&$r==='estimate-answers')json_response(wf_estimate_answers(input()));
+ if($method==='POST'&&$r==='prepare-act')json_response(wf_prepare_act(input()));
  if($method==='POST'&&$r==='prepare-documents')json_response(wf_prepare_documents(input()));
  if($method==='POST'&&$r==='bind-prepared-agreement')json_response(wf_bind_prepared_agreement(input()));
  if($method==='POST'&&$r==='confirm-price')json_response(wf_confirm_price(input()));
