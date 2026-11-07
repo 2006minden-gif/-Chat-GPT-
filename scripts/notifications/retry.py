@@ -3,6 +3,7 @@ from pathlib import Path
 import shlex
 import sys
 import re
+import os
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'deploy'))
 from client import Remote,ACCOUNT
 
@@ -39,7 +40,9 @@ if __name__=='__main__':
     try:
         remote=Remote(Path('.'),'','notifications')
         worker=ACCOUNT+'/private/notifications/worker.php'
-        command='if [ -f '+shlex.quote(worker)+' ]; then '+shlex.join([remote.php,worker])+'''; else printf '%s' '{"ok":true,"not_installed":true}'; fi'''
+        args=[remote.php,worker]
+        if os.environ.get('MAX_RETRY_NOW')=='1':args.append('--retry-max-now')
+        command='if [ -f '+shlex.quote(worker)+' ]; then '+shlex.join(args)+'''; else printf '%s' '{"ok":true,"not_installed":true}'; fi'''
         result=remote.command(command,json_output=True)
         # Explicit safe output allowlist: never print remote arbitrary payloads.
         import json
@@ -49,6 +52,10 @@ if __name__=='__main__':
             diagnostic=remote.command(shlex.join([remote.php,'/dev/stdin']),
                 input=Path(__file__).with_name('diagnose.php').read_text(),json_output=True)
             print(json.dumps(safe_diagnostic(diagnostic)))
+        # Executing a worker is not evidence of successful delivery. Keep retries
+        # scheduled, but make a persisted MAX delivery failure visible in Actions.
+        if result.get('error_code','').startswith('max_'):
+            sys.exit(1)
     except Exception:
         print('{"ok":false,"error":"notification_retry_failed"}');sys.exit(1)
     finally:

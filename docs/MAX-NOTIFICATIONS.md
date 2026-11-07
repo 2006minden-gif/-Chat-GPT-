@@ -10,6 +10,25 @@ https://dev.max.ru/docs-api/methods/POST/subscriptions, reviewed 27 October 2026
 Use platform-api2.max.ru, header Authorization, verified TLS, no redirects,
 4-second transport timeout. No token in URLs/logs/Git/artifacts/browser storage.
 
+The fixed-host MAX client also trusts the official Russian Trusted Root CA via
+`private/notifications/russian-trusted-root.pem`; system CA directories remain
+available. This changes no global trust store and keeps peer/name verification
+enabled. Source: https://gu-st.ru/content/lending/russian_trusted_root_ca_pem.crt
+(downloaded over verified HTTPS, 7 November 2026). DER SHA-256:
+`d26d2d0231b7c39f92cc738512ba54103519e4405d68b5bd703e9788ca8ecf31`.
+MAX's current requirement: https://dev.max.ru/docs-api/ .
+
+Read-only host diagnostics run when delivery fails or is deferred. They report
+safe connection/identity/subscription metadata, never tokens, recipient IDs or
+full webhook URLs. A persisted MAX delivery error makes the retry workflow fail
+visibly; backoff and the durable queue continue to operate.
+After a successfully published main release the same worker retries immediately,
+so a repaired connection is not held by the old one-hour backoff. The owner's
+manual retry also bypasses backoff without resetting acknowledged IDs.
+
+Restoring outgoing site notifications does not require resetting the bot's
+inbound webhook, token, recipient binding or acknowledgement ledger.
+
 Authenticated owner settings (session+CSRF+same-origin) verify token via /me,
 register an HTTPS webhook with a random secret, and return a 15-minute one-time
 pair command. The owner sends it in a private bot chat; webhook checks the secret

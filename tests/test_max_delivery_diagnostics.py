@@ -5,6 +5,12 @@ import os
 from pathlib import Path
 import subprocess
 import unittest
+import contextlib
+import io
+import runpy
+import sys
+import types
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('max_retry',ROOT/'scripts/notifications/retry.py')
@@ -12,6 +18,26 @@ retry=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(retry)
 
 class MaxDeliveryDiagnostics(unittest.TestCase):
+    def test_retry_job_reports_delivery_failure_and_keeps_other_workers(self):
+        commands=[]
+        class Remote:
+            php='php'
+            def __init__(self,*args):pass
+            def command(self,command,**kwargs):
+                commands.append(command)
+                if len(commands)==1:return {'ok':True,'sent':0,'deferred':True,'error_code':'max_connection_failed','access_jobs_processed':2,'token':'SECRET'}
+                return {'ok':True,'max_diagnostic':{'identity':'max_connection_failed','token':'SECRET'}}
+            def close(self):commands.append('closed')
+        module=types.ModuleType('client');module.Remote=Remote;module.ACCOUNT='/home/n/neurodepro'
+        stdout=io.StringIO()
+        with patch.dict(sys.modules,{'client':module}),contextlib.redirect_stdout(stdout):
+            with self.assertRaises(SystemExit) as exc:
+                runpy.run_path(str(ROOT/'scripts/notifications/retry.py'),run_name='__main__')
+        self.assertEqual(exc.exception.code,1)
+        self.assertEqual(commands[-1],'closed')
+        self.assertIn('"access_jobs_processed": 2',stdout.getvalue())
+        self.assertNotIn('SECRET',stdout.getvalue())
+
     def test_runner_drops_unexpected_remote_values(self):
         actual=retry.safe_diagnostic({'token':'SECRET','max_diagnostic':{
             'configured':True,'identity':'SECRET','subscription_count':2,'user_id':123,

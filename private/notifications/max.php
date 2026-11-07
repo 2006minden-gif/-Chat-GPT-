@@ -27,12 +27,23 @@ function max_write(array $v): void {
     try{chmod($tmp,0600);$s=json_encode($v,JSON_THROW_ON_ERROR);if(fwrite($h,$s)!==strlen($s))throw new RuntimeException('max_state_write_failed');fflush($h);fclose($h);$h=null;if(!rename($tmp,$p))throw new RuntimeException('max_state_write_failed');}
     finally{if(is_resource($h))fclose($h);if(is_file($tmp))unlink($tmp);}
 }
+function max_ssl_options():array {
+    // MAX API uses Russian Trusted CA. Trust it only for this fixed-host client,
+    // never by disabling TLS verification or changing the server-wide CA store.
+    $ca=__DIR__.'/russian-trusted-root.pem';
+    if(is_link($ca)||!is_file($ca)||!is_readable($ca))throw new RuntimeException('max_trust_unavailable');
+    $ssl=['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false,'cafile'=>$ca];
+    $locations=openssl_get_cert_locations();
+    $capath=$locations['ini_capath']?:($locations['default_cert_dir']??'');
+    if(is_string($capath)&&is_dir($capath))$ssl['capath']=$capath;
+    return $ssl;
+}
 function max_http(string $method,string $path,string $token,?array $body=null): array {
     // Fixed host, bounded I/O, no redirects, TLS verification stays enabled.
     if (!preg_match('/^[A-Za-z0-9._:-]{20,512}$/D',$token))throw new RuntimeException('max_invalid_token');
     if (!preg_match('#^/(me|subscriptions|messages\?user_id=[1-9][0-9]{0,18}&disable_link_preview=true)$#D',$path))throw new RuntimeException('max_invalid_api_path');
     $options=['http'=>['method'=>$method,'header'=>"Authorization: ".$token."\r\nContent-Type: application/json\r\n",'timeout'=>4,'ignore_errors'=>true,'follow_location'=>0,'max_redirects'=>0],
-        'ssl'=>['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false]];
+        'ssl'=>max_ssl_options()];
     if($body!==null)$options['http']['content']=json_encode($body,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);
     $context=stream_context_create($options);$stream=@fopen('https://platform-api2.max.ru'.$path,'rb',false,$context);
     if(!$stream)throw new RuntimeException('max_connection_failed');
@@ -102,11 +113,11 @@ function max_confirm(?callable $http=null): void {
     });
 }
 function max_pending_pair(): bool {return max_locked(fn()=>isset(max_read()['pending_user_id']));}
-function max_pump(int $limit=1,?callable $http=null): array {
+function max_pump(int $limit=1,?callable $http=null,bool $retryNow=false): array {
     $http??='max_http';$limit=max(1,min($limit,10));
-    return max_locked(function()use($limit,$http){$s=max_read();$sent=0;
+    return max_locked(function()use($limit,$http,$retryNow){$s=max_read();$sent=0;
         if(($s['enabled']??false)!==true||!isset($s['user_id']))return ['ok'=>true,'sent'=>0,'configured'=>false];
-        if(($s['retry_at']??0)>time())return ['ok'=>true,'sent'=>0,'deferred'=>true];
+        if(!$retryNow&&($s['retry_at']??0)>time())return ['ok'=>true,'sent'=>0,'deferred'=>true,'error_code'=>$s['error_code']??''];
         $events=[];foreach(array_slice(max_queue($s),0,$limit) as $id)$events[]=['id'=>(int)$id,'kind'=>'lead','url'=>'https://neurodelo.pro/studio.php'];
         if($limit>count($events))foreach(array_slice(max_workflow_queue($s),0,$limit-count($events)) as $row)$events[]=['id'=>(int)$row['id'],'kind'=>'workflow','url'=>$row['entity']==='orders'?'https://neurodelo.pro/orders.php?mode=owner#'.(int)$row['record_id']:'https://neurodelo.pro/finance.php?mode=owner'];
         foreach($events as $event){$id=$event['id'];
