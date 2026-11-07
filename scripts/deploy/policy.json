@@ -136,7 +136,9 @@
     "support-api.php",
     "support.js",
     "support.php",
-    "workspace.php"
+    "workspace.php",
+    "order-answers.php",
+    "order-answers.js"
   ],
   "private_files": [
     ".htaccess",
@@ -267,7 +269,8 @@
     "workflow/core.php",
     "workflow/page.php",
     "workflow/diagnostics.php",
-    "workflow/prepare.php"
+    "workflow/prepare.php",
+    "workflow/preparation.php"
   ],
   "keep_backups": 3,
   "migrations": [
