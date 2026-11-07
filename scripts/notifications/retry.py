@@ -15,7 +15,7 @@ def safe_diagnostic(value):
               ('configured','enabled','owner_bound','is_bot','stored_bot_matches','site_webhook_present') and type(v) is bool}
         for key in ('stored_error','identity','subscriptions','error'):
             v=source.get(key)
-            if v in ('','ok','max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response','max_delivery_failed','diagnostic_failed','diagnostic_unavailable'):
+            if isinstance(v,str) and (v in ('','ok','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response','max_delivery_failed','diagnostic_failed','diagnostic_unavailable') or re.fullmatch(r'max_connection_failed( \((dns|tls|transport)\))?',v)):
                 diag[key]=v
         if type(source.get('subscription_count')) is int and 0<=source['subscription_count']<=100:
             diag['subscription_count']=source['subscription_count']

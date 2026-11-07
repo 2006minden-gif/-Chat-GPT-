@@ -34,8 +34,16 @@ function max_http(string $method,string $path,string $token,?array $body=null): 
     $options=['http'=>['method'=>$method,'header'=>"Authorization: ".$token."\r\nContent-Type: application/json\r\n",'timeout'=>4,'ignore_errors'=>true,'follow_location'=>0,'max_redirects'=>0],
         'ssl'=>['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false]];
     if($body!==null)$options['http']['content']=json_encode($body,JSON_THROW_ON_ERROR|JSON_UNESCAPED_UNICODE);
-    $context=stream_context_create($options);$stream=@fopen('https://platform-api2.max.ru'.$path,'rb',false,$context);
-    if(!$stream)throw new RuntimeException('max_connection_failed');
+    $context=stream_context_create($options);
+    // platform-api2 occasionally fails TCP/TLS from SpaceWeb; fall back to the primary host.
+    $hosts=['platform-api2.max.ru','platform-api.max.ru'];
+    $stream=false;$lastError='';
+    foreach($hosts as $host){
+        set_error_handler(static function(int $level,string $message)use(&$lastError):bool{$lastError=$message;return true;});
+        try{$stream=@fopen('https://'.$host.$path,'rb',false,$context);}finally{restore_error_handler();}
+        if($stream!==false)break;
+    }
+    if($stream===false)throw new RuntimeException('max_connection_failed'.($lastError!==''?' ('.(preg_match('/getaddrinfo|resolve/i',$lastError)?'dns':(preg_match('/certificate|SSL|TLS/i',$lastError)?'tls':'transport')).')':''));
     try{$meta=stream_get_meta_data($stream);$raw=stream_get_contents($stream,131073);}finally{fclose($stream);}
     $status=0;foreach($meta['wrapper_data']??[] as $line)if(preg_match('#^HTTP/\S+ ([0-9]{3})#',$line,$m))$status=(int)$m[1];
     if($status===401||$status===403)throw new RuntimeException('max_auth_failed');
@@ -115,7 +123,7 @@ function max_pump(int $limit=1,?callable $http=null): array {
                 if(!isset($response['message']['body']['mid']))throw new RuntimeException('max_invalid_response');
                 if($event['kind']==='lead'){$s['cursor']=max($s['cursor']??0,(int)$id);$s['completed_ids'][]=(int)$id;}else $s['completed_workflow_ids'][]=(int)$id;
                 $s['last_sent_at']=time();$s['error_code']='';$s['failures']=0;unset($s['retry_at']);max_write($s);$sent++;
-            }catch(Throwable $e){$s['error_code']=in_array($e->getMessage(),['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response'],true)?$e->getMessage():'max_delivery_failed';$s['failures']=min(10,($s['failures']??0)+1);$s['retry_at']=time()+min(3600,30*(2**$s['failures']));max_write($s);break;}
+            }catch(Throwable $e){$message=$e->getMessage();$known=in_array($message,['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response'],true)||preg_match('/^max_connection_failed \((dns|tls|transport)\)$/D',$message);$s['error_code']=$known?$message:'max_delivery_failed';$s['failures']=min(10,($s['failures']??0)+1);$s['retry_at']=time()+min(3600,30*(2**$s['failures']));max_write($s);break;}
         }
         return ['ok'=>true,'sent'=>$sent,'error_code'=>$s['error_code']??''];
     },false)??['ok'=>true,'busy'=>true,'sent'=>0];

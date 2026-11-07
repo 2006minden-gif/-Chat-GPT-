@@ -4,7 +4,7 @@ declare(strict_types=1);
 function max_delivery_diagnostic(array $state, callable $request): array {
     $out=['configured'=>isset($state['token']),'enabled'=>($state['enabled']??false)===true,
         'owner_bound'=>isset($state['user_id']),'stored_error'=>in_array($state['error_code']??'',
-            ['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response','max_delivery_failed'],true)?$state['error_code']:''];
+            ['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response','max_delivery_failed'],true)||preg_match('/^max_connection_failed \((dns|tls|transport)\)$/D',$state['error_code']??'')?$state['error_code']:''];
     if(!isset($state['token']))return $out;
     foreach(['/me','/subscriptions'] as $path){
         $key=$path==='/me'?'identity':'subscriptions';
@@ -28,7 +28,7 @@ function max_delivery_diagnostic(array $state, callable $request): array {
                 $out['webhook_hosts']=array_values(array_unique($hosts));
             }
         }catch(Throwable $e){
-            $out[$key]=in_array($e->getMessage(),['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response'],true)?$e->getMessage():'diagnostic_failed';
+            $message=$e->getMessage();$out[$key]=in_array($message,['max_connection_failed','max_auth_failed','max_rate_limited','max_api_failed','max_invalid_response'],true)||preg_match('/^max_connection_failed \((dns|tls|transport)\)$/D',$message)?$message:'diagnostic_failed';
         }
     }
     return $out;
