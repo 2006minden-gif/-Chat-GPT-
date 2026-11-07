@@ -5,11 +5,20 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows: ['NeuroDelo CI/CD']
+    types: [completed]
+    branches: [main]
 permissions:
   contents: read
 jobs:
   retry:
-    if: github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name != 'workflow_run' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'))
     runs-on: ubuntu-24.04
     timeout-minutes: 3
     environment: production
@@ -37,4 +46,5 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          MAX_RETRY_NOW: ${{ (github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch') && '1' || '0' }}
         run: python scripts/notifications/retry.py

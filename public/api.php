@@ -24,7 +24,7 @@ try {
                 json_response(max_connect($token));
             }
             if(($data['action']??'')==='confirm'){max_confirm();json_response(['ok'=>true]);}
-            if(($data['action']??'')==='retry'){max_pump();json_response(['ok'=>true]);}
+            if(($data['action']??'')==='retry'){max_pump(1,null,true);json_response(['ok'=>true]);}
             if(($data['action']??'')==='disable'){max_locked(function(){$s=max_read();$s['enabled']=false;unset($s['pending_user_id'],$s['pair_hash'],$s['pair_expires']);max_write($s);});json_response(['ok'=>true]);}
             fail(422,'Неизвестное действие');
         }catch(RuntimeException $e){fail(502,'Не удалось подключиться к MAX. Проверьте токен и повторите позже.','max_connection_error');}

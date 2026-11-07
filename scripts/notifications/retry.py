@@ -3,6 +3,7 @@ from pathlib import Path
 import shlex
 import sys
 import re
+import os
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'deploy'))
 from client import Remote,ACCOUNT
 
@@ -39,7 +40,9 @@ if __name__=='__main__':
     try:
         remote=Remote(Path('.'),'','notifications')
         worker=ACCOUNT+'/private/notifications/worker.php'
-        command='if [ -f '+shlex.quote(worker)+' ]; then '+shlex.join([remote.php,worker])+'''; else printf '%s' '{"ok":true,"not_installed":true}'; fi'''
+        args=[remote.php,worker]
+        if os.environ.get('MAX_RETRY_NOW')=='1':args.append('--retry-max-now')
+        command='if [ -f '+shlex.quote(worker)+' ]; then '+shlex.join(args)+'''; else printf '%s' '{"ok":true,"not_installed":true}'; fi'''
         result=remote.command(command,json_output=True)
         # Explicit safe output allowlist: never print remote arbitrary payloads.
         import json

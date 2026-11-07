@@ -22,6 +22,9 @@ Read-only host diagnostics run when delivery fails or is deferred. They report
 safe connection/identity/subscription metadata, never tokens, recipient IDs or
 full webhook URLs. A persisted MAX delivery error makes the retry workflow fail
 visibly; backoff and the durable queue continue to operate.
+After a successfully published main release the same worker retries immediately,
+so a repaired connection is not held by the old one-hour backoff. The owner's
+manual retry also bypasses backoff without resetting acknowledged IDs.
 
 Restoring outgoing site notifications does not require resetting the bot's
 inbound webhook, token, recipient binding or acknowledgement ledger.

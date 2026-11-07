@@ -84,6 +84,15 @@ $mock=function($method,$path,$token,$body)use($v){
   self.sql("INSERT INTO nd_leads(id,name,contact,service,idea,notes,created) VALUES (999999,'TEST','t@example.com','Сайт или лендинг','test','',?)",params=[int(time.time())])
   self.assertEqual(self.run_php('echo json_encode(max_pump(1,$mock));')['sent'],1)
   self.assertIn(999999,self.state()['completed_ids']);self.assertIn(1000000,self.state()['completed_ids'])
+ def test_explicit_retry_bypasses_backoff_without_resetting_acknowledgements(self):
+  self.bind();first=self.add_lead()
+  self.assertEqual(self.run_php('echo json_encode(max_pump(1,$mock));')['sent'],1)
+  second=self.add_lead()
+  self.run_php('echo json_encode(max_pump(1,$mock));',broken=True)
+  self.assertTrue(self.run_php('echo json_encode(max_pump(1,$mock));')['deferred'])
+  self.assertEqual(self.run_php('echo json_encode(max_pump(1,$mock,true));')['sent'],1)
+  self.assertIn(first,self.state()['completed_ids']);self.assertIn(second,self.state()['completed_ids'])
+  self.assertEqual(self.run_php('echo json_encode(max_pump(1,$mock,true));')['sent'],0)
  def test_symlink_state_refused(self):
   runtime=self.path/'private/notifications/runtime';runtime.mkdir();target=self.path/'untouched';target.write_text('KEEP');(runtime/'state.json').symlink_to(target)
   result=self.run_php("try{max_read();echo '{}';}catch(Throwable $e){echo json_encode(['error'=>$e->getMessage()]);}")

@@ -113,11 +113,11 @@ function max_confirm(?callable $http=null): void {
     });
 }
 function max_pending_pair(): bool {return max_locked(fn()=>isset(max_read()['pending_user_id']));}
-function max_pump(int $limit=1,?callable $http=null): array {
+function max_pump(int $limit=1,?callable $http=null,bool $retryNow=false): array {
     $http??='max_http';$limit=max(1,min($limit,10));
-    return max_locked(function()use($limit,$http){$s=max_read();$sent=0;
+    return max_locked(function()use($limit,$http,$retryNow){$s=max_read();$sent=0;
         if(($s['enabled']??false)!==true||!isset($s['user_id']))return ['ok'=>true,'sent'=>0,'configured'=>false];
-        if(($s['retry_at']??0)>time())return ['ok'=>true,'sent'=>0,'deferred'=>true,'error_code'=>$s['error_code']??''];
+        if(!$retryNow&&($s['retry_at']??0)>time())return ['ok'=>true,'sent'=>0,'deferred'=>true,'error_code'=>$s['error_code']??''];
         $events=[];foreach(array_slice(max_queue($s),0,$limit) as $id)$events[]=['id'=>(int)$id,'kind'=>'lead','url'=>'https://neurodelo.pro/studio.php'];
         if($limit>count($events))foreach(array_slice(max_workflow_queue($s),0,$limit-count($events)) as $row)$events[]=['id'=>(int)$row['id'],'kind'=>'workflow','url'=>$row['entity']==='orders'?'https://neurodelo.pro/orders.php?mode=owner#'.(int)$row['record_id']:'https://neurodelo.pro/finance.php?mode=owner'];
         foreach($events as $event){$id=$event['id'];
