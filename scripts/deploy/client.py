@@ -167,7 +167,7 @@ if __name__=='__main__':
                     report['after_retirement']=health.require_asset_revision(verified,expected_assets)
                     if not report['after_retirement']['ok']:report['result']='deployed_retirement_verification_pending'
                 except RemoteFailure as error:
-                    report['result']='deployed_retirement_pending';report['retirement_error']=str(error)
+                    report['result']='deployed_retirement_pending';report['retirement_error']=str(error);report['retirement_remote']=error.details
         finally:remote.close()
         report['revision']=args.revision;report['release_id']=release_id
     except Exception as error:
