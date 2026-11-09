@@ -1,0 +1,98 @@
+-- Import into the database created in the hosting panel. MySQL 5.7+/8, MariaDB 10.5+.
+CREATE TABLE IF NOT EXISTS nd_admin (
+ id TINYINT UNSIGNED PRIMARY KEY,
+ password_hash VARCHAR(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS nd_leads (
+ id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(100) NOT NULL,
+ contact VARCHAR(200) NOT NULL,
+ service VARCHAR(100) NOT NULL,
+ idea TEXT NOT NULL,
+ status VARCHAR(30) NOT NULL DEFAULT 'Новая',
+ notes TEXT NOT NULL,
+ next_step VARCHAR(500) NOT NULL DEFAULT '',
+ created BIGINT UNSIGNED NOT NULL,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ request_key CHAR(64) NULL,
+ request_hash CHAR(64) NULL,
+ consent TINYINT UNSIGNED NULL,
+ consent_at BIGINT UNSIGNED NULL,
+ policy_version VARCHAR(64) NULL,
+ policy_hash CHAR(64) NULL,
+ UNIQUE KEY nd_leads_request_key (request_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS nd_sessions (
+ token CHAR(64) PRIMARY KEY,
+ csrf CHAR(64) NOT NULL,
+ expires BIGINT UNSIGNED NOT NULL,
+ INDEX (expires)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE IF NOT EXISTS nd_limits (
+ bucket CHAR(64) PRIMARY KEY,
+ attempts INT UNSIGNED NOT NULL,
+ expires BIGINT UNSIGNED NOT NULL,
+ INDEX (expires)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE nd_publications (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ kind ENUM('portfolio','review') NOT NULL,
+ slug VARCHAR(80) NOT NULL UNIQUE,
+ order_id BIGINT UNSIGNED NULL,
+ state ENUM('DRAFT','PUBLISHED','UNPUBLISHED','ARCHIVED') NOT NULL DEFAULT 'DRAFT',
+ head_revision INT UNSIGNED NOT NULL DEFAULT 0,
+ published_version_id BIGINT UNSIGNED NULL,
+ sort_order INT NOT NULL DEFAULT 0,
+ version INT UNSIGNED NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY(order_id) REFERENCES nd_orders(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_publication_media (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ storage_key CHAR(64) NULL UNIQUE,
+ kind ENUM('upload','external') NOT NULL DEFAULT 'upload',
+ external_url TEXT NULL,
+ deleted_at DATETIME NULL,
+ purged_at DATETIME NULL,
+ display_name VARCHAR(190) NOT NULL,
+ mime VARCHAR(64) NOT NULL,
+ size_bytes BIGINT UNSIGNED NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_publication_versions (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ publication_id BIGINT UNSIGNED NOT NULL,
+ revision_number INT UNSIGNED NOT NULL,
+ body_json MEDIUMTEXT NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE KEY nd_publication_revision(publication_id,revision_number),
+ FOREIGN KEY(publication_id) REFERENCES nd_publications(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_publication_permissions (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ version_id BIGINT UNSIGNED NOT NULL,
+ binding_id BIGINT UNSIGNED NOT NULL,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ state ENUM('REQUESTED','GRANTED','DECLINED','REVOKED') NOT NULL DEFAULT 'REQUESTED',
+ reason TEXT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ decided_at DATETIME NULL,
+ UNIQUE KEY nd_permission_exact_version(version_id),
+ FOREIGN KEY(version_id) REFERENCES nd_publication_versions(id) ON DELETE RESTRICT,
+ FOREIGN KEY(binding_id) REFERENCES nd_lc_document_bindings(id) ON DELETE RESTRICT,
+ FOREIGN KEY(customer_id) REFERENCES nd_customers(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE nd_publication_permission_events (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ permission_id BIGINT UNSIGNED NOT NULL,
+ actor_type ENUM('owner','customer','prospect') NOT NULL,
+ actor_id BIGINT UNSIGNED NOT NULL,
+ action ENUM('REQUESTED','GRANTED','DECLINED','REVOKED','PUBLISHED','UNPUBLISHED') NOT NULL,
+ checksum CHAR(64) NOT NULL,
+ reason TEXT NOT NULL,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY(permission_id) REFERENCES nd_publication_permissions(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

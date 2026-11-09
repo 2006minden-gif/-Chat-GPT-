@@ -17,7 +17,7 @@ def safe_application_path(name):
     return (bool(parts) and all(re.fullmatch(r'[A-Za-z0-9_-][A-Za-z0-9_.-]*|\.htaccess', p)
             and p not in {'.', '..'} for p in parts)
             and parts[-1] not in FORBIDDEN_NAMES
-            and (parts[-1] == '.htaccess' or parts[-1].endswith(('.php', '.html', '.css', '.js')) or name in {'favicon.svg','favicon.ico','sitemap.xml','robots.txt','legal/privacy-2026-10-26-v1.json','legal/privacy-2026-10-27-v2.json','legal/privacy-2026-11-02-v3.json', 'legal/privacy-2026-11-02-v4.json','owner-bootstrap.json','lifecycle/package/01_contract.docx','lifecycle/package/02_specification.docx','lifecycle/package/03_acceptance_act.docx','lifecycle/package/04_change_agreement.docx','lifecycle/package/05_portfolio_permission.docx','lifecycle/package/06_review_permission.docx','lifecycle/package/history/01_contract-r1.docx','lifecycle/package/history/02_specification-r1.docx','lifecycle/package/catalog.json','lifecycle/package/logo.png','help/screens/portfolio-editor.png','help/screens/payment-settings.png','help/screens/planning.png','vendor/tfpdf/font/unifont/DejaVuSans.ttf','vendor/tfpdf/font/unifont/DejaVuSans-Bold.ttf','vendor/tfpdf/NOTICE.txt','vendor/tfpdf/LICENSE.txt','vendor/tfpdf/DEJAVU-LICENSE.txt'}))
+            and (parts[-1] == '.htaccess' or parts[-1].endswith(('.php', '.html', '.css', '.js')) or name in {'favicon.svg','favicon.ico','sitemap.xml','robots.txt'}))
 
 def check_source_path(source, root):
     if any(p.is_symlink() for p in [source, *source.parents] if p == root or root in p.parents):
@@ -28,47 +28,7 @@ def policy_check(root=ROOT):
     if policy.get('schema_version') != 1 or policy.get('keep_backups', 0) < 2:
         raise ValueError('invalid_release_policy')
     if not isinstance(policy.get('database_recovery_required',False),bool):raise ValueError('invalid_database_recovery_policy')
-    entries = policy.get('migrations', [])
-    seen = set()
-    previous = None
-    for entry in entries:
-        if 'operator' in entry:
-            if entry.get('depends_on') != previous or not re.fullmatch(r'scripts/migrate(?:-[a-z]+)?\.php', entry['operator']):
-                raise ValueError('invalid_migration_dependency_chain')
-            if not (root / entry['operator']).is_file():
-                raise ValueError('migration_operator_missing')
-        previous = entry['version']
-        version = entry['version']
-        if not re.fullmatch(r'[0-9]{3}_[a-z_]+', version) or version in seen:
-            raise ValueError('invalid_migration_version')
-        seen.add(version)
-        folder = root / 'database/migrations' / version
-        for direction in ['up', 'down']:
-            if digest(folder / (direction + '.sql')) != entry[direction + '_sha256']:
-                raise ValueError('unreviewed_migration_checksum')
-        if entry['automatic']:
-            sql = re.sub(r'^--[^\n]*$', '', (folder / 'up.sql').read_text(), flags=re.M)
-            statements = [s.strip() for s in sql.split(';') if s.strip()]
-            # Exact reviewed lifecycle batch; unknown SQL and operators remain refused.
-            reviewed = json.loads((root / 'scripts/deploy/reviewed-migrations.json').read_text()) if (root / 'scripts/deploy/reviewed-migrations.json').exists() else {}
-            if entry.get('kind') == 'reviewed_additive':
-                pin=reviewed.get(version)
-                if pin and digest(root / pin['operator'])!=pin.get('operator_sha256'):raise ValueError('unreviewed_migration_operator')
-                if not pin or any(entry.get(k)!=v for k,v in pin.items()) or not entry['required']:
-                    raise ValueError('automatic_migration_not_supported')
-                continue
-            # Legacy additive Stage 3 contract.
-            if version != '004_crm_foundation' or entry['kind'] != 'additive' or not statements:
-                raise ValueError('automatic_migration_not_supported')
-            if any(not re.fullmatch(r'CREATE TABLE nd_[a-z_]+\s*\([\s\S]+\)\s*ENGINE=InnoDB[\s\S]*', s) for s in statements):
-                raise ValueError('destructive_or_unreviewed_migration')
-        if not isinstance(entry['automatic'], bool) or not isinstance(entry['required'], bool):
-            raise ValueError('invalid_migration_flags')
-    discovered = list((root / 'database/migrations').glob('*/up.sql'))
-    if discovered and not all((root / p).is_file() for p in ['scripts/migrate.php', 'tests/test_crm_migrations.py', 'tests/test_prelaunch_foundation.py']):
-        raise ValueError('migration_compatibility_tests_missing')
-    if any('operator' in e for e in entries) and {p.parent.name for p in discovered} != seen:
-        raise ValueError('migration_dependency_chain_incomplete')
+    if policy.get('migrations') != []:raise ValueError('schema_migrations_forbidden')
     for folder in ['public', 'private']:
         names = policy.get(folder + '_files', [])
         if len(names) != len(set(names)) or any(not safe_application_path(n) for n in names):
@@ -100,17 +60,11 @@ def build(output, revision, root=ROOT):
             copy(root / source_dir / name, prefix + '/' + name, files)
     copy(root / 'scripts/deploy/remote.php', 'remote.php', tools)
     copy(root / 'scripts/deploy/recovery.php', 'recovery.php', tools)
-    copy(root / 'scripts/deploy/reviewed-migrations.php', 'reviewed-migrations.php', tools)
-    # Delivery is independent from execution approval. All versioned SQL/CLI stays private.
-    for source in sorted((root / 'database').rglob('*.sql')):
-        path=source.relative_to(root).as_posix()
-        if not re.fullmatch(r'database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)',path):
-            raise ValueError('unapproved_sql_file_path')
-        copy(source,path,tools)
-    for source in sorted((root / 'scripts').glob('migrate*.php')):
-        copy(source, 'scripts/' + source.name, tools)
+    copy(root / 'scripts/deploy/portfolio-retirement.php', 'portfolio-retirement.php', tools)
+    copy(root / 'database/schema.sql', 'database/schema.sql', tools)
     manifest = {'schema_version':1,'revision':revision,'files':files,'tools':tools,
-                'keep_backups':policy['keep_backups'],'migrations':policy['migrations'],
+                'keep_backups':policy['keep_backups'],'migrations':[],
+                'portfolio_retirement':json.loads((root/'scripts/deploy/retirement-policy.json').read_text()),
                 'database_recovery_required':policy.get('database_recovery_required',False),
                 'verification_contract':'ci-mysql57-backup-restore-v1'}
     (output / 'manifest.json').write_text(json.dumps(manifest, sort_keys=True, indent=2))

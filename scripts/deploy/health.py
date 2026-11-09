@@ -12,7 +12,7 @@ ASSET_PATHS=['/styles.css','/brand-ui.css','/publications.css']
 RETIRED_PATHS=['/api.php?r=leads','/customer.php','/customer-api.php','/ordering.php','/services.php','/billing.php','/payment-api.php','/order-workflow.php','/publication-api.php']
 PATHS=['/','/studio.php','/portfolio.php','/portfolio-api.php?r=session']+RETIRED_PATHS+DENIED_PATHS+ASSET_PATHS
 
-def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=()):
+def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=(), expected_mode=None):
     assets = list(dict.fromkeys(ASSET_PATHS + list(extra_assets)))
     if any((p not in METADATA_TYPES and not re.fullmatch(r'/[A-Za-z0-9_-][A-Za-z0-9_./-]*\.(css|js)', p)) or '..' in p.split('/') for p in assets):
         raise ValueError('unsafe_health_asset_path')
@@ -37,14 +37,14 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_
                 except ValueError: pass
             portfolio_only=rows.get('/',{}).get('portfolio_only',False)
             if path=='/':
-                row['portfolio_only']=response.headers.get('X-Neurodelo-Site')=='portfolio-only'
-                row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text
+                row['site_mode']=response.headers.get('X-Neurodelo-Site');row['portfolio_only']=row['site_mode'] in ['portfolio-only','portfolio-only-v2']
+                row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text and (expected_mode is None or row['site_mode']==expected_mode)
             elif path in ['/studio.php','/portfolio.php']:
                 row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text
             elif path=='/portfolio-api.php?r=session':
                 row['ok']=(response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)) if portfolio_only else response.status in [401,404,410]
             elif path in RETIRED_PATHS:
-                row['ok']=response.status==410 if portfolio_only else response.status in [200,401,403,404,410,503]
+                row['ok']=response.status==(404 if rows.get('/',{}).get('site_mode')=='portfolio-only-v2' else 410) if portfolio_only else response.status in [200,401,403,404,410,503]
             elif path in assets:
                 expected=METADATA_TYPES.get(path, ['text/css'] if path.endswith('.css') else ['application/javascript','text/javascript'])
                 row['ok']=response.status==200 and row['content_type'] in expected;row['sha256']=hashlib.sha256(body).hexdigest()

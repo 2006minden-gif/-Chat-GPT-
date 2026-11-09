@@ -21,8 +21,6 @@
     "styles.css"
   ],
   "private_files": [
-    "app.php",
-    "notifications/worker.php",
     "site-view.php",
     "site.php"
   ],

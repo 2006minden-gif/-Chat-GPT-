@@ -248,7 +248,7 @@ function rp_preflight(string $configFile,array $valueProofs=[]):array {
     if(getenv('NEURO_REPAIR_TEST_FAKE_PDO')==='1'&&getenv('NEURO_REPAIR_TEST')==='1'&&str_starts_with($configFile,sys_get_temp_dir().'/'))return ['pdo'=>true,'synthetic'=>true,'privacy_approved'=>($c['privacy_policy_approved']??false)===true];
     $p=new PDO('mysql:host='.$c['db_host'].';port='.($c['db_port']??3306).';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     $p->exec('SET SESSION TRANSACTION READ ONLY');
-    foreach(['nd_admin'=>'id,password_hash','nd_leads'=>'id,version,request_key,request_hash,consent,consent_at,policy_version,policy_hash','nd_sessions'=>'token,csrf,expires','nd_limits'=>'bucket,attempts,expires'] as $table=>$cols)$p->query('SELECT '.$cols.' FROM '.$table.' LIMIT 0');
+    foreach(['nd_admin'=>'id,password_hash','nd_pf_items'=>'id,version,rights_verified','nd_sessions'=>'token,csrf,expires','nd_limits'=>'bucket,attempts,expires'] as $table=>$cols)$p->query('SELECT '.$cols.' FROM '.$table.' LIMIT 0');
     return ['pdo'=>true,'database_version'=>$p->query('SELECT VERSION()')->fetchColumn(),'admin_exists'=>(bool)$p->query('SELECT id FROM nd_admin WHERE id=1')->fetchColumn(),'privacy_approved'=>($c['privacy_policy_approved']??false)===true];
 }
 function rp_summary(string $plan,array $m):array {

@@ -30,10 +30,9 @@ class Delivery(unittest.TestCase):
    self.assertTrue(all(not n.startswith('archive/') for n in manifest['files']))
    (bundle/'private/config.php').write_text('PRIVATE')
    with self.assertRaises(ValueError):client.validate_bundle(bundle,'a'*40)
- def test_scheduled_crm_worker_is_retired_without_credentials(self):
-  result=subprocess.run([os.environ.get('PHP_BIN','php'),str(ROOT/'private/notifications/worker.php')],capture_output=True,text=True,check=True)
-  self.assertEqual(json.loads(result.stdout),{'ok':True,'retired':True,'sent':0})
-  self.assertNotIn('schedule:',(ROOT/'.github/workflows/notifications.yml').read_text())
+ def test_retired_code_is_absent_from_repository(self):
+  for name in ['archive/legacy-site','private/app.php','private/notifications','scripts/notifications','.github/workflows/notifications.yml']:
+   self.assertFalse((ROOT/name).exists(),name)
  def test_downloadable_templates_are_manual_and_valid_packages(self):
   import zipfile,xml.etree.ElementTree as ET
   files=list((ROOT/'manual-templates').glob('*.docx'));self.assertEqual(len(files),6)
@@ -47,7 +46,7 @@ class ApacheRetirement(unittest.TestCase):
  def setUpClass(cls):
   cls.tmp=tempfile.TemporaryDirectory();cls.addClassCleanup(cls.tmp.cleanup);cls.path=Path(cls.tmp.name);cls.path.chmod(0o755);public=cls.path/'public';shutil.copytree(ROOT/'public',public)
   (public/'site-router.php').write_text('PORTFOLIO_ROUTER_ONLY')
-  cls.retired=[p.name for p in (ROOT/'archive/legacy-site/public').iterdir() if p.is_file() and p.name not in {x.name for x in (ROOT/'public').iterdir()}]
+  cls.retired=json.loads((ROOT/'tests/fixtures/retired-public-paths.json').read_text())
   for name in cls.retired:(public/name).write_text('RETIRED_SECRET_SHOULD_NOT_EXECUTE')
   (public/'.well-known/acme-challenge').mkdir(parents=True);(public/'.well-known/acme-challenge/token-test').write_text('ACME_OK')
   s=socket.socket();s.bind(('127.0.0.1',0));cls.port=s.getsockname()[1];s.close();modules=Path(os.environ['APACHE_MODULE_DIR']);apache=os.environ['APACHE_BIN'];conf=cls.path/'httpd.conf'

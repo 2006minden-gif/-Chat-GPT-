@@ -17,17 +17,26 @@ class PortfolioSite(fixture.Prelaunch):
   report=health.snapshot(base=self.base,extra_assets=['/site.css','/site.js','/portfolio-editor.js'])
   self.assertTrue(report['ok'],{p:r for p,r in report['checks'].items() if not r['ok']})
   self.assertEqual(requests.get(self.base+'/private/config.php').status_code,403)
+ def test_transition_freezes_writes_until_verified_cleanup(self):
+  s,h=self.owner();marker=self.path/'portfolio-transition.json'
+  try:
+   marker.write_text('{"phase":"prepare"}');self.assertEqual(requests.get(self.base+'/').status_code,503)
+   marker.write_text('{"phase":"verify"}');self.assertEqual(requests.get(self.base+'/').status_code,200)
+   self.assertEqual(s.post(self.api('save'),headers=h,json=self.payload()).status_code,503)
+  finally:marker.unlink(missing_ok=True)
  def payload(self,**changes):
   return dict(title='Тестовая работа',text='Реальный сценарий теста на одноразовых данных.',category='website',media=[],published=False,**changes)
  def test_old_routes_cannot_read_or_write_even_with_owner_session(self):
-  self.sql("INSERT INTO nd_leads(name,contact,service,idea,notes,created) VALUES ('KEEP','keep@example.com','Сайт','KEEP','KEEP',1)")
-  before=self.sql('SELECT * FROM nd_leads');session,headers=self.owner()
-  for old in (fixture.ROOT/'archive/legacy-site/public').glob('*.php'):
+  self.sql('CREATE TABLE IF NOT EXISTS nd_archive_leads(id INT PRIMARY KEY AUTO_INCREMENT,name VARCHAR(100),contact VARCHAR(100),service VARCHAR(100),idea TEXT,notes TEXT,created INT) ENGINE=InnoDB');self.sql("INSERT INTO nd_archive_leads(name,contact,service,idea,notes,created) VALUES ('KEEP','keep@example.com','Сайт','KEEP','KEEP',1)")
+  before=self.sql('SELECT * FROM nd_archive_leads');session,headers=self.owner()
+  for name in json.loads((fixture.ROOT/'tests/fixtures/retired-public-paths.json').read_text()):
+   if not name.endswith('.php'):continue
+   old=Path(name)
    if old.name in ['index.php','studio.php','portfolio.php','portfolio-case.php']:continue
    for method in ['get','post']:
     response=getattr(session,method)(self.base+'/'+old.name,headers=headers,**({'json':{'action':'delete'}} if method=='post' else {}))
-    self.assertEqual(response.status_code,410,(old.name,method,response.text[:100]))
-  self.assertEqual(self.sql('SELECT * FROM nd_leads'),before)
+    self.assertEqual(response.status_code,404,(old.name,method,response.text[:100]))
+  self.assertEqual(self.sql('SELECT * FROM nd_archive_leads'),before)
  def test_owner_auth_csrf_upload_and_existing_password(self):
   self.assertEqual(requests.get(self.api('items')).status_code,401)
   self.assertEqual(requests.post(self.api('save'),json=self.payload()).status_code,401)
@@ -49,11 +58,11 @@ class PortfolioSite(fixture.Prelaunch):
   d.update(version=item['version'],published=False)
   result=s.post(self.api('save'),headers=h,json=d);self.assertEqual(result.status_code,200,result.text)
   self.assertEqual(requests.get(url).status_code,404)
-  self.assertEqual(len(self.sql('SELECT * FROM nd_publication_versions WHERE publication_id=?',params=[item['id']])),3)
- def test_legacy_portfolio_and_files_are_read_without_migration(self):
+  self.assertEqual(len(self.sql('SELECT * FROM nd_pf_versions WHERE publication_id=?',params=[item['id']])),3)
+ def test_existing_portfolio_and_files_are_preserved(self):
   slug='legacy-'+secrets.token_hex(4);raw=json.dumps({'title':'Существующая работа','text':'Сохранить','media':[]},ensure_ascii=False)
-  self.sql("INSERT INTO nd_publications(kind,slug,state,head_revision) VALUES ('portfolio',?,'PUBLISHED',1)",params=[slug]);pid=self.sql('SELECT id FROM nd_publications WHERE slug=?',params=[slug])[0]['id']
-  self.sql('INSERT INTO nd_publication_versions(publication_id,revision_number,body_json,checksum) VALUES (?,1,?,?)',params=[pid,raw,hashlib.sha256(raw.encode()).hexdigest()]);vid=self.sql('SELECT id FROM nd_publication_versions WHERE publication_id=?',params=[pid])[0]['id'];self.sql('UPDATE nd_publications SET published_version_id=? WHERE id=?',params=[vid,pid])
+  self.sql("INSERT INTO nd_pf_items(slug,state,head_revision,rights_verified) VALUES (?,'PUBLISHED',1,1)",params=[slug]);pid=self.sql('SELECT id FROM nd_pf_items WHERE slug=?',params=[slug])[0]['id']
+  self.sql('INSERT INTO nd_pf_versions(publication_id,revision_number,body_json,checksum) VALUES (?,1,?,?)',params=[pid,raw,hashlib.sha256(raw.encode()).hexdigest()]);vid=self.sql('SELECT id FROM nd_pf_versions WHERE publication_id=?',params=[pid])[0]['id'];self.sql('UPDATE nd_pf_items SET published_version_id=? WHERE id=?',params=[vid,pid])
   self.assertIn('Существующая работа',requests.get(self.base+'/portfolio.php').text)
   s,h=self.owner();self.assertTrue(any(i['slug']==slug for i in s.get(self.api('items')).json()['items']))
  def test_mobile_owner_upload_publish_edit_archive_end_to_end(self):
