@@ -8,8 +8,9 @@ import urllib.request
 
 DENIED_PATHS=['/~.htaccess','/index~.html','/.htaccess','/private/config.php','/index.html','/crm.html']
 METADATA_TYPES={'/favicon.svg':['image/svg+xml'],'/favicon.ico':['image/x-icon','image/vnd.microsoft.icon'],'/sitemap.xml':['application/xml','text/xml'],'/robots.txt':['text/plain']}
-ASSET_PATHS=['/styles.css','/crm.css','/script.js','/crm.js','/api-client.js']
-PATHS=['/','/studio.php','/api.php?r=privacy','/privacy.php','/api.php?r=session','/api.php?r=leads']+DENIED_PATHS+ASSET_PATHS
+ASSET_PATHS=['/styles.css','/brand-ui.css','/publications.css']
+RETIRED_PATHS=['/api.php?r=leads','/customer.php','/customer-api.php','/ordering.php','/services.php','/billing.php','/payment-api.php','/order-workflow.php','/publication-api.php']
+PATHS=['/','/studio.php','/portfolio.php','/portfolio-api.php?r=session']+RETIRED_PATHS+DENIED_PATHS+ASSET_PATHS
 
 def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=()):
     assets = list(dict.fromkeys(ASSET_PATHS + list(extra_assets)))
@@ -34,20 +35,16 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_
             if row['content_type']=='application/json':
                 try: data=json.loads(text)
                 except ValueError: pass
-            if path in ['/', '/studio.php']:
+            portfolio_only=rows.get('/',{}).get('portfolio_only',False)
+            if path=='/':
+                row['portfolio_only']=response.headers.get('X-Neurodelo-Site')=='portfolio-only'
                 row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text
-            elif path=='/api.php?r=privacy':
-                row['ok']=response.status==200 and isinstance(data,dict) and isinstance(data.get('enabled'),bool) and isinstance(data.get('version'),str) and data.get('url')=='/privacy.php'
-                if row['ok']:
-                    row['ok'] = bool(re.fullmatch(r'[A-Za-z0-9._-]{1,64}',data['version'])) if data['enabled'] else data['version']==''
-                    row['enabled']=data['enabled'];row['version']=data['version']
-            elif path=='/privacy.php':
-                policy=rows.get('/api.php?r=privacy',{})
-                row['ok']=policy.get('ok',False) and row['content_type']=='text/html' and (
-                    (policy['enabled'] and response.status==200 and ('Версия: '+policy['version']) in text) or
-                    (not policy['enabled'] and (response.status==503 or (response.status==200 and 'data-privacy-mode="notice"' in text)) and 'Приём заявок через форму отключён' in text))
-            elif path in ['/api.php?r=session','/api.php?r=leads']:
-                row['ok']=response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)
+            elif path in ['/studio.php','/portfolio.php']:
+                row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text
+            elif path=='/portfolio-api.php?r=session':
+                row['ok']=(response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)) if portfolio_only else response.status in [401,404,410]
+            elif path in RETIRED_PATHS:
+                row['ok']=response.status==410 if portfolio_only else response.status in [200,401,403,404,410,503]
             elif path in assets:
                 expected=METADATA_TYPES.get(path, ['text/css'] if path.endswith('.css') else ['application/javascript','text/javascript'])
                 row['ok']=response.status==200 and row['content_type'] in expected;row['sha256']=hashlib.sha256(body).hexdigest()

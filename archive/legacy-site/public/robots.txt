@@ -1,0 +1,11 @@
+User-agent: *
+Disallow: /max-webhook.php
+Disallow: /owner-setup.php
+Disallow: /api.php
+Disallow: /studio.php
+Disallow: /crm.html
+Disallow: /private/
+
+Sitemap: https://neurodelo.pro/sitemap.xml
+
+Sitemap: https://neurodelo.pro/sitemap-publications.php
