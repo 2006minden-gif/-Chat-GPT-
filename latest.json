@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "source_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
-  "nonce": "workflow-42617705046",
-  "run_id": "42617734014",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42617734014",
-  "time": "2026-11-09T12:31:40.549047+00:00",
+  "nonce": "workflow-42618105848",
+  "run_id": "42618323779",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42618323779",
+  "time": "2026-11-09T12:35:52.032545+00:00",
   "production_touched": false,
   "producer": {
-    "id": 42617705046,
-    "name": "Enable approved auto-merge",
-    "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
-    "head_branch": "main",
-    "event": "workflow_run",
+    "id": 42618105848,
+    "name": "Validate fe5152b6b620c2a7278e737685ea02e0156edd63",
+    "head_sha": "fe5152b6b620c2a7278e737685ea02e0156edd63",
+    "head_branch": "fix/retirement-finalization",
+    "event": "push",
     "status": "completed",
-    "conclusion": "skipped",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42617705046",
-    "path": ".github/workflows/auto-merge.yml"
+    "conclusion": "success",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42618105848",
+    "path": ".github/workflows/deploy.yml"
   },
   "inspection": {
     "repository": {
@@ -103,6 +103,22 @@
     "open_prs": {
       "status": 200,
       "pulls": [
+        {
+          "number": 84,
+          "title": "Завершить физическое удаление после проверки сайта",
+          "state": "open",
+          "draft": false,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/pull/84",
+          "merge_commit_sha": "f880e12df8fbc5d716799e4fea3f28a61901af43",
+          "head": {
+            "ref": "fix/retirement-finalization",
+            "sha": "fe5152b6b620c2a7278e737685ea02e0156edd63"
+          },
+          "base": {
+            "ref": "main",
+            "sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e"
+          }
+        },
         {
           "number": 64,
           "title": "Update from task 11a72abf-a80b-42db-84c7-38d788e00390",
@@ -234,18 +250,18 @@
       "status": 200,
       "runs": [
         {
-          "id": 42617734014,
+          "id": 42618323779,
           "name": "Record Git-readable automation evidence",
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42617734014",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42618323779",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
-              "id": 129161703296,
+              "id": 129163692045,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -269,6 +285,378 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 42618323608,
+          "name": "Enable approved auto-merge",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42618323608",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 129163691274,
+              "name": "approved",
+              "status": "completed",
+              "conclusion": "failure",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Enable only independently reviewed passing PRs",
+                  "conclusion": "failure",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 129163691968,
+              "name": "Create PR after trusted branch validation",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Create missing PR without enabling merge",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
+            },
+            {
+              "id": 129163692861,
+              "name": "Enable routine deployment only after verified bootstrap",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 129163693312,
+              "name": "Verify and enable protected integration",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 129163741257,
+              "name": "Configure CI/CD after validated main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 42618195799,
+          "name": "Validate f880e12df8fbc5d716799e4fea3f28a61901af43",
+          "event": "pull_request",
+          "head_branch": "fix/retirement-finalization",
+          "head_sha": "fe5152b6b620c2a7278e737685ea02e0156edd63",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42618195799",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 129163276260,
+              "name": "Validate",
+              "status": "in_progress",
+              "conclusion": null,
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Validate dispatched revision",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Portfolio browser, API, Apache and database recovery tests",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 42618105848,
+          "name": "Validate fe5152b6b620c2a7278e737685ea02e0156edd63",
+          "event": "push",
+          "head_branch": "fix/retirement-finalization",
+          "head_sha": "fe5152b6b620c2a7278e737685ea02e0156edd63",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42618105848",
+          "path": ".github/workflows/deploy.yml",
+          "jobs": [
+            {
+              "id": 129162969343,
+              "name": "Validate",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Initialize containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Validate dispatched revision",
+                  "conclusion": "skipped",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Install isolated test dependencies",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Syntax and workflow validation",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Portfolio browser, API, Apache and database recovery tests",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Build checked release",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Stop containers",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
+            },
+            {
+              "id": 129163660912,
+              "name": "Publish approved main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 129163662006,
+              "name": "Enable verified routine publication",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 42617734014,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42617734014",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 129161703296,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -1041,402 +1429,6 @@
                   "status": "completed"
                 }
               ]
-            }
-          ]
-        },
-        {
-          "id": 42616654746,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "c0e3b8ff1c8d9192f2b8b008bddcfd0e25c29179",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616654746",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 129158072197,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": 42616654732,
-          "name": "Enable approved auto-merge",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "c0e3b8ff1c8d9192f2b8b008bddcfd0e25c29179",
-          "status": "completed",
-          "conclusion": "failure",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616654732",
-          "path": ".github/workflows/auto-merge.yml",
-          "jobs": [
-            {
-              "id": 129158072450,
-              "name": "approved",
-              "status": "completed",
-              "conclusion": "failure",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Enable only independently reviewed passing PRs",
-                  "conclusion": "failure",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 129158072753,
-              "name": "Create PR after trusted branch validation",
-              "status": "completed",
-              "conclusion": "failure",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Create missing PR without enabling merge",
-                  "conclusion": "failure",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 129158129486,
-              "name": "Verify and enable protected integration",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 129158130241,
-              "name": "Enable routine deployment only after verified bootstrap",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 129158134854,
-              "name": "Configure CI/CD after validated main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 42616478523,
-          "name": "Validate 2472322c703b61cd70a52018a1848d79136a73d2",
-          "event": "pull_request",
-          "head_branch": "remove/legacy-systems",
-          "head_sha": "1f17361e3431d1c71e19e502431b7d001985dd27",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616478523",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 129157486320,
-              "name": "Validate",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Initialize containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Validate dispatched revision",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Install isolated test dependencies",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Syntax and workflow validation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Portfolio browser, API, Apache and database recovery tests",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Build checked release",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Stop containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 129158188462,
-              "name": "Publish approved main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 129158189460,
-              "name": "Enable verified routine publication",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 42616425768,
-          "name": "Validate 1f17361e3431d1c71e19e502431b7d001985dd27",
-          "event": "push",
-          "head_branch": "remove/legacy-systems",
-          "head_sha": "1f17361e3431d1c71e19e502431b7d001985dd27",
-          "status": "completed",
-          "conclusion": "success",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616425768",
-          "path": ".github/workflows/deploy.yml",
-          "jobs": [
-            {
-              "id": 129157310619,
-              "name": "Validate",
-              "status": "completed",
-              "conclusion": "success",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Initialize containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Validate dispatched revision",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run shivammathur/setup-php@d52fc211a0436f8839a587b3b5b8efddab4744ea",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Install isolated test dependencies",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Syntax and workflow validation",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Portfolio browser, API, Apache and database recovery tests",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Build checked release",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Stop containers",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 129158043501,
-              "name": "Publish approved main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 129158044170,
-              "name": "Enable verified routine publication",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
             }
           ]
         }
