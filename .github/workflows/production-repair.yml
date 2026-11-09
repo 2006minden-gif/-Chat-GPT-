@@ -1,5 +1,10 @@
 name: One-time production blocker repair
 on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/production-repair.yml'
+      - 'scripts/repair/production.php'
   workflow_dispatch:
     inputs:
       operation:
@@ -30,7 +35,7 @@ jobs:
     timeout-minutes: 10
     environment: production
     concurrency:
-      group: spaceweb-production
+      group: ${{ github.event_name == 'push' && 'spaceweb-readonly-inspect' || 'spaceweb-production' }}
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -39,7 +44,7 @@ jobs:
           persist-credentials: false
       - name: Verify reviewed revision before credentials become available
         env:
-          OPERATION: ${{ inputs.operation }}
+          OPERATION: ${{ github.event_name == 'push' && 'inspect' || inputs.operation }}
           EXPECTED: ${{ inputs.expected_revision }}
           REVISION: ${{ github.sha }}
           GH_TOKEN: ${{ github.token }}
@@ -58,7 +63,7 @@ jobs:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-          OPERATION: ${{ inputs.operation }}
+          OPERATION: ${{ github.event_name == 'push' && 'inspect' || inputs.operation }}
           PLAN_ID: ${{ inputs.plan_id }}
           REVISION: ${{ github.sha }}
         run: python scripts/repair/client.py --operation "$OPERATION" --plan-id "$PLAN_ID" --revision "$REVISION" --report "$RUNNER_TEMP/repair-report.json"
