@@ -1,7 +1,7 @@
 """Actual MySQL snapshot/shadow restore, in a disposable loopback database only."""
 import hashlib,json,secrets,shutil,time
 from pathlib import Path
-import test_prelaunch as fixture
+import fixture_site as fixture
 
 class DatabaseRecovery(fixture.Prelaunch):
  def setUp(self):

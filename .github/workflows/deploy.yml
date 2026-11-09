@@ -102,11 +102,11 @@ jobs:
           (cd "$RUNNER_TEMP" && sha256sum -c "$GITHUB_WORKSPACE/scripts/ci/actionlint.sha256")
           tar -xzf "$RUNNER_TEMP/actionlint_1.7.7_linux_amd64.tar.gz" -C "$RUNNER_TEMP" actionlint
           "$RUNNER_TEMP/actionlint" -shellcheck= -pyflakes=
-      - name: Unit, integration, Apache, security and migration tests
+      - name: Portfolio browser, API, Apache and database recovery tests
         run: |
           set -euo pipefail
           python scripts/deploy/release.py --check
-          node --test tests/api-client.test.cjs
+          node --test tests/site.test.cjs
           python scripts/run-tests.py -v
       - name: Build checked release
         env:
@@ -179,14 +179,6 @@ jobs:
         with:
           name: neurodelo-${{ github.sha }}
           path: ${{ runner.temp }}/neurodelo-release
-      - name: Prepare public analytics verification browser
-        if: steps.current.outputs.current == 'true'
-        run: |
-          set -euo pipefail
-          if python -c "import json,sys; d=json.load(open('private/legal/privacy-2026-11-02-v3.json')); sys.exit(0 if d.get('analytics_approved') else 1)"; then
-            python -m pip install -r tests/requirements.txt
-            python -m playwright install --with-deps chromium
-          fi
       - name: Recheck production environment before secret use
         if: steps.current.outputs.current == 'true'
         env:
