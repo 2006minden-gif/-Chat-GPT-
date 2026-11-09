@@ -164,7 +164,22 @@ function rp_htaccess_candidate(string $s):string {
     rp_assert(!str_contains($s,'# END NEURODELO ISSUE10 SECURITY'),'incomplete_managed_rules');
     return $s.(str_ends_with($s,"\n")?'':"\n").rp_block()."\n";
 }
-function rp_inspect(string $root):array {
+function rp_origin_http():array {
+    $out=['dns_a'=>@gethostbynamel('neurodelo.pro')?:[]];
+    foreach(['https','http'] as $scheme){
+        $warnings=[];$context=stream_context_create(['http'=>['method'=>'GET','timeout'=>4,'ignore_errors'=>true,'follow_location'=>0,'max_redirects'=>0],
+            'ssl'=>['verify_peer'=>true,'verify_peer_name'=>true,'allow_self_signed'=>false]]);
+        set_error_handler(static function(int $level,string $message)use(&$warnings):bool{$warnings[]=$message;return true;});
+        try{$h=fopen($scheme.'://neurodelo.pro/','rb',false,$context);}finally{restore_error_handler();}
+        if(!$h){$warning=implode(' ',$warnings);$out[$scheme]=['connected'=>false,'failure'=>preg_match('/certificate|SSL|crypto|TLS/i',$warning)?'tls':(preg_match('/getaddrinfo|resolve|name resolution/i',$warning)?'dns':(preg_match('/timed out|timeout/i',$warning)?'timeout':'connection'))];continue;}
+        try{$meta=stream_get_meta_data($h);$body=stream_get_contents($h,8192);}finally{fclose($h);}
+        $row=['connected'=>true,'status'=>0,'site_name_present'=>is_string($body)&&str_contains($body,'НейроДело'),'portfolio_only'=>false];
+        foreach($meta['wrapper_data']??[] as $line){if(preg_match('#^HTTP/\S+ ([0-9]{3})#',$line,$m))$row['status']=(int)$m[1];if(strtolower(trim($line))==='x-neurodelo-site: portfolio-only')$row['portfolio_only']=true;}
+        $out[$scheme]=$row;
+    }
+    return $out;
+}
+function rp_inspect(string $root,?callable $originProbe=null):array {
     $config=rp_read($root.'/private/config.php');$syntax=rp_syntax($config);$candidate=null;
     try{$candidate=rp_config_candidate($config);}catch(RepairFailure $e){}
     $out=['ok'=>true,'read_only'=>true,'php'=>PHP_VERSION,'configuration'=>['syntax_valid'=>$syntax['valid'],'error_type'=>$syntax['valid']?null:'ParseError','error_line'=>$syntax['line'],'error_category'=>$syntax['category']??null,'structure'=>rp_shape($config),'automatic_repair_available'=>$candidate!==null,'repair_kind'=>$candidate['kind']??null,'repair_line'=>$candidate['line']??null,'repair_insertions'=>$candidate===null?null:($candidate['insertions']??($candidate['kind']==='no_change'?0:1))],'backup_copies'=>[]];
@@ -182,7 +197,8 @@ function rp_inspect(string $root):array {
         if(preg_match('/\.(sql|sqlite3?|dump|zip|tar|tgz|gz|7z|rar)$/i',$name))$inventory['dump_or_archive']++;
     }
     $out['public_inventory']=$inventory;
-    $rules=rp_read($root.'/public_html/.htaccess');$out['managed_rules_present']=str_contains($rules,rp_block());return $out;
+    $rules=rp_read($root.'/public_html/.htaccess');$out['managed_rules_present']=str_contains($rules,rp_block());
+    $out['origin_http']=($originProbe??'rp_origin_http')();$out['available_disk_mb']=(int)(disk_free_space($root)/1048576);return $out;
 }
 
 function rp_layout(string $root):void {
