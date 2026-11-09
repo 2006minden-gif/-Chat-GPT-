@@ -1,7 +1,0 @@
-<?php
-declare(strict_types=1);require dirname(__DIR__).'/private/app.php';security_headers();header('Cache-Control: no-store');
-$d=release_legal_documents();$requested=$_GET['version']??'analytics-2026-11-02-v2';$historical=$requested==='analytics-2026-11-02-v1';
-if($historical)$d=json_decode((string)file_get_contents(dirname(__DIR__).'/private/legal/privacy-2026-11-02-v3.json'),true);
-if(!in_array($requested,['analytics-2026-11-02-v1','analytics-2026-11-02-v2'],true)){http_response_code(404);exit('Версия условий не найдена.');}
-$e=fn($s)=>htmlspecialchars($s,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8');
-?><!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Аналитика сайта — НейроДело</title><link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/brand-ui.css?v=20261105-layout"></head><body><header class="header wrap"><a class="logo" href="/">НейроДело.</a><a href="/privacy.php">Политика конфиденциальности</a></header><main class="wrap section legal-page"><h1>Аналитика сайта</h1><?php if($historical): ?><p>Архивная редакция. Текущие условия опубликованы в <a href="/privacy.php">политике конфиденциальности</a>.</p><?php endif; ?><?php if($d): ?><p>Версия: <?= $e($d['analytics_notice_version']) ?>.</p><div class="policy-text"><?= $e($d['analytics_notice']) ?></div><?php else: ?><p>Информация временно недоступна.</p><?php endif; ?><p><a href="/">На главную</a></p></main></body></html>

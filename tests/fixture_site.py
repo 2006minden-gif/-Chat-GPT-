@@ -19,12 +19,11 @@ class Prelaunch(unittest.TestCase):
   cls.dbname='neuro_test_'+secrets.token_hex(8)
   cls.dbargs={'dsn':dsn+';charset=utf8mb4','user':os.environ.get('NEURO_TEST_USER','root'),'password':os.environ.get('NEURO_TEST_PASSWORD','')}
   cls.tmp=tempfile.TemporaryDirectory();cls.path=Path(cls.tmp.name)
-  for name in ['public','private','tests','scripts']:shutil.copytree(ROOT/name,cls.path/name,ignore=shutil.ignore_patterns('config.php','__pycache__'))
+  for name in ['public','private','tests','scripts','database']:shutil.copytree(ROOT/name,cls.path/name,ignore=shutil.ignore_patterns('config.php','__pycache__'))
   cls.password=secrets.token_urlsafe(24)
   cls.sql('CREATE DATABASE `'+cls.dbname+'` CHARACTER SET utf8mb4',admin=True)
   cls.addClassCleanup(cls.cleanup)
-  schema=(ROOT/'archive/legacy-site/database/schema.sql').read_text();cls.sql(schema)
-  publication=(ROOT/'archive/legacy-site/database/migrations/023_publication/up.sql').read_text();publication=__import__('re').sub(r' FOREIGN KEY[^\n]+\n','',publication).replace(',\n)', '\n)');cls.sql(publication)
+  cls.sql((ROOT/'database/schema.sql').read_text())
   cls.sql("INSERT INTO nd_admin VALUES (1, '"+cls.php_eval('echo password_hash($v["password"], PASSWORD_DEFAULT);',{'password':cls.password})+"')")
   sock=socket.socket();sock.bind(('127.0.0.1',0));cls.port=sock.getsockname()[1];sock.close();cls.base='http://127.0.0.1:'+str(cls.port)
   cls.config={'db_host':'127.0.0.1','db_port':int(dsn.split('port=')[1]),'db_name':cls.dbname,'db_user':cls.dbargs['user'],'db_password':cls.dbargs['password'],'app_url':cls.base,'setup_key':''}

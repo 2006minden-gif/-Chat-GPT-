@@ -17,7 +17,7 @@ function save_json(string $path,array $value):void {
     chmod($tmp,0600);insist(rename($tmp,$path),'metadata_rename_failed');
 }
 function paths():array {
-    return ['public_html/.htaccess', 'public_html/brand-ui.css', 'public_html/favicon.ico', 'public_html/favicon.svg', 'public_html/index.html', 'public_html/index.php', 'public_html/portfolio-api.php', 'public_html/portfolio-case.php', 'public_html/portfolio-editor.js', 'public_html/portfolio.php', 'public_html/publications.css', 'public_html/robots.txt', 'public_html/site-router.php', 'public_html/site.css', 'public_html/site.js', 'public_html/sitemap.xml', 'public_html/studio.php', 'public_html/styles.css', 'private/app.php', 'private/notifications/worker.php', 'private/site-view.php', 'private/site.php'];
+    return ['public_html/.htaccess', 'public_html/brand-ui.css', 'public_html/favicon.ico', 'public_html/favicon.svg', 'public_html/index.html', 'public_html/index.php', 'public_html/portfolio-api.php', 'public_html/portfolio-case.php', 'public_html/portfolio-editor.js', 'public_html/portfolio.php', 'public_html/publications.css', 'public_html/robots.txt', 'public_html/site-router.php', 'public_html/site.css', 'public_html/site.js', 'public_html/sitemap.xml', 'public_html/studio.php', 'public_html/styles.css', 'private/site-view.php', 'private/site.php'];
 }
 function hash_file_safe(string $path):?string {
     $parent=$path;do {insist(!is_link($parent),'symlink_refused');$next=dirname($parent);if($next===$parent)break;$parent=$next;} while(true);
@@ -25,36 +25,15 @@ function hash_file_safe(string $path):?string {
     insist(is_file($path)&&is_readable($path),'non_regular_file');return hash_file('sha256',$path);
 }
 function protected_files(string $root):array {
-    return ['private/config.php'=>hash_file_safe($root.'/private/config.php'),'private/privacy-policy.txt'=>hash_file_safe($root.'/private/privacy-policy.txt')];
+    return ['private/config.php'=>hash_file_safe($root.'/private/config.php')];
 }
 function assert_protected(string $root,array $before):void {insist(protected_files($root)===$before,'protected_file_changed');}
 /** Schema metadata only: no customer rows, credentials, dumps or SQL text in evidence. */
 function database_inventory(PDO $pdo):array {
     $tables=$pdo->query("SELECT table_name FROM information_schema.tables WHERE table_schema=DATABASE() ORDER BY table_name")->fetchAll(PDO::FETCH_COLUMN);
     $tables=array_values(array_filter($tables,fn($t)=>is_string($t)&&preg_match('/^nd_[a-z_]+$/D',$t)===1));
-    $journal=[];
-    if(in_array('nd_schema_migrations',$tables,true)) {
-        $rows=$pdo->query('SELECT version,state,up_checksum,down_checksum FROM nd_schema_migrations ORDER BY version LIMIT 100')->fetchAll(PDO::FETCH_ASSOC);
-        foreach($rows as $row) {
-            insist(preg_match('/^[0-9]{3}_[a-z_]+$/D',$row['version'])===1,'invalid_migration_journal');
-            $journal[]=['version'=>$row['version'],'state'=>$row['state'],'up_checksum'=>$row['up_checksum'],'down_checksum'=>$row['down_checksum']];
-        }
-    }
     $columns=$pdo->query("SELECT table_name,column_name,column_type,is_nullable,column_key FROM information_schema.columns WHERE table_schema=DATABASE() AND LEFT(table_name,3)='nd_' ORDER BY table_name,ordinal_position")->fetchAll(PDO::FETCH_ASSOC);
-    return ['mysql_version'=>(string)$pdo->query('SELECT VERSION()')->fetchColumn(),'tables'=>$tables,'journal'=>$journal,'schema_sha256'=>hash('sha256',json_encode($columns))];
-}
-function safe_subprocess_diagnostic(string $path):array {
-    $stage=basename($path)==='database.sql.error'?'database_dump':'migration_operator';$out=['stage'=>$stage,'code'=>'unclassified_private_subprocess_failure'];
-    if(is_link($path)||!is_file($path)||filesize($path)>65536)return $out;
-    $text=(string)file_get_contents($path);$j=json_decode(trim($text),true);
-    $allowed=['invalid_configuration','strict_sql_mode_required','migration_files_missing','invalid_migration_manifest','migration_busy','migration_checksum_mismatch','partial_migration_requires_empty_rollback','unmanaged_table_collision','innodb_baseline_required','rollback_refused_nonempty_auth','newer_migration_applied','migration_failed','migration_004_required','migration_005_required','migration_006_required','migration_007_required','migration_008_required','migration_009_required','migration_010_required','migration_011_required','migration_012_required'];
-    if(is_array($j)&&in_array($j['error']??'',$allowed,true))$out['code']=$j['error'];
-    elseif(preg_match('/(?:Error|error|Got error|ERROR)[ :]+(?:\(([0-9]{3,4})\)|([0-9]{3,4}))/',$text,$m)){$out['code']='mysql_error_'.($m[1]!==''?$m[1]:$m[2]);}
-    return $out;
-}
-function migration_diagnostics(string $root):array {
-    $dirs=glob($root.'/.neurodelo-deploy/backups/*',GLOB_ONLYDIR)?:[];usort($dirs,fn($a,$b)=>filemtime($b)<=>filemtime($a));$out=[];
-    foreach($dirs as $dir){if(is_link($dir))continue;foreach(array_merge(glob($dir.'/migration-*.log.error')?:[],glob($dir.'/database.sql.error')?:[]) as $path){if(is_link($path)||!is_file($path)||filesize($path)===0)continue;$row=safe_subprocess_diagnostic($path);$row['release_id']=basename($dir);if(preg_match('/^migration-([0-9]{3}_[a-z_]+)\.log\.error$/D',basename($path),$m))$row['migration']=$m[1];$out[]=$row;}if(count($out)>=3)break;}return array_slice($out,0,3);
+    return ['mysql_version'=>(string)$pdo->query('SELECT VERSION()')->fetchColumn(),'tables'=>$tables,'schema_sha256'=>hash('sha256',json_encode($columns))];
 }
 function preflight(string $root):array {
     insist(PHP_VERSION_ID>=80400,'php_84_required');
@@ -69,10 +48,11 @@ function preflight(string $root):array {
     insist(str_starts_with((string)$pdo->query('SELECT VERSION()')->fetchColumn(),'5.7.'),'mysql_57_required');
     $pdo->exec('SET SESSION TRANSACTION READ ONLY');
     $pdo->query('SELECT id,password_hash FROM nd_admin LIMIT 0');
-    $pdo->query('SELECT id,version,request_key,request_hash,consent,consent_at,policy_version,policy_hash FROM nd_leads LIMIT 0');
+    $hasPortfolio=(int)$pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='nd_pf_items'")->fetchColumn();
+    $pdo->query($hasPortfolio?'SELECT id,version,rights_verified FROM nd_pf_items LIMIT 0':'SELECT id,version FROM nd_publications LIMIT 0');
     $pdo->query('SELECT token,csrf,expires FROM nd_sessions LIMIT 0');$pdo->query('SELECT bucket,attempts,expires FROM nd_limits LIMIT 0');
     return ['ok'=>true,'php'=>PHP_VERSION,'database_connected'=>true,'admin_exists'=>(bool)$pdo->query('SELECT id FROM nd_admin WHERE id=1')->fetchColumn(),
-            'privacy_approved'=>($c['privacy_policy_approved']??false)===true,'database_inventory'=>database_inventory($pdo),'prior_private_failures'=>migration_diagnostics($root),'strict_sql_mode'=>(bool)preg_match('/\bSTRICT_(TRANS_TABLES|ALL_TABLES)\b/',(string)$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn())];
+            'privacy_approved'=>($c['privacy_policy_approved']??false)===true,'database_inventory'=>database_inventory($pdo),'strict_sql_mode'=>(bool)preg_match('/\bSTRICT_(TRANS_TABLES|ALL_TABLES)\b/',(string)$pdo->query('SELECT @@SESSION.sql_mode')->fetchColumn())];
 }
 function remove_tree(string $path):void {
     // Only managed backup/staging trees call this; unlink a leftover link, never follow it.
@@ -88,7 +68,7 @@ function verify_bundle(string $candidate,string $id):array {
     foreach(array_keys($m['tools']) as $path)insist(!str_starts_with($path,'private/')&&!str_starts_with($path,'public_html/'),'unsafe_tool_path');
     foreach(array_merge($m['files'],$m['tools']) as $path=>$hash) {
         insist(!in_array('..',explode('/',$path),true)&&!in_array('.',explode('/',$path),true)&&!str_contains($path,'//'),'unsafe_release_path');
-        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^(remote|recovery|reviewed-migrations)\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
+        insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^(remote|recovery|portfolio-retirement)\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
     $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
@@ -118,81 +98,6 @@ function prune(string $stateRoot,array $state,int $keep):void {
         if(is_dir($incoming)&&!is_link($incoming))remove_tree($incoming);
     }
 }
-function execute_private(array $command,string $stdoutPath):void {
-    $error=$stdoutPath.'.error';$p=proc_open($command,[0=>['file','/dev/null','r'],1=>['file',$stdoutPath,'w'],2=>['file',$error,'w']],$pipes);
-    insist(is_resource($p),'subprocess_start_failed');$code=proc_close($p);chmod($stdoutPath,0600);if(is_file($error))chmod($error,0600);
-    if($code!==0){$diagnostic=safe_subprocess_diagnostic($error);throw new DeployFailure($diagnostic['stage'].'_failed:'.$diagnostic['code']);}
-}
-function migrate_approved(string $root,string $candidate,array $m,string $backup):array {
-    $entries=$m['migrations']??[];if(!$entries)return [];
-    $c=require $root.'/private/config.php';
-    $pdo=new PDO('mysql:host='.$c['db_host'].';port='.($c['db_port']??3306).';dbname='.$c['db_name'].';charset=utf8mb4',$c['db_user'],$c['db_password'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
-    $exists=(bool)$pdo->query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='nd_schema_migrations'")->fetchColumn();
-    $pending=[];$reviewed=false;
-    if(is_file($candidate.'/reviewed-migrations.php'))require_once $candidate.'/reviewed-migrations.php';
-    foreach($entries as $entry) {
-        insist(is_bool($entry['automatic']??null)&&is_bool($entry['required']??null)&&preg_match('/^[0-9]{3}_[a-z_]+$/D',$entry['version']??'')===1,'invalid_migration_approval');
-        foreach(['up','down'] as $direction)insist(hash_file_safe($candidate.'/database/migrations/'.$entry['version'].'/'.$direction.'.sql')===($entry[$direction.'_sha256']??null),'migration_checksum_mismatch');
-        $row=false;if($exists){$q=$pdo->prepare('SELECT * FROM nd_schema_migrations WHERE version=?');$q->execute([$entry['version']]);$row=$q->fetch(PDO::FETCH_ASSOC);}
-        if($row){insist($row['state']==='applied'&&$row['up_checksum']===$entry['up_sha256']&&$row['down_checksum']===$entry['down_sha256'],'migration_state_or_checksum_mismatch');continue;}
-        if(!$entry['automatic']){insist(!$entry['required'],'manual_migration_approval_required');continue;}
-        if(($entry['kind']??'')==='reviewed_additive'){insist(function_exists('reviewed_migration')&&reviewed_migration($entry,$candidate),'unapproved_reviewed_migration');$reviewed=true;$pending[]=$entry['version'];continue;}
-        insist($entry['version']==='004_crm_foundation'&&$entry['kind']==='additive','unapproved_automatic_migration');
-        $up=(string)file_get_contents($candidate.'/database/migrations/'.$entry['version'].'/up.sql');
-        $sql=preg_replace('/^--[^\n]*$/m','',$up);$statements=array_values(array_filter(array_map('trim',explode(';',$sql))));
-        insist(count($statements)===12,'unsupported_automatic_migration');
-        foreach($statements as $statement)insist(preg_match('/^CREATE TABLE nd_[a-z_]+\s*\([\s\S]+\)\s*ENGINE=InnoDB[\s\S]*$/D',$statement)===1,'destructive_migration_refused');
-        $pending[]=$entry['version'];
-    }
-    if(!$pending)return [];
-    // A prior genuinely healthy delivery and this CI's real dump/restore test are mandatory.
-    $state=read_json(dirname(dirname($backup)).'/state.json');$previous=$state['last_release']??'';
-    insist(is_string($previous)&&preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$previous)===1&&($m['verification_contract']??'')==='ci-mysql57-backup-restore-v1','pipeline_backup_recovery_not_verified');
-    $good=read_json(dirname(dirname($backup)).'/backups/good-'.$previous.'/backup.json');
-    $current=read_json($backup.'/backup.json');
-    insist(($good['baseline']['ok']??false)===true&&($current['baseline']['ok']??false)===true,'pipeline_backup_recovery_not_verified');
-    foreach($good['files'] as $path=>$entry)insist(hash_file_safe(dirname(dirname($backup)).'/backups/good-'.$previous.'/files/'.$path)===$entry['before'],'verified_recovery_snapshot_corrupt');
-    if($reviewed){
-        insist(($m['database_recovery_required']??false)===true,'database_recovery_required');
-        reviewed_recovery_proof(dirname(dirname($backup)).'/backups/'.$previous.'/database-recovery');
-        reviewed_recovery_proof($backup.'/database-recovery');
-        foreach(['fileinfo','zip','openssl','tokenizer','mbstring','pdo_mysql'] as $extension)insist(extension_loaded($extension),'lifecycle_extension_missing_'.$extension);
-    }
-    if($reviewed){$proof=read_json($backup.'/database-recovery/verified.json');save_json($backup.'/database.json',['format'=>'verified-private-jsonl-schema-v1','directory'=>'database-recovery','sha256'=>$proof['backup_sha256'],'schema_sha256'=>$proof['schema_sha256'],'restore'=>'operator-approved only; never auto-import']);}
-    else {
-    // credentials are read from the existing protected config, never from GitHub or command arguments.
-    $defaults=$backup.'/.mysql-client.cnf';
-    $quote=static fn($v)=>'"'.str_replace(["\\","\"","\n","\r"],["\\\\","\\\"","\\n","\\r"],(string)$v).'"';
-    $text="[client]\n";foreach(['host'=>$c['db_host'],'port'=>$c['db_port']??3306,'user'=>$c['db_user'],'password'=>$c['db_password']] as $key=>$value)$text.=$key.'='.$quote($value)."\n";
-    insist(file_put_contents($defaults,$text)!==false,'database_backup_config_failed');chmod($defaults,0600);
-    try {
-        $size=(int)$pdo->query('SELECT COALESCE(SUM(data_length+index_length),0) FROM information_schema.tables WHERE table_schema=DATABASE()')->fetchColumn();
-        insist(disk_free_space($backup)>max(16777216,$size*2),'insufficient_database_backup_space');
-        $help=proc_open(['mysqldump','--help'],[0=>['file','/dev/null','r'],1=>['pipe','w'],2=>['file','/dev/null','w']],$helpPipes);
-        insist(is_resource($help),'dump_client_unavailable');$options=(string)stream_get_contents($helpPipes[1],1048576);fclose($helpPipes[1]);insist(proc_close($help)===0,'dump_client_unavailable');
-        insist(str_contains($options,'no-tablespaces'),'dump_client_not_supported');
-        $command=['mysqldump','--defaults-file='.$defaults,'--single-transaction','--quick','--skip-lock-tables','--no-tablespaces'];
-        if(str_contains($options,'set-gtid-purged'))$command[]='--set-gtid-purged=OFF';
-        if(str_contains($options,'column-statistics'))$command[]='--column-statistics=0';
-        $command[]='--databases';$command[]=$c['db_name'];execute_private($command,$backup.'/database.sql');
-        insist(filesize($backup.'/database.sql')>0,'empty_database_backup');
-        save_json($backup.'/database.json',['sha256'=>hash_file('sha256',$backup.'/database.sql'),'restore'=>'operator-approved only; never auto-import']);
-        $statePath=dirname(dirname($backup)).'/state.json';$state=read_json($statePath);$state['database_recovery_backup']=basename($backup);save_json($statePath,$state);
-    } finally {if(is_file($defaults))unlink($defaults);}
-    }
-    $configLink=$candidate.'/private/config.php';insist(!file_exists($configLink)&&!is_link($configLink),'candidate_config_collision');
-    insist(symlink($root.'/private/config.php',$configLink),'candidate_config_link_failed');
-    try {
-        foreach($entries as $entry)if(in_array($entry['version'],$pending,true))execute_private([getenv('NEURO_PHP_BIN')?:PHP_BINARY,$candidate.'/'.($entry['operator']??'scripts/migrate.php'),'up'],$backup.'/migration-'.$entry['version'].'.log');
-        // Confirm persistence in the migration journal, not only a successful process exit.
-        foreach($entries as $entry)if(in_array($entry['version'],$pending,true)) {
-            $q=$pdo->prepare('SELECT state,up_checksum,down_checksum FROM nd_schema_migrations WHERE version=?');$q->execute([$entry['version']]);$row=$q->fetch(PDO::FETCH_ASSOC);
-            insist($row&&$row['state']==='applied'&&$row['up_checksum']===$entry['up_sha256']&&$row['down_checksum']===$entry['down_sha256'],'migration_persistence_not_confirmed');
-        }
-        // Never execute down or import this database dump automatically.
-    } finally {if(is_link($configLink))unlink($configLink);}
-    return $pending;
-}
 function rollback(string $root,string $stateRoot,array &$state,string $id):array {
     insist(preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$id)===1,'invalid_release_id');
     $protectedNow=protected_files($root);
@@ -204,6 +109,7 @@ function rollback(string $root,string $stateRoot,array &$state,string $id):array
         insist($current===$entry['before']||$current===$entry['candidate'],'rollback_conflicting_manual_change');
         if($entry['before']!==null)insist(hash_file_safe($backup.'/files/'.$path)===$entry['before'],'backup_checksum_mismatch');
     }
+    $helper=$stateRoot.'/incoming/'.$id.'/portfolio-retirement.php';if(is_file($helper)){require_once $helper;pt_rollback($root,read_json($stateRoot.'/incoming/'.$id.'/manifest.json')['revision']);}
     foreach($meta['files'] as $path=>$entry) {
         if(hash_file_safe($root.'/'.$path)===$entry['before'])continue;
         if($entry['before']===null)insist(unlink($root.'/'.$path),'rollback_remove_failed');
@@ -217,7 +123,7 @@ function rollback(string $root,string $stateRoot,array &$state,string $id):array
 $lock=null;
 try {
     $op=$argv[1]??'';$root=$argv[2]??'';$id=$argv[3]??'';
-    insist(in_array($op,['preflight','apply','finalize','mark-unhealthy','rollback','recover','confirm-rollback'],true),'invalid_operation');
+    insist(in_array($op,['preflight','apply','finalize','retire','mark-unhealthy','rollback','recover','confirm-rollback'],true),'invalid_operation');
     insist(is_dir($root)&&!is_link($root)&&realpath($root)===$root,'invalid_account_root');
     if($op==='preflight') {echo json_encode(preflight($root),JSON_UNESCAPED_SLASHES),PHP_EOL;exit;}
     insist(preg_match('/^[a-zA-Z0-9_-]{1,120}$/D',$id)===1,'invalid_release_id');
@@ -226,7 +132,10 @@ try {
     insist(is_dir($stateRoot)&&!is_link($stateRoot),'deployment_directory_missing');
     $lock=fopen($stateRoot.'/lock','c');insist(is_resource($lock)&&flock($lock,LOCK_EX|LOCK_NB),'deployment_busy');chmod($stateRoot.'/lock',0600);
     $state=is_file($stateRoot.'/state.json')?read_json($stateRoot.'/state.json'):[];
-    if($op==='rollback'||$op==='recover') {
+    if($op==='retire'){
+        insist(empty($state['active'])&&($state['last_release']??'')===$id,'retirement_release_not_verified');
+        $candidate=$stateRoot.'/incoming/'.$id;$m=verify_bundle($candidate,$id);require_once $candidate.'/portfolio-retirement.php';$result=['ok'=>true,'retirement'=>pt_cleanup($root,$m)];
+    } elseif($op==='rollback'||$op==='recover') {
         $target=$op==='rollback'?$id:($state['active']??$state['last_release']??null);
         insist(is_string($target),'no_recovery_point');
         if($op==='rollback')insist(($state['active']??null)===$id||($state['last_release']??null)===$id,'release_writes_not_started');
@@ -288,15 +197,19 @@ try {
         $meta=['revision'=>$m['revision'],'files'=>$entries,'protected'=>$protected,'baseline'=>$baseline,'keep_backups'=>$m['keep_backups']];
         save_json($backup.'/backup.json',$meta);
         $state['active']=$id;if(($baseline['ok']??false)===true)$state['known_good_backup']=$id;save_json($stateRoot.'/state.json',$state);
+        $retirement=null;
+        if(!empty($m['portfolio_retirement'])){require_once $candidate.'/portfolio-retirement.php';$retirement=pt_begin($root,$candidate,$m,$id);}
         $databaseRecovery=null;
         if(($m['database_recovery_required']??false)===true){require_once $candidate.'/recovery.php';$databaseRecovery=nr_rehearse(require $root.'/private/config.php',$backup.'/database-recovery');$state['database_recovery_backup']=$id;save_json($stateRoot.'/state.json',$state);}
-        $migrated=migrate_approved($root,$candidate,$m,$backup);
+        $migrated=[];insist(empty($m['migrations']),'schema_migrations_forbidden');
+        if(!empty($m['portfolio_retirement']))$retirement=pt_populate($root,$candidate,$m,$backup);
         foreach(paths() as $path)atomic_copy($candidate.'/'.$path,$root.'/'.$path,$id);
+        if(!empty($m['portfolio_retirement']))pt_ready($root);
         assert_protected($root,$protected);
         $actual=[];foreach(paths() as $path){$actual[$path]=hash_file_safe($root.'/'.$path);insist($actual[$path]===$m['files'][$path],'deployed_hash_mismatch');}
-        $result=['database_recovery'=>$databaseRecovery,'backup_verified'=>true,'recovery_verified'=>true,'files_sha256'=>$actual,'ok'=>true,'applied'=>true,'revision'=>$m['revision'],'migrations'=>$migrated,'baseline_healthy'=>$baseline['ok']??false];
+        $result=['portfolio_transition'=>$retirement,'database_recovery'=>$databaseRecovery,'backup_verified'=>true,'recovery_verified'=>true,'files_sha256'=>$actual,'ok'=>true,'applied'=>true,'revision'=>$m['revision'],'migrations'=>$migrated,'baseline_healthy'=>$baseline['ok']??false];
     }
     echo json_encode($result,JSON_UNESCAPED_SLASHES),PHP_EOL;
 } catch(Throwable $e) {
-    echo json_encode(['ok'=>false,'error'=>($e instanceof DeployFailure||$e instanceof RecoveryFailure)?$e->getMessage():'private_operation_failed','type'=>get_class($e),'file'=>basename($e->getFile()),'line'=>$e->getLine(),'writes_started'=>isset($state)&&(($state['active']??null)===$id||($state['last_release']??null)===$id)],JSON_UNESCAPED_SLASHES),PHP_EOL;exit(1);
+    echo json_encode(['ok'=>false,'error'=>($e instanceof DeployFailure||$e instanceof RecoveryFailure||$e instanceof RetirementFailure)?$e->getMessage():'private_operation_failed','type'=>get_class($e),'file'=>basename($e->getFile()),'line'=>$e->getLine(),'writes_started'=>isset($state)&&(($state['active']??null)===$id||($state['last_release']??null)===$id)],JSON_UNESCAPED_SLASHES),PHP_EOL;exit(1);
 } finally {if(is_resource($lock)){flock($lock,LOCK_UN);fclose($lock);}}

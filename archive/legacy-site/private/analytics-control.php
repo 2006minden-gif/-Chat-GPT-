@@ -1,3 +1,0 @@
-<?php
-declare(strict_types=1);if(PHP_SAPI!=='cli'){http_response_code(404);exit;}ini_set('display_errors','0');
-try{$mode=$argv[1]??'';if(count($argv)!==2||!in_array($mode,['enable','disable'],true))throw new RuntimeException();$root=__DIR__.'/runtime';if(is_link($root)||(!is_dir($root)&&!mkdir($root,0700)))throw new RuntimeException();$file=$root.'/analytics-disabled';if(is_link($file))throw new RuntimeException();if($mode==='disable'){if(file_put_contents($file,'disabled',LOCK_EX)!==8)throw new RuntimeException();chmod($file,0600);}elseif(is_file($file)&&!unlink($file))throw new RuntimeException();echo json_encode(['ok'=>true,'analytics_disabled'=>is_file($file)]);}catch(Throwable $e){echo '{"ok":false,"error":"analytics_safety_control_failed"}';exit(1);}

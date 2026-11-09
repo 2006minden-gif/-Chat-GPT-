@@ -159,44 +159,19 @@ if __name__=='__main__':
         remote=Remote(args.bundle,args.revision,release_id)
         expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if (p.startswith('public_html/') and p.endswith(('.js','.css'))) or p in ['public_html/favicon.svg','public_html/favicon.ico','public_html/sitemap.xml','public_html/robots.txt']}
         try:
-            report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets))
-            if report['result']=='deployed_and_verified' and 'private/workflow/prepare.php' in manifest['files']:
+            report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets,expected_mode="portfolio-only-v2"))
+            if report['result']=='deployed_and_verified' and manifest.get('portfolio_retirement'):
                 try:
-                    prepared=remote.command(shlex.join([remote.php,ACCOUNT+'/private/workflow/prepare.php']),json_output=True)
-                    report['draft_preparation']={k:prepared[k] for k in ['ok','legal_draft_prepared','service_drafts_created','published','error'] if k in prepared}
-                except Exception:
-                    report['draft_preparation']={'ok':False,'error':'draft_preparation_unavailable'}
-            if report['result']=='deployed_and_verified' and 'private/legal/privacy-2026-11-02-v4.json' in manifest['files']:
-                analytics=json.loads((args.bundle/'private/legal/privacy-2026-11-02-v4.json').read_text())
-                if analytics.get('analytics_approved') is True:
-                    control=[remote.php,ACCOUNT+'/private/analytics-control.php']
-                    evidence=args.report.with_name('analytics-verification.json')
-                    verification={'ok':False,'error':'verification_not_started'}
-                    try:
-                        enabled=remote.command(shlex.join(control+['enable']),json_output=True)
-                        if enabled.get('analytics_disabled') is not False:raise RuntimeError('analytics_enable_not_verified')
-                        browser_env={k:v for k,v in os.environ.items() if not k.startswith('SSH_') and k not in {'GH_TOKEN','GITHUB_TOKEN','ACTIONS_RUNTIME_TOKEN','ACTIONS_ID_TOKEN_REQUEST_TOKEN','DEPLOY_PATH'}}
-                        checked=subprocess.run([__import__('sys').executable,'scripts/verify-analytics-production.py','--evidence',str(evidence)],capture_output=True,text=True,timeout=180,env=browser_env)
-                        verification=json.loads(evidence.read_text()) if evidence.is_file() else {'ok':False,'error':'verification_evidence_missing'}
-                        if checked.returncode or verification.get('ok') is not True:raise RuntimeError('analytics_verification_failed')
-                        report['analytics_verification']=verification
-                    except Exception:
-                        disabled=False
-                        try:disabled=remote.command(shlex.join(control+['disable']),json_output=True).get('analytics_disabled') is True
-                        except Exception:pass
-                        report['analytics_verification']={**verification,'ok':False,'counter_disabled':disabled}
-                        report['result']='deployed_analytics_disabled' if disabled else 'deployed_analytics_state_unknown'
-            if report['result']=='deployed_and_verified' and 'private/workflow/diagnostics.php' in manifest['files']:
-                try:
-                    gates=remote.command(shlex.join([remote.php,ACCOUNT+'/private/workflow/diagnostics.php']),json_output=True)
-                    # Explicit safe field selection; never echo arbitrary remote settings or failures.
-                    report['workflow_gates']={k:gates[k] for k in ['ok','template_previews','launch_readiness','technical_runtime','legal','document_templates','owner_details_reviewed','mail_verified','repeat_mail_verification_required','capabilities','remaining_actions'] if k in gates}
-                except Exception:
-                    report['workflow_gates']={'ok':False,'error':'gate_evidence_unavailable'}
+                    report['retirement']=remote.action('retire')['retirement']
+                    verified=health.snapshot(extra_assets=expected_assets,expected_mode="portfolio-only-v2")
+                    report['after_retirement']=health.require_asset_revision(verified,expected_assets)
+                    if not report['after_retirement']['ok']:report['result']='deployed_retirement_verification_pending'
+                except RemoteFailure as error:
+                    report['result']='deployed_retirement_pending';report['retirement_error']=str(error)
         finally:remote.close()
         report['revision']=args.revision;report['release_id']=release_id
     except Exception as error:
         report={'result':'failed','error_type':type(error).__name__}
     args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,indent=2,ensure_ascii=False))
-    print(json.dumps({'result':report['result'],'rollback_verified':report.get('rollback_verified',False),**({'analytics_verification':report['analytics_verification']} if 'analytics_verification' in report else {}),**({'workflow_gates':report['workflow_gates']} if 'workflow_gates' in report else {})}))
+    print(json.dumps({'result':report['result'],'rollback_verified':report.get('rollback_verified',False)}))
     raise SystemExit(0 if report['result'] in ['deployed_and_verified','preview_passed','rollback_verified_to_baseline'] else 1)
