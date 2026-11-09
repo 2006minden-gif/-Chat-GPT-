@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "source_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
-  "nonce": "workflow-42616934363",
-  "run_id": "42616966670",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616966670",
-  "time": "2026-11-09T12:26:06.519422+00:00",
+  "nonce": "workflow-42616736564",
+  "run_id": "42617705057",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42617705057",
+  "time": "2026-11-09T12:31:22.141267+00:00",
   "production_touched": false,
   "producer": {
-    "id": 42616934363,
-    "name": "Enable approved auto-merge",
+    "id": 42616736564,
+    "name": "Validate aabcd8fb493a048236ee87214ceff7c53fdc241e",
     "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
     "head_branch": "main",
-    "event": "schedule",
+    "event": "push",
     "status": "completed",
     "conclusion": "failure",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616934363",
-    "path": ".github/workflows/auto-merge.yml"
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616736564",
+    "path": ".github/workflows/deploy.yml"
   },
   "inspection": {
     "repository": {
@@ -234,18 +234,18 @@
       "status": 200,
       "runs": [
         {
-          "id": 42616966670,
+          "id": 42617705057,
           "name": "Record Git-readable automation evidence",
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
           "status": "in_progress",
           "conclusion": null,
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616966670",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42617705057",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
-              "id": 129159123225,
+              "id": 129161603992,
               "name": "record",
               "status": "in_progress",
               "conclusion": null,
@@ -269,6 +269,100 @@
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
                   "conclusion": null,
                   "status": "pending"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": 42617705046,
+          "name": "Enable approved auto-merge",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
+          "status": "in_progress",
+          "conclusion": null,
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42617705046",
+          "path": ".github/workflows/auto-merge.yml",
+          "jobs": [
+            {
+              "id": 129161605036,
+              "name": "approved",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 129161605227,
+              "name": "Verify and enable protected integration",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 129161605944,
+              "name": "Create PR after trusted branch validation",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 129161652813,
+              "name": "Enable routine deployment only after verified bootstrap",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            },
+            {
+              "id": 129161662135,
+              "name": "Configure CI/CD after validated main",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
+            }
+          ]
+        },
+        {
+          "id": 42616966670,
+          "name": "Record Git-readable automation evidence",
+          "event": "workflow_run",
+          "head_branch": "main",
+          "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
+          "status": "completed",
+          "conclusion": "success",
+          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616966670",
+          "path": ".github/workflows/evidence.yml",
+          "jobs": [
+            {
+              "id": 129159123225,
+              "name": "record",
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -359,8 +453,8 @@
           "event": "push",
           "head_branch": "main",
           "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616736803",
           "path": ".github/workflows/production-repair.yml",
           "jobs": [
@@ -460,9 +554,45 @@
             {
               "id": 129159177923,
               "name": "repair",
-              "status": "waiting",
-              "conclusion": null,
-              "steps": []
+              "status": "completed",
+              "conclusion": "success",
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Verify reviewed revision before credentials become available",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run one-time plan without release or migration",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Store redacted verification evidence only",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
+                }
+              ]
             },
             {
               "id": 129159178152,
@@ -486,8 +616,8 @@
           "event": "push",
           "head_branch": "main",
           "head_sha": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "failure",
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42616736564",
           "path": ".github/workflows/deploy.yml",
           "jobs": [
@@ -587,8 +717,8 @@
             {
               "id": 129159046209,
               "name": "Publish approved main",
-              "status": "in_progress",
-              "conclusion": null,
+              "status": "completed",
+              "conclusion": "failure",
               "steps": [
                 {
                   "name": "Set up job",
@@ -622,20 +752,32 @@
                 },
                 {
                   "name": "Publish or maintain checked release",
-                  "conclusion": null,
-                  "status": "in_progress"
+                  "conclusion": "failure",
+                  "status": "completed"
                 },
                 {
                   "name": "Record deployment evidence",
-                  "conclusion": null,
-                  "status": "pending"
+                  "conclusion": "success",
+                  "status": "completed"
                 },
                 {
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": null,
-                  "status": "pending"
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
+            },
+            {
+              "id": 129161580915,
+              "name": "Enable verified routine publication",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
             }
           ]
         },
@@ -1297,108 +1439,656 @@
               ]
             }
           ]
-        },
-        {
-          "id": 42610896843,
-          "name": "Record Git-readable automation evidence",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "c0e3b8ff1c8d9192f2b8b008bddcfd0e25c29179",
-          "status": "completed",
-          "conclusion": "cancelled",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42610896843",
-          "path": ".github/workflows/evidence.yml",
-          "jobs": [
-            {
-              "id": 129138737662,
-              "name": "record",
-              "status": "completed",
-              "conclusion": "cancelled",
-              "steps": []
-            }
-          ]
-        },
-        {
-          "id": 42610896814,
-          "name": "Enable approved auto-merge",
-          "event": "workflow_run",
-          "head_branch": "main",
-          "head_sha": "c0e3b8ff1c8d9192f2b8b008bddcfd0e25c29179",
-          "status": "completed",
-          "conclusion": "failure",
-          "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42610896814",
-          "path": ".github/workflows/auto-merge.yml",
-          "jobs": [
-            {
-              "id": 129138738505,
-              "name": "approved",
-              "status": "completed",
-              "conclusion": "failure",
-              "steps": [
-                {
-                  "name": "Set up job",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Run actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
-                  "conclusion": "skipped",
-                  "status": "completed"
-                },
-                {
-                  "name": "Enable only independently reviewed passing PRs",
-                  "conclusion": "failure",
-                  "status": "completed"
-                },
-                {
-                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": "success",
-                  "status": "completed"
-                },
-                {
-                  "name": "Complete job",
-                  "conclusion": "success",
-                  "status": "completed"
-                }
-              ]
-            },
-            {
-              "id": 129138739979,
-              "name": "Enable routine deployment only after verified bootstrap",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 129138778609,
-              "name": "Create PR after trusted branch validation",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 129138797470,
-              "name": "Verify and enable protected integration",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            },
-            {
-              "id": 129138808894,
-              "name": "Configure CI/CD after validated main",
-              "status": "completed",
-              "conclusion": "skipped",
-              "steps": []
-            }
-          ]
         }
       ]
     }
   },
-  "deployment_evidence": null
+  "deployment_evidence": {
+    "mode": "deploy",
+    "result": "deployed_retirement_pending",
+    "rollback_verified": false,
+    "revision": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
+    "release_id": "20261109T122601Z-r42616736564-a1-aabcd8fb493a",
+    "before": {
+      "ok": true,
+      "complete": true,
+      "checks": {
+        "/": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "site_mode": "portfolio-only",
+          "portfolio_only": true,
+          "ok": true
+        },
+        "/studio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/portfolio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/portfolio-api.php?r=session": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=leads": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/customer.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/customer-api.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/ordering.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/services.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/billing.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/payment-api.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/order-workflow.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/publication-api.php": {
+          "status": 410,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/~.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index~.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/private/config.php": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/crm.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/styles.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "e5dc3e168dd5caf50dacdd42ecdea600f8f632bbf487ee255f87ed0ddc63cc67"
+        },
+        "/brand-ui.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "ccbc3b27e49d868a19cdb7404ef3262f490734235ca60c004a6a75240e9072d9"
+        },
+        "/publications.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "40e880a503b917c69e95f17f6dfd5268abcf5bd7cc65d9be5caaa5563a6085fe"
+        }
+      }
+    },
+    "after": {
+      "ok": true,
+      "complete": true,
+      "checks": {
+        "/": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "site_mode": "portfolio-only-v2",
+          "portfolio_only": true,
+          "ok": true
+        },
+        "/studio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/portfolio.php": {
+          "status": 200,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/portfolio-api.php?r=session": {
+          "status": 401,
+          "content_type": "application/json",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/api.php?r=leads": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/customer.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/customer-api.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/ordering.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/services.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/billing.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/payment-api.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/order-workflow.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/publication-api.php": {
+          "status": 404,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/~.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index~.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/.htaccess": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/private/config.php": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/index.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/crm.html": {
+          "status": 403,
+          "content_type": "text/html",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true
+        },
+        "/styles.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "e5dc3e168dd5caf50dacdd42ecdea600f8f632bbf487ee255f87ed0ddc63cc67"
+        },
+        "/brand-ui.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "ccbc3b27e49d868a19cdb7404ef3262f490734235ca60c004a6a75240e9072d9"
+        },
+        "/publications.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "40e880a503b917c69e95f17f6dfd5268abcf5bd7cc65d9be5caaa5563a6085fe"
+        },
+        "/favicon.ico": {
+          "status": 200,
+          "content_type": "image/x-icon",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "4ca8234f48266b2e1efc708a7bbfe87b2f5adaa0cbb8f68d54a5a1b8cbccf19e"
+        },
+        "/favicon.svg": {
+          "status": 200,
+          "content_type": "image/svg+xml",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "d51ef61e2e56597ca0036305ff509c6398bc16564c9b1f7885305ee44fc469d3"
+        },
+        "/portfolio-editor.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "c277513936020a3896559b51bb556b9f1b5b939cd811b0c5c6089b441fd6a0ed"
+        },
+        "/robots.txt": {
+          "status": 200,
+          "content_type": "text/plain",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "e40863160c4826be5f4d1fd62b363185e5a009edb9e7a68b32671fd27fcac158"
+        },
+        "/site.css": {
+          "status": 200,
+          "content_type": "text/css",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "a22c766d28897b2dffd008b0c2506c260a6df90a80e7fe7489c4bfc15283adcd"
+        },
+        "/site.js": {
+          "status": 200,
+          "content_type": "text/javascript",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "015d8575caf5c5661e989ce2edcf111055383cc871cd6f476f90d75de454b29f"
+        },
+        "/sitemap.xml": {
+          "status": 200,
+          "content_type": "application/xml",
+          "request_id": null,
+          "transport_ok": true,
+          "redirected": false,
+          "ok": true,
+          "sha256": "0c78daaf7d209c9d4b51718d725908b1dd95b9dc3fa4a66a9fcc701c248466da"
+        }
+      }
+    },
+    "preflight": {
+      "ok": true,
+      "php": "8.4.27",
+      "database_connected": true,
+      "admin_exists": true,
+      "privacy_approved": false,
+      "database_inventory": {
+        "mysql_version": "5.7.27-30-log",
+        "tables": [
+          "nd_activity_history",
+          "nd_admin",
+          "nd_ai_agents",
+          "nd_ai_approvals",
+          "nd_ai_artifacts",
+          "nd_ai_attempts",
+          "nd_ai_budgets",
+          "nd_ai_context_refs",
+          "nd_ai_events",
+          "nd_ai_provider_state",
+          "nd_ai_rules",
+          "nd_ai_rule_runs",
+          "nd_ai_tasks",
+          "nd_ai_usage",
+          "nd_ai_visitors",
+          "nd_billing_sequences",
+          "nd_catalog_briefs",
+          "nd_catalog_offers",
+          "nd_catalog_requests",
+          "nd_catalog_scope_transitions",
+          "nd_catalog_services",
+          "nd_catalog_service_versions",
+          "nd_catalog_templates",
+          "nd_catalog_template_versions",
+          "nd_cc_approvals",
+          "nd_cc_decisions",
+          "nd_cc_documents",
+          "nd_cc_files",
+          "nd_cc_messages",
+          "nd_cc_message_files",
+          "nd_cc_reads",
+          "nd_cc_revisions",
+          "nd_cc_revision_files",
+          "nd_cost_rates",
+          "nd_cost_registry_keys",
+          "nd_crm_conversions",
+          "nd_crm_notifications",
+          "nd_crm_requests",
+          "nd_customers",
+          "nd_customer_accounts",
+          "nd_customer_auth",
+          "nd_customer_auth_events",
+          "nd_customer_consents",
+          "nd_customer_sessions",
+          "nd_customer_tokens",
+          "nd_deals",
+          "nd_employees",
+          "nd_invoices",
+          "nd_invoice_adjustments",
+          "nd_invoice_lines",
+          "nd_lc_access_jobs",
+          "nd_lc_audit",
+          "nd_lc_bank_records",
+          "nd_lc_business_decisions",
+          "nd_lc_change_applications",
+          "nd_lc_closure_records",
+          "nd_lc_contract_terms",
+          "nd_lc_customer_details",
+          "nd_lc_document_bindings",
+          "nd_lc_feedback",
+          "nd_lc_inquiry_orders",
+          "nd_lc_milestone_versions",
+          "nd_lc_obligations",
+          "nd_lc_order_flow",
+          "nd_lc_owner_profiles",
+          "nd_lc_payment_claims",
+          "nd_lc_pdf_assets",
+          "nd_lc_prospect_events",
+          "nd_lc_prospect_links",
+          "nd_lc_prospect_sessions",
+          "nd_lc_prospect_uploads",
+          "nd_lc_receipt_evidence",
+          "nd_lc_receipt_tasks",
+          "nd_lc_schedule_entries",
+          "nd_lc_scope_changes",
+          "nd_lc_templates",
+          "nd_leads",
+          "nd_lead_customers",
+          "nd_limits",
+          "nd_manual_jobs",
+          "nd_manual_qr_assignments",
+          "nd_manual_qr_settings",
+          "nd_manual_qr_versions",
+          "nd_manual_results",
+          "nd_max_account_events",
+          "nd_max_account_links",
+          "nd_max_launches",
+          "nd_max_sessions",
+          "nd_notification_outbox",
+          "nd_notification_preferences",
+          "nd_orders",
+          "nd_order_access_policies",
+          "nd_payment_attempts",
+          "nd_payment_events",
+          "nd_payment_transactions",
+          "nd_pricing_decisions",
+          "nd_pricing_policies",
+          "nd_pricing_scan_state",
+          "nd_prod_artifacts",
+          "nd_prod_decisions",
+          "nd_prod_dependencies",
+          "nd_prod_events",
+          "nd_prod_expenses",
+          "nd_prod_findings",
+          "nd_prod_packages",
+          "nd_prod_plans",
+          "nd_prod_profitability",
+          "nd_prod_qa_reports",
+          "nd_prod_rate_scopes",
+          "nd_prod_revisions",
+          "nd_prod_runs",
+          "nd_prod_steps",
+          "nd_prod_step_attempts",
+          "nd_projects",
+          "nd_project_actuals",
+          "nd_project_estimates",
+          "nd_project_members",
+          "nd_project_stages",
+          "nd_publications",
+          "nd_publication_media",
+          "nd_publication_permissions",
+          "nd_publication_permission_events",
+          "nd_publication_versions",
+          "nd_quotations",
+          "nd_refunds",
+          "nd_schema_migrations",
+          "nd_sessions",
+          "nd_tasks",
+          "nd_task_planning",
+          "nd_task_projects",
+          "nd_workload_plans",
+          "nd_work_calendars"
+        ],
+        "schema_sha256": "8b13090dadf8554b86211eec0d673becd6579a8791113261bd4f36ec22359593"
+      },
+      "strict_sql_mode": false
+    },
+    "apply": {
+      "portfolio_transition": {
+        "phase": "prepared",
+        "archive_id": "20261109T122601Z-r42616736564-a1-aabcd8fb493a",
+        "legacy_tables_archived": 129,
+        "files_archived": 319,
+        "copy": {
+          "items": 1,
+          "versions": 4,
+          "media": 4
+        },
+        "physical_cleanup_verified": false
+      },
+      "database_recovery": {
+        "verified": true,
+        "backup_sha256": "0e6389100042e7f7f5ffc97eeb45cbc3e389eb07875bfc3b40c5fa4a281775a4",
+        "schema_sha256": "3aab510c3735cf3edd5bd09431e3745c61054678a95a159db0c42b60cdfba322",
+        "tables_verified": 132,
+        "rows_verified": 297,
+        "foreign_keys_verified": 234,
+        "source_data_written": false,
+        "shadow_tables_removed": true
+      },
+      "backup_verified": true,
+      "recovery_verified": true,
+      "files_sha256": {
+        "public_html/.htaccess": "2dc30c0005c6263e52ceca9db90f5c8c2fd37f1bbe62720bc241a617ee5eada2",
+        "public_html/brand-ui.css": "ccbc3b27e49d868a19cdb7404ef3262f490734235ca60c004a6a75240e9072d9",
+        "public_html/favicon.ico": "4ca8234f48266b2e1efc708a7bbfe87b2f5adaa0cbb8f68d54a5a1b8cbccf19e",
+        "public_html/favicon.svg": "d51ef61e2e56597ca0036305ff509c6398bc16564c9b1f7885305ee44fc469d3",
+        "public_html/index.html": "8c74f87ad9b02921692e7645527e9a30bdf38c0d394ecf4bcb61f797f695f956",
+        "public_html/index.php": "3b8d49dd1815ea58beda2605d73c1625b272c659bcca8cbff7771a59cabe3554",
+        "public_html/portfolio-api.php": "f874799a740adbf073d22e6f7cb12a8800dfc0f70293ff7875456f0270922723",
+        "public_html/portfolio-case.php": "5493a144a0a184ef215622a20ab7d34529f33f65530428a562745ded3792439b",
+        "public_html/portfolio-editor.js": "c277513936020a3896559b51bb556b9f1b5b939cd811b0c5c6089b441fd6a0ed",
+        "public_html/portfolio.php": "ad28b28fe24970ab614002741e1d8ede7d31d258e6ae50677a0aa59c8f5c7aa9",
+        "public_html/publications.css": "40e880a503b917c69e95f17f6dfd5268abcf5bd7cc65d9be5caaa5563a6085fe",
+        "public_html/robots.txt": "e40863160c4826be5f4d1fd62b363185e5a009edb9e7a68b32671fd27fcac158",
+        "public_html/site-router.php": "282776f8e8dc1ceac1489e72871e95f5b604c5394eae33c14553707fbc4586c3",
+        "public_html/site.css": "a22c766d28897b2dffd008b0c2506c260a6df90a80e7fe7489c4bfc15283adcd",
+        "public_html/site.js": "015d8575caf5c5661e989ce2edcf111055383cc871cd6f476f90d75de454b29f",
+        "public_html/sitemap.xml": "0c78daaf7d209c9d4b51718d725908b1dd95b9dc3fa4a66a9fcc701c248466da",
+        "public_html/studio.php": "88767ac4f1b474e154f7967a68161f51f2e9d0297b49b76de1750dedc61d0f1c",
+        "public_html/styles.css": "e5dc3e168dd5caf50dacdd42ecdea600f8f632bbf487ee255f87ed0ddc63cc67",
+        "private/site-view.php": "730ccb11cdd6632237f749f5836b22ec310cf1d29a6d32eb6bbcc9ceedb8902b",
+        "private/site.php": "d77d8ac1f3d3af1c1dff8d7b44e844f3d7c1239a219bc072151c104d443c7aa5"
+      },
+      "ok": true,
+      "applied": true,
+      "revision": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
+      "migrations": [],
+      "baseline_healthy": true
+    },
+    "finalize": {
+      "ok": true,
+      "revision": "aabcd8fb493a048236ee87214ceff7c53fdc241e",
+      "files_verified": true
+    }
+  }
 }
