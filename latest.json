@@ -1,21 +1,21 @@
 {
   "schema_version": 1,
   "source_sha": "4b15f9ce53130653c786c654853f528129126e2e",
-  "nonce": "workflow-42604323148",
-  "run_id": "42606688928",
-  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42606688928",
-  "time": "2026-11-09T11:09:20.144826+00:00",
+  "nonce": "workflow-42606689159",
+  "run_id": "42606698306",
+  "run_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42606698306",
+  "time": "2026-11-09T11:09:38.167922+00:00",
   "production_touched": false,
   "producer": {
-    "id": 42604323148,
-    "name": "Validate 4b15f9ce53130653c786c654853f528129126e2e",
+    "id": 42606689159,
+    "name": "Enable approved auto-merge",
     "head_sha": "4b15f9ce53130653c786c654853f528129126e2e",
     "head_branch": "main",
-    "event": "push",
+    "event": "workflow_run",
     "status": "completed",
-    "conclusion": "failure",
-    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42604323148",
-    "path": ".github/workflows/deploy.yml"
+    "conclusion": "skipped",
+    "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42606689159",
+    "path": ".github/workflows/auto-merge.yml"
   },
   "inspection": {
     "repository": {
@@ -239,7 +239,7 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "4b15f9ce53130653c786c654853f528129126e2e",
-          "status": "pending",
+          "status": "in_progress",
           "conclusion": null,
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42606698306",
           "path": ".github/workflows/evidence.yml",
@@ -247,9 +247,30 @@
             {
               "id": 129124407804,
               "name": "record",
-              "status": "pending",
+              "status": "in_progress",
               "conclusion": null,
-              "steps": []
+              "steps": [
+                {
+                  "name": "Set up job",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Export metadata and safe main deployment evidence without PR execution",
+                  "conclusion": null,
+                  "status": "in_progress"
+                },
+                {
+                  "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+                  "conclusion": null,
+                  "status": "pending"
+                }
+              ]
             }
           ]
         },
@@ -291,6 +312,13 @@
               "status": "completed",
               "conclusion": "skipped",
               "steps": []
+            },
+            {
+              "id": 129124448737,
+              "name": "approved",
+              "status": "completed",
+              "conclusion": "skipped",
+              "steps": []
             }
           ]
         },
@@ -300,16 +328,16 @@
           "event": "workflow_run",
           "head_branch": "main",
           "head_sha": "4b15f9ce53130653c786c654853f528129126e2e",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "html_url": "https://github.com/2006minden-gif/-Chat-GPT-/actions/runs/42606688928",
           "path": ".github/workflows/evidence.yml",
           "jobs": [
             {
               "id": 129124374571,
               "name": "record",
-              "status": "in_progress",
-              "conclusion": null,
+              "status": "completed",
+              "conclusion": "success",
               "steps": [
                 {
                   "name": "Set up job",
@@ -323,13 +351,18 @@
                 },
                 {
                   "name": "Export metadata and safe main deployment evidence without PR execution",
-                  "conclusion": null,
-                  "status": "in_progress"
+                  "conclusion": "success",
+                  "status": "completed"
                 },
                 {
                   "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
-                  "conclusion": null,
-                  "status": "pending"
+                  "conclusion": "success",
+                  "status": "completed"
+                },
+                {
+                  "name": "Complete job",
+                  "conclusion": "success",
+                  "status": "completed"
                 }
               ]
             }
@@ -1090,144 +1123,5 @@
       ]
     }
   },
-  "deployment_evidence": {
-    "mode": "deploy",
-    "result": "failed",
-    "rollback_verified": false,
-    "revision": "4b15f9ce53130653c786c654853f528129126e2e",
-    "release_id": "20261109T105336Z-r42604323148-a1-4b15f9ce5313",
-    "before": {
-      "ok": false,
-      "complete": false,
-      "checks": {
-        "/": {
-          "status": 200,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "portfolio_only": false,
-          "ok": true
-        },
-        "/studio.php": {
-          "status": 200,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/portfolio.php": {
-          "status": 200,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/portfolio-api.php?r=session": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/api.php?r=leads": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/customer.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/customer-api.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/ordering.php": {
-          "status": 200,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/services.php": {
-          "status": 200,
-          "content_type": "text/html",
-          "request_id": null,
-          "transport_ok": true,
-          "redirected": false,
-          "ok": true
-        },
-        "/billing.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/payment-api.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/order-workflow.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/publication-api.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/~.htaccess": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/index~.html": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/.htaccess": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/private/config.php": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/index.html": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/crm.html": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/styles.css": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/brand-ui.css": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        },
-        "/publications.css": {
-          "ok": false,
-          "transport_ok": false,
-          "error_type": "URLError"
-        }
-      }
-    },
-    "error": "baseline_transport_unavailable"
-  }
+  "deployment_evidence": null
 }
