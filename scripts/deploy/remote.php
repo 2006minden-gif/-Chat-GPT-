@@ -71,7 +71,7 @@ function verify_bundle(string $candidate,string $id):array {
         insist(preg_match('#^(public_html|private)/[A-Za-z0-9_./-]+$|^(remote|recovery|portfolio-retirement)\.php$|^scripts/migrate(?:-[a-z]+)?\.php$|^database/(schema\.sql|migrations/[0-9]{3}_[a-z_]+\.sql|migrations/[0-9]{3}_[a-z_]+/(up|down)\.sql)$#D',$path)===1,'unsafe_release_path');
         insist(is_string($hash)&&preg_match('/^[a-f0-9]{64}$/D',$hash)===1&&hash_file_safe($candidate.'/'.$path)===$hash,'release_checksum_mismatch');
     }
-    $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json']);
+    $allowed=array_merge(array_keys($m['files']),array_keys($m['tools']),['manifest.json','baseline.json','after-health.json']);
     $iterator=new RecursiveIteratorIterator(new RecursiveDirectoryIterator($candidate,FilesystemIterator::SKIP_DOTS));
     foreach($iterator as $file) {insist(!$file->isLink(),'symlink_refused');if($file->isFile())insist(in_array(substr($file->getPathname(),strlen($candidate)+1),$allowed,true),'unexpected_release_file');}
     return $m;
@@ -120,6 +120,7 @@ function rollback(string $root,string $stateRoot,array &$state,string $id):array
     $state['active']=null;$state['last_result']='files_restored_health_unverified';$state['rollback_pending']=$id;save_json($stateRoot.'/state.json',$state);
     return ['ok'=>true,'files_restored'=>true,'health_verified'=>false,'baseline'=>$meta['baseline'],'id'=>$id];
 }
+if(defined('NEURO_DEPLOY_LIBRARY')&&NEURO_DEPLOY_LIBRARY)return;
 $lock=null;
 try {
     $op=$argv[1]??'';$root=$argv[2]??'';$id=$argv[3]??'';

@@ -30,6 +30,16 @@ class Delivery(unittest.TestCase):
    self.assertTrue(all(not n.startswith('archive/') for n in manifest['files']))
    (bundle/'private/config.php').write_text('PRIVATE')
    with self.assertRaises(ValueError):client.validate_bundle(bundle,'a'*40)
+ def test_remote_bundle_revalidation_accepts_managed_health_evidence(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   bundle=Path(tmp)/'bundle';release.build(bundle,'a'*40)
+   (bundle/'baseline.json').write_text('{"ok":true}');(bundle/'after-health.json').write_text('{"ok":true}')
+   code='define("NEURO_DEPLOY_LIBRARY",true);require '+json.dumps(str(ROOT/'scripts/deploy/remote.php'))+';echo json_encode(verify_bundle('+json.dumps(str(bundle))+',"test")["revision"]);'
+   result=subprocess.run([os.environ.get('PHP_BIN','php'),'-r',code],capture_output=True,text=True,check=True)
+   self.assertEqual(json.loads(result.stdout),'a'*40)
+   (bundle/'unexpected.txt').write_text('unexpected')
+   result=subprocess.run([os.environ.get('PHP_BIN','php'),'-r',code],capture_output=True,text=True)
+   self.assertNotEqual(result.returncode,0);self.assertIn('unexpected_release_file',result.stderr)
  def test_retired_code_is_absent_from_repository(self):
   for name in ['archive/legacy-site','private/app.php','private/notifications','scripts/notifications','.github/workflows/notifications.yml']:
    self.assertFalse((ROOT/name).exists(),name)
