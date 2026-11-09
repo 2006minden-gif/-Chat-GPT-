@@ -159,7 +159,8 @@ if __name__=='__main__':
         remote=Remote(args.bundle,args.revision,release_id)
         expected_assets={'/'+p.split('/',1)[1]:h for p,h in manifest['files'].items() if (p.startswith('public_html/') and p.endswith(('.js','.css'))) or p in ['public_html/favicon.svg','public_html/favicon.ico','public_html/sitemap.xml','public_html/robots.txt']}
         try:
-            report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets))
+            expected_site_mode='portfolio-only' if 'private/site.php' in manifest['files'] else None
+            report=coordinate(remote,args.operation,expected_assets=expected_assets,revision_snapshot=lambda:health.snapshot(extra_assets=expected_assets,expected_site_mode=expected_site_mode))
             if report['result']=='deployed_and_verified' and 'private/workflow/prepare.php' in manifest['files']:
                 try:
                     prepared=remote.command(shlex.join([remote.php,ACCOUNT+'/private/workflow/prepare.php']),json_output=True)

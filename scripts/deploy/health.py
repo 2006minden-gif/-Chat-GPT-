@@ -10,14 +10,16 @@ DENIED_PATHS=['/~.htaccess','/index~.html','/.htaccess','/private/config.php','/
 METADATA_TYPES={'/favicon.svg':['image/svg+xml'],'/favicon.ico':['image/x-icon','image/vnd.microsoft.icon'],'/sitemap.xml':['application/xml','text/xml'],'/robots.txt':['text/plain']}
 ASSET_PATHS=['/styles.css','/brand-ui.css','/publications.css']
 RETIRED_PATHS=['/api.php?r=leads','/customer.php','/customer-api.php','/ordering.php','/services.php','/billing.php','/payment-api.php','/order-workflow.php','/publication-api.php']
-PATHS=['/','/studio.php','/portfolio.php','/portfolio-api.php?r=session']+RETIRED_PATHS+DENIED_PATHS+ASSET_PATHS
+PORTFOLIO_PATHS=['/studio.php','/portfolio.php','/portfolio-api.php?r=session']+RETIRED_PATHS
+LEGACY_PATHS=['/studio.php','/portfolio.php','/api.php?r=session']
+PATHS=['/']+PORTFOLIO_PATHS+DENIED_PATHS+ASSET_PATHS
 
-def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=()):
+def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=(), expected_site_mode=None):
     assets = list(dict.fromkeys(ASSET_PATHS + list(extra_assets)))
     if any((p not in METADATA_TYPES and not re.fullmatch(r'/[A-Za-z0-9_-][A-Za-z0-9_./-]*\.(css|js)', p)) or '..' in p.split('/') for p in assets):
         raise ValueError('unsafe_health_asset_path')
-    rows = {}
-    for path in list(dict.fromkeys(PATHS + assets)):
+    rows = {};plan=['/']
+    for path in plan:
         head = path in DENIED_PATHS
         url = base.rstrip('/') + path + ('&' if '?' in path else '?') + '_nd_check=' + str(time.time_ns())
         try:
@@ -39,12 +41,19 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_
             if path=='/':
                 row['portfolio_only']=response.headers.get('X-Neurodelo-Site')=='portfolio-only'
                 row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text
+                if expected_site_mode=='portfolio-only' and not row['portfolio_only']:row['ok']=False
+                # Never request a future API or retired business module before
+                # its deployment. The root selects the actual site's contract.
+                selected=PORTFOLIO_PATHS if row['portfolio_only'] else LEGACY_PATHS
+                plan.extend(dict.fromkeys(selected+DENIED_PATHS+assets))
             elif path in ['/studio.php','/portfolio.php']:
                 row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text
             elif path=='/portfolio-api.php?r=session':
-                row['ok']=(response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)) if portfolio_only else response.status in [401,404,410]
+                row['ok']=response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)
+            elif path=='/api.php?r=session':
+                row['ok']=response.status==401 and isinstance(data,dict) and isinstance(data.get('detail'),str)
             elif path in RETIRED_PATHS:
-                row['ok']=response.status==410 if portfolio_only else response.status in [200,401,403,404,410,503]
+                row['ok']=portfolio_only and response.status==410
             elif path in assets:
                 expected=METADATA_TYPES.get(path, ['text/css'] if path.endswith('.css') else ['application/javascript','text/javascript'])
                 row['ok']=response.status==200 and row['content_type'] in expected;row['sha256']=hashlib.sha256(body).hexdigest()
@@ -53,6 +62,9 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_
             response.close();rows[path]=row
         except Exception as error:
             rows[path]={'ok':False,'transport_ok':False,'error_type':type(error).__name__}
+            # One failed connection already makes this snapshot unusable. Do
+            # not keep requesting the rest of an unavailable hosting account.
+            break
     return {'ok':all(row['ok'] for row in rows.values()),'complete':all(row['transport_ok'] for row in rows.values()),'checks':rows}
 
 def same_baseline(before, after):
