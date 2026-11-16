@@ -17,6 +17,9 @@ class PortfolioSite(fixture.Prelaunch):
   report=health.snapshot(base=self.base,extra_assets=['/site.css','/site.js','/portfolio-editor.js'])
   self.assertTrue(report['ok'],{p:r for p,r in report['checks'].items() if not r['ok']})
   self.assertEqual(requests.get(self.base+'/private/config.php').status_code,403)
+  policy=requests.get(self.base+'/privacy.php');self.assertEqual(policy.status_code,200);self.assertIn('Сухарева Наталья Владимировна',policy.text)
+  for path in ['/','/portfolio.php','/studio.php']:
+   self.assertIn('href="/privacy.php"',requests.get(self.base+path).text)
  def test_transition_freezes_writes_until_verified_cleanup(self):
   s,h=self.owner();marker=self.path/'portfolio-transition.json'
   try:
