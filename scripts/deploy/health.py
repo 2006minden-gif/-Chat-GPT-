@@ -10,7 +10,7 @@ DENIED_PATHS=['/~.htaccess','/index~.html','/.htaccess','/private/config.php','/
 METADATA_TYPES={'/favicon.svg':['image/svg+xml'],'/favicon.ico':['image/x-icon','image/vnd.microsoft.icon'],'/sitemap.xml':['application/xml','text/xml'],'/robots.txt':['text/plain']}
 ASSET_PATHS=['/styles.css','/brand-ui.css','/publications.css']
 RETIRED_PATHS=['/api.php?r=leads','/customer.php','/customer-api.php','/ordering.php','/services.php','/billing.php','/payment-api.php','/order-workflow.php','/publication-api.php']
-PATHS=['/','/studio.php','/portfolio.php','/portfolio-api.php?r=session']+RETIRED_PATHS+DENIED_PATHS+ASSET_PATHS
+PATHS=['/','/privacy.php','/studio.php','/portfolio.php','/portfolio-api.php?r=session']+RETIRED_PATHS+DENIED_PATHS+ASSET_PATHS
 
 def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=(), expected_mode=None):
     assets = list(dict.fromkeys(ASSET_PATHS + list(extra_assets)))
@@ -39,6 +39,8 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_
             if path=='/':
                 row['site_mode']=response.headers.get('X-Neurodelo-Site');row['portfolio_only']=row['site_mode'] in ['portfolio-only','portfolio-only-v2']
                 row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text and (expected_mode is None or row['site_mode']==expected_mode)
+            elif path=='/privacy.php':
+                row['ok']=(response.status==200 and row['content_type']=='text/html' and 'Политика конфиденциальности' in text) or (expected_mode is None and response.status==404)
             elif path in ['/studio.php','/portfolio.php']:
                 row['ok']=response.status==200 and row['content_type']=='text/html' and 'НейроДело' in text
             elif path=='/portfolio-api.php?r=session':

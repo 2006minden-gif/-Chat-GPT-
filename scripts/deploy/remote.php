@@ -17,7 +17,7 @@ function save_json(string $path,array $value):void {
     chmod($tmp,0600);insist(rename($tmp,$path),'metadata_rename_failed');
 }
 function paths():array {
-    return ['public_html/.htaccess', 'public_html/brand-ui.css', 'public_html/favicon.ico', 'public_html/favicon.svg', 'public_html/index.html', 'public_html/index.php', 'public_html/portfolio-api.php', 'public_html/portfolio-case.php', 'public_html/portfolio-editor.js', 'public_html/portfolio.php', 'public_html/publications.css', 'public_html/robots.txt', 'public_html/site-router.php', 'public_html/site.css', 'public_html/site.js', 'public_html/sitemap.xml', 'public_html/studio.php', 'public_html/styles.css', 'private/site-view.php', 'private/site.php'];
+    return ['public_html/.htaccess', 'public_html/brand-ui.css', 'public_html/favicon.ico', 'public_html/favicon.svg', 'public_html/index.html', 'public_html/index.php', 'public_html/portfolio-api.php', 'public_html/portfolio-case.php', 'public_html/portfolio-editor.js', 'public_html/portfolio.php', 'public_html/privacy.php', 'public_html/publications.css', 'public_html/robots.txt', 'public_html/site-router.php', 'public_html/site.css', 'public_html/site.js', 'public_html/sitemap.xml', 'public_html/studio.php', 'public_html/styles.css', 'private/site-view.php', 'private/site.php'];
 }
 function hash_file_safe(string $path):?string {
     $parent=$path;do {insist(!is_link($parent),'symlink_refused');$next=dirname($parent);if($next===$parent)break;$parent=$next;} while(true);
