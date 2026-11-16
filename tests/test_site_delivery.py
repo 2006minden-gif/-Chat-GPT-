@@ -40,6 +40,25 @@ class Delivery(unittest.TestCase):
    (bundle/'unexpected.txt').write_text('unexpected')
    result=subprocess.run([os.environ.get('PHP_BIN','php'),'-r',code],capture_output=True,text=True)
    self.assertNotEqual(result.returncode,0);self.assertIn('unexpected_release_file',result.stderr)
+ def test_health_retries_transport_once_without_hiding_http_errors(self):
+  from unittest.mock import patch
+  import urllib.error,urllib.request
+  req=urllib.request.Request('https://example.invalid/')
+  calls=[];answer=object()
+  def interrupted(request,timeout):
+   calls.append(request)
+   if len(calls)==1:raise TimeoutError('synthetic timeout')
+   return answer
+  with patch.object(health.time,'sleep'):
+   self.assertIs(health.open_response(interrupted,req),answer)
+   self.assertEqual(len(calls),2)
+   calls.clear()
+   def unavailable(request,timeout):calls.append(request);raise TimeoutError('synthetic timeout')
+   with self.assertRaises(TimeoutError):health.open_response(unavailable,req)
+   self.assertEqual(len(calls),2)
+   calls.clear();error=urllib.error.HTTPError(req.full_url,503,'unavailable',{},None)
+   def rejected(request,timeout):calls.append(request);raise error
+   self.assertIs(health.open_response(rejected,req),error);self.assertEqual(len(calls),1)
  def test_retired_code_is_absent_from_repository(self):
   for name in ['archive/legacy-site','private/app.php','private/notifications','scripts/notifications','.github/workflows/notifications.yml']:
    self.assertFalse((ROOT/name).exists(),name)

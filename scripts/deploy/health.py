@@ -12,6 +12,16 @@ ASSET_PATHS=['/styles.css','/brand-ui.css','/publications.css']
 RETIRED_PATHS=['/api.php?r=leads','/customer.php','/customer-api.php','/ordering.php','/services.php','/billing.php','/payment-api.php','/order-workflow.php','/publication-api.php']
 PATHS=['/','/privacy.php','/studio.php','/portfolio.php','/portfolio-api.php?r=session']+RETIRED_PATHS+DENIED_PATHS+ASSET_PATHS
 
+def open_response(opener, request):
+    """Retry one interrupted connection; HTTP statuses are always checked as-is."""
+    for attempt in range(2):
+        try: return opener(request, timeout=15)
+        except urllib.error.HTTPError as error: return error
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if attempt: raise
+            time.sleep(.5)
+
+
 def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_assets=(), expected_mode=None):
     assets = list(dict.fromkeys(ASSET_PATHS + list(extra_assets)))
     if any((p not in METADATA_TYPES and not re.fullmatch(r'/[A-Za-z0-9_-][A-Za-z0-9_./-]*\.(css|js)', p)) or '..' in p.split('/') for p in assets):
@@ -22,8 +32,7 @@ def snapshot(base='https://neurodelo.pro', opener=urllib.request.urlopen, extra_
         url = base.rstrip('/') + path + ('&' if '?' in path else '?') + '_nd_check=' + str(time.time_ns())
         try:
             req = urllib.request.Request(url, method='HEAD' if head else 'GET', headers={'Cache-Control':'no-cache','User-Agent':'NeuroDelo-deployment-health/1'})
-            try: response = opener(req, timeout=15)
-            except urllib.error.HTTPError as error: response = error
+            response = open_response(opener, req)
             body = b'' if head else response.read(131073)
             row = {'status':response.status,'content_type':response.headers.get('Content-Type','').split(';')[0].lower(),
                    'request_id':response.headers.get('X-Request-ID'),'transport_ok':True}
